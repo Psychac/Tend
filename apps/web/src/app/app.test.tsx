@@ -158,3 +158,50 @@ describe('backup and restore', () => {
     expect(await screen.findByText(/no activities yet/i)).toBeInTheDocument();
   });
 });
+
+describe('assets and usage-based maintenance', () => {
+  it('adds an asset, schedules service by mileage, and becomes due after enough driving', async () => {
+    const { user } = renderApp('/assets');
+    await user.click(await screen.findByRole('button', { name: 'Add asset' }));
+    await user.type(screen.getByLabelText('Name'), 'Honda City');
+    await user.click(screen.getByRole('button', { name: 'Save asset' }));
+    expect(await screen.findByText('Honda City')).toBeInTheDocument();
+    expect(screen.getByText(/0 activities/)).toBeInTheDocument();
+
+    const record = async (value: string) => {
+      await user.click(screen.getByRole('button', { name: 'Record a reading' }));
+      const form = screen.getByRole('form', { name: 'Reading for Honda City' });
+      await user.clear(within(form).getByLabelText('Value'));
+      await user.type(within(form).getByLabelText('Value'), value);
+      await user.click(within(form).getByRole('button', { name: 'Save reading' }));
+    };
+    await record('1000');
+    expect(await screen.findByText('odometer: 1000 km')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('link', { name: 'Activities' }));
+    await user.click(await screen.findByRole('link', { name: 'New activity' }));
+    await user.type(await screen.findByLabelText('Name'), 'Oil change');
+    await user.selectOptions(await screen.findByLabelText('Asset (optional)'), 'Honda City');
+    await user.selectOptions(screen.getByLabelText('Repeats'), 'usage');
+    await user.click(screen.getByRole('button', { name: 'Create activity' }));
+    expect(await screen.findByText('Oil change')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('link', { name: 'Dashboard' }));
+    expect(await screen.findByText(/nothing is due/i)).toBeInTheDocument();
+
+    await user.click(screen.getByRole('link', { name: 'Assets' }));
+    await record('6500');
+    await user.click(screen.getByRole('link', { name: 'Dashboard' }));
+    const dueToday = await screen.findByRole('region', { name: 'Due today' });
+    expect(within(dueToday).getByText('Oil change')).toBeInTheDocument();
+  });
+
+  it('retires an asset and hides it from the list', async () => {
+    const { user } = renderApp('/assets');
+    await user.click(await screen.findByRole('button', { name: 'Add asset' }));
+    await user.type(screen.getByLabelText('Name'), 'Old fridge');
+    await user.click(screen.getByRole('button', { name: 'Save asset' }));
+    await user.click(await screen.findByRole('button', { name: 'Retire' }));
+    expect(await screen.findByText(/no assets yet/i)).toBeInTheDocument();
+  });
+});

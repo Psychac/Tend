@@ -1,8 +1,9 @@
 import { useState, type FormEvent } from 'react';
 import { useNavigate } from 'react-router';
-import { createActivity, type ScheduleInput } from '@upkeep/application';
+import { createActivity, listAssets, type ScheduleInput } from '@upkeep/application';
 import {
   localDateOf,
+  type AssetId,
   type ActivityType,
   type IsoWeekday,
   type Priority,
@@ -10,7 +11,7 @@ import {
   type ScheduleStrategy,
 } from '@upkeep/domain';
 import { useApp } from '../../app/providers/AppProvider';
-import { describeError, deviceTimeZone, useAction } from '../../shared/hooks';
+import { describeError, deviceTimeZone, useAction, useLiveQuery } from '../../shared/hooks';
 
 const TYPES: ActivityType[] = [
   'cleaning',
@@ -32,7 +33,7 @@ const WEEKDAYS: [IsoWeekday, string][] = [
   [7, 'Sun'],
 ];
 
-type Repeat = 'none' | 'calendar' | 'after_completion';
+type Repeat = 'none' | 'calendar' | 'after_completion' | 'usage';
 
 const field = 'mt-1 block w-full max-w-md rounded border border-slate-300 px-2 py-1';
 
@@ -52,6 +53,11 @@ export function ActivityFormPage() {
   const [startsOn, setStartsOn] = useState(() => localDateOf(deps.clock.now(), deviceTimeZone()));
   const [graceDays, setGraceDays] = useState('0');
   const [checklist, setChecklist] = useState('');
+  const [assetId, setAssetId] = useState('');
+  const [meterKey, setMeterKey] = useState('odometer');
+  const [meterUnit, setMeterUnit] = useState('km');
+  const [usageEvery, setUsageEvery] = useState('5000');
+  const assets = useLiveQuery(({ repos }) => listAssets(repos));
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -59,13 +65,19 @@ export function ActivityFormPage() {
     if (repeat === 'none') return undefined;
     const interval = { every: Number(every), unit };
     const strategy: ScheduleStrategy =
-      repeat === 'calendar'
+      repeat === 'usage'
         ? {
-            kind: 'calendar',
-            interval,
-            byWeekday: unit === 'week' && weekdays.length > 0 ? weekdays : undefined,
+            kind: 'usage',
+            meterKey,
+            every: { value: Number(usageEvery), unit: meterUnit },
           }
-        : { kind: 'completion_interval', interval };
+        : repeat === 'calendar'
+          ? {
+              kind: 'calendar',
+              interval,
+              byWeekday: unit === 'week' && weekdays.length > 0 ? weekdays : undefined,
+            }
+          : { kind: 'completion_interval', interval };
     return { strategy, timeZone: deviceTimeZone(), startsOn, graceDays: Number(graceDays) };
   }
 
@@ -83,6 +95,7 @@ export function ActivityFormPage() {
           .split('\n')
           .map((l) => l.trim())
           .filter(Boolean),
+        assetId: assetId ? (assetId as AssetId) : undefined,
         schedule: buildSchedule(),
       }),
     );
@@ -139,6 +152,27 @@ export function ActivityFormPage() {
       </div>
 
       <label className="block text-sm">
+        Asset (optional)
+        <select
+          value={assetId}
+          onChange={(e) => {
+            setAssetId(e.target.value);
+            if (!e.target.value && repeat === 'usage') setRepeat('none');
+          }}
+          className={field}
+        >
+          <option value="">None</option>
+          {assets.status === 'ready'
+            ? assets.data.map((a) => (
+                <option key={a.asset.id} value={a.asset.id}>
+                  {a.asset.name}
+                </option>
+              ))
+            : null}
+        </select>
+      </label>
+
+      <label className="block text-sm">
         Repeats
         <select
           value={repeat}
@@ -148,37 +182,72 @@ export function ActivityFormPage() {
           <option value="none">Does not repeat</option>
           <option value="calendar">On a fixed calendar (e.g. every week)</option>
           <option value="after_completion">After I complete it (e.g. 30 days later)</option>
+          {assetId ? <option value="usage">By usage (e.g. every 5,000 km)</option> : null}
         </select>
       </label>
 
       {repeat !== 'none' ? (
         <fieldset className="space-y-3 rounded border border-slate-200 bg-white p-3">
           <legend className="px-1 text-sm font-medium">Schedule</legend>
-          <div className="flex flex-wrap items-end gap-3">
-            <label className="block text-sm">
-              Every
-              <input
-                type="number"
-                min="1"
-                value={every}
-                onChange={(e) => setEvery(e.target.value)}
-                className="mt-1 block w-20 rounded border border-slate-300 px-2 py-1"
-              />
-            </label>
-            <label className="block text-sm">
-              Unit
-              <select
-                value={unit}
-                onChange={(e) => setUnit(e.target.value as RecurrenceUnit)}
-                className="mt-1 block rounded border border-slate-300 px-2 py-1"
-              >
-                <option value="day">days</option>
-                <option value="week">weeks</option>
-                <option value="month">months</option>
-                <option value="year">years</option>
-              </select>
-            </label>
-          </div>
+          {repeat === 'usage' ? (
+            <div className="flex flex-wrap items-end gap-3">
+              <label className="block text-sm">
+                Meter
+                <input
+                  required
+                  value={meterKey}
+                  onChange={(e) => setMeterKey(e.target.value)}
+                  className="mt-1 block w-32 rounded border border-slate-300 px-2 py-1"
+                />
+              </label>
+              <label className="block text-sm">
+                Every
+                <input
+                  type="number"
+                  min="1"
+                  step="any"
+                  value={usageEvery}
+                  onChange={(e) => setUsageEvery(e.target.value)}
+                  className="mt-1 block w-28 rounded border border-slate-300 px-2 py-1"
+                />
+              </label>
+              <label className="block text-sm">
+                Unit
+                <input
+                  required
+                  value={meterUnit}
+                  onChange={(e) => setMeterUnit(e.target.value)}
+                  className="mt-1 block w-20 rounded border border-slate-300 px-2 py-1"
+                />
+              </label>
+            </div>
+          ) : (
+            <div className="flex flex-wrap items-end gap-3">
+              <label className="block text-sm">
+                Every
+                <input
+                  type="number"
+                  min="1"
+                  value={every}
+                  onChange={(e) => setEvery(e.target.value)}
+                  className="mt-1 block w-20 rounded border border-slate-300 px-2 py-1"
+                />
+              </label>
+              <label className="block text-sm">
+                Unit
+                <select
+                  value={unit}
+                  onChange={(e) => setUnit(e.target.value as RecurrenceUnit)}
+                  className="mt-1 block rounded border border-slate-300 px-2 py-1"
+                >
+                  <option value="day">days</option>
+                  <option value="week">weeks</option>
+                  <option value="month">months</option>
+                  <option value="year">years</option>
+                </select>
+              </label>
+            </div>
+          )}
 
           {repeat === 'calendar' && unit === 'week' ? (
             <fieldset>
