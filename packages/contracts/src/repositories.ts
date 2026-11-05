@@ -82,6 +82,7 @@ export interface LocationRepository {
 
 export interface ScheduleRepository {
   getById(id: ScheduleId): Promise<Schedule | null>;
+  list(): Promise<Schedule[]>;
   listForActivity(activityId: ActivityId): Promise<Schedule[]>;
   save(schedule: Schedule): Promise<void>;
   delete(id: ScheduleId): Promise<void>;
@@ -92,12 +93,14 @@ export interface OccurrenceFilter extends Page {
   readonly status?: readonly OccurrenceStatus[] | undefined;
   readonly dueFrom?: LocalDate | undefined;
   readonly dueTo?: LocalDate | undefined;
+  /** Ordering by `dueOn`; defaults to ascending. */
+  readonly order?: 'due_asc' | 'due_desc' | undefined;
 }
 
 export interface OccurrenceRepository {
   getById(id: OccurrenceId): Promise<Occurrence | null>;
   list(filter: OccurrenceFilter): Promise<Occurrence[]>;
-  /** Idempotent: saving an occurrence with an existing id replaces it. */
+  /** Version-checked like other mutable entities. */
   save(occurrence: Occurrence): Promise<void>;
 }
 
@@ -107,7 +110,11 @@ export interface CompletionFilter extends Page {
   readonly to?: Instant | undefined;
 }
 
-/** Completions are append-only: there is no update or delete. */
+/**
+ * Completions are append-only: there is no update or delete. Adding an id that
+ * already exists is a no-op, which makes retried uploads idempotent.
+ * `list` returns the newest completion first.
+ */
 export interface CompletionRepository {
   getById(id: CompletionId): Promise<Completion | null>;
   add(completion: Completion): Promise<void>;
@@ -122,7 +129,7 @@ export interface MeasurementFilter extends Page {
   readonly to?: Instant | undefined;
 }
 
-/** Measurements are append-only. */
+/** Measurements are append-only (duplicate ids are a no-op). `list` returns the newest first. */
 export interface MeasurementRepository {
   add(measurement: Measurement): Promise<void>;
   list(filter: MeasurementFilter): Promise<Measurement[]>;

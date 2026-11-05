@@ -23,3 +23,15 @@ export const invariantError = (message: string): DomainError => ({
   message,
   issues: [],
 });
+
+export const notFoundError = (entity: string, id: string): DomainError => ({
+  code: 'not_found',
+  message: `${entity} ${id} was not found`,
+  issues: [],
+});
+
+export const conflictError = (message: string): DomainError => ({
+  code: 'conflict',
+  message,
+  issues: [],
+});

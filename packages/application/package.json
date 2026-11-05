@@ -11,5 +11,9 @@
   },
   "devDependencies": {
     "vitest": "^5.1.0"
+  },
+  "dependencies": {
+    "@upkeep/contracts": "workspace:*",
+    "@upkeep/domain": "workspace:*"
   }
 }
