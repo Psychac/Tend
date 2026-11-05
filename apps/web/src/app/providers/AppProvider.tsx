@@ -1,4 +1,12 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from 'react';
 import { reconcileSchedules, type Deps } from '@upkeep/application';
 import type { Repositories } from '@upkeep/contracts';
 import {
@@ -53,10 +61,24 @@ type State =
 
 const AppContext = createContext<AppServices | null>(null);
 
+interface Changes {
+  /** Increases whenever data changes; screens re-query when it does. */
+  readonly revision: number;
+  readonly notifyChanged: () => void;
+}
+
+const ChangesContext = createContext<Changes | null>(null);
+
 export function useApp(): AppServices {
   const services = useContext(AppContext);
   if (!services) throw new Error('useApp must be used inside <AppProvider>');
   return services;
+}
+
+export function useChanges(): Changes {
+  const changes = useContext(ChangesContext);
+  if (!changes) throw new Error('useChanges must be used inside <AppProvider>');
+  return changes;
 }
 
 let sharedDatabase: Promise<SqlDatabase> | undefined;
@@ -87,6 +109,9 @@ interface Props {
  */
 export function AppProvider({ children, open = openSharedDatabase }: Props) {
   const [state, setState] = useState<State>({ status: 'loading' });
+  const [revision, setRevision] = useState(0);
+  const notifyChanged = useCallback(() => setRevision((r) => r + 1), []);
+  const changes = useMemo(() => ({ revision, notifyChanged }), [revision, notifyChanged]);
 
   useEffect(() => {
     let cancelled = false;
@@ -98,9 +123,11 @@ export function AppProvider({ children, open = openSharedDatabase }: Props) {
         const services = createServices(db);
         const reconcile = () => {
           // A failed reconcile must never stop the app from working.
-          reconcileSchedules(services.deps).catch((e: unknown) =>
-            console.error('Schedule reconciliation failed', e),
-          );
+          reconcileSchedules(services.deps)
+            .then(() => {
+              if (!cancelled) notifyChanged();
+            })
+            .catch((e: unknown) => console.error('Schedule reconciliation failed', e));
         };
         reconcile();
         onVisible = () => {
@@ -119,7 +146,7 @@ export function AppProvider({ children, open = openSharedDatabase }: Props) {
       cancelled = true;
       if (onVisible) document.removeEventListener('visibilitychange', onVisible);
     };
-  }, [open]);
+  }, [open, notifyChanged]);
 
   if (state.status === 'loading') {
     return <p className="p-4 text-slate-600">Opening your data…</p>;
@@ -137,5 +164,9 @@ export function AppProvider({ children, open = openSharedDatabase }: Props) {
       </div>
     );
   }
-  return <AppContext.Provider value={state.services}>{children}</AppContext.Provider>;
+  return (
+    <AppContext.Provider value={state.services}>
+      <ChangesContext.Provider value={changes}>{children}</ChangesContext.Provider>
+    </AppContext.Provider>
+  );
 }

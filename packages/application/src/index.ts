@@ -3,3 +3,4 @@ export * from './activities';
 export * from './occurrences';
 export * from './schedules';
 export * from './measurements';
+export * from './queries';
