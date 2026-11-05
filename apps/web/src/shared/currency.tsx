@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 
 const STORAGE_KEY = 'upkeep.defaultCurrency';
 const FALLBACK_DEFAULT = 'INR';
@@ -28,7 +28,11 @@ interface CurrencyOption {
   readonly name: string;
 }
 
+let cachedOptions: CurrencyOption[] | undefined;
+
+/** Built once: the list never changes while the app runs. */
 function currencyOptions(): CurrencyOption[] {
+  if (cachedOptions) return cachedOptions;
   const codes =
     typeof Intl.supportedValuesOf === 'function' ? Intl.supportedValuesOf('currency') : COMMON;
   let names: Intl.DisplayNames | undefined;
@@ -37,7 +41,8 @@ function currencyOptions(): CurrencyOption[] {
   } catch {
     names = undefined;
   }
-  return codes.map((code) => ({ code, name: names?.of(code) ?? code }));
+  cachedOptions = codes.map((code) => ({ code, name: names?.of(code) ?? code }));
+  return cachedOptions;
 }
 
 interface SelectProps {
@@ -47,7 +52,7 @@ interface SelectProps {
 }
 
 export function CurrencySelect({ value, onChange, label }: SelectProps) {
-  const options = useMemo(currencyOptions, []);
+  const options = currencyOptions();
   return (
     <select
       aria-label={label}
