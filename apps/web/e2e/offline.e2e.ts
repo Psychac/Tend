@@ -28,11 +28,18 @@ test('data created in the app survives a reload and can be completed', async ({ 
   expect(errors).toEqual([]);
 });
 
-// MVP criterion 7: the installed app must start with no network. This needs a service worker
-// that precaches the app shell and the SQLite WASM assets, which is not built yet.
-test.fixme('the app starts with no network once loaded', async ({ page, context }) => {
+// MVP criterion 7: once loaded, the app must start with no network. The service worker precaches the
+// app shell and the SQLite WASM files.
+test('the app starts with no network once loaded', async ({ page, context }) => {
   await page.goto('/');
   await expect(page.getByRole('heading', { name: 'Dashboard' })).toBeVisible({ timeout: 30_000 });
+  // Wait until the service worker controls the page, i.e. the precache is complete.
+  await page.evaluate(async () => {
+    await navigator.serviceWorker.ready;
+  });
+  await page.reload();
+  await expect.poll(() => page.evaluate(() => !!navigator.serviceWorker.controller)).toBe(true);
+
   await context.setOffline(true);
   await page.reload();
   await expect(page.getByRole('heading', { name: 'Dashboard' })).toBeVisible({ timeout: 30_000 });
