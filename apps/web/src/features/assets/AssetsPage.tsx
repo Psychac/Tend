@@ -19,11 +19,11 @@ import { CategorySelect, LocationSelect } from '../../shared/pickers';
 import { useApp } from '../../app/providers/AppProvider';
 import { describeError, formatDate, useAction, useLiveQuery } from '../../shared/hooks';
 
-const field = 'mt-1 block w-full rounded border border-slate-300 px-2 py-1';
+const field = 'field mt-1 block w-full';
 const button =
-  'rounded border border-slate-300 bg-white px-3 py-1 text-sm hover:bg-slate-100 disabled:opacity-50';
+  'btn';
 const primary =
-  'rounded bg-emerald-600 px-3 py-1 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-50';
+  'btn btn-primary';
 
 export function AssetsPage() {
   const [search, setSearch] = useState('');
@@ -58,7 +58,7 @@ export function AssetsPage() {
         placeholder="Search assets"
         value={search}
         onChange={(e) => setSearch(e.target.value)}
-        className="block w-full max-w-md rounded border border-slate-300 px-2 py-1"
+        className="block w-full max-w-md field"
       />
 
       <div className="flex flex-wrap gap-4">
@@ -67,14 +67,14 @@ export function AssetsPage() {
           empty="All categories"
           value={categoryFilter}
           onChange={setCategoryFilter}
-          className="mt-1 block rounded border border-slate-300 px-2 py-1"
+          className="mt-1 block field"
         />
         <LocationSelect
           label="Place"
           empty="All places"
           value={locationFilter}
           onChange={setLocationFilter}
-          className="mt-1 block rounded border border-slate-300 px-2 py-1"
+          className="mt-1 block field"
         />
       </div>
 
@@ -87,14 +87,14 @@ export function AssetsPage() {
         Show retired and disposed
       </label>
 
-      {assets.status === 'loading' ? <p className="text-slate-600">Loading…</p> : null}
+      {assets.status === 'loading' ? <p className="text-muted">Loading…</p> : null}
       {assets.status === 'error' ? (
-        <p role="alert" className="text-red-700">
+        <p role="alert" className="text-danger">
           {assets.message}
         </p>
       ) : null}
       {assets.status === 'ready' && assets.data.length === 0 ? (
-        <p className="text-slate-600">
+        <p className="text-muted">
           {search ? 'No assets match your search.' : 'No assets yet. Add a car, appliance or tool.'}
         </p>
       ) : null}
@@ -168,7 +168,7 @@ function AssetForm({ asset, onDone }: { asset?: Asset | undefined; onDone: () =>
     <form
       onSubmit={submit}
       aria-label={asset ? `Edit ${asset.name}` : 'New asset'}
-      className="max-w-xl space-y-3 rounded border border-slate-200 bg-white p-3"
+      className="max-w-xl space-y-3 card p-3"
     >
       <label className="block text-sm">
         Name
@@ -208,7 +208,7 @@ function AssetForm({ asset, onDone }: { asset?: Asset | undefined; onDone: () =>
         <textarea value={notes} onChange={(e) => setNotes(e.target.value)} className={field} />
       </label>
       {error ? (
-        <p role="alert" className="text-sm text-red-700">
+        <p role="alert" className="text-sm text-danger">
           {error}
         </p>
       ) : null}
@@ -265,11 +265,11 @@ function AssetCard({ item }: { item: AssetListItem }) {
   }
 
   return (
-    <li className="rounded border border-slate-200 bg-white p-3">
+    <li className="card p-3">
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div>
           <p className="font-medium">{asset.name}</p>
-          <p className="text-sm text-slate-600">
+          <p className="text-sm text-muted">
             {item.activityCount} {item.activityCount === 1 ? 'activity' : 'activities'}
             {asset.status !== 'active' ? ` · ${asset.status.replace('_', ' ')}` : ''}
             {asset.warranty ? ` · warranty ends ${formatDate(asset.warranty.expiresOn)}` : ''}
@@ -278,7 +278,7 @@ function AssetCard({ item }: { item: AssetListItem }) {
           </p>
           {item.latestReadings.map((m) =>
             m.value.kind === 'numeric' ? (
-              <p key={m.id} className="text-sm text-slate-600">
+              <p key={m.id} className="text-sm text-muted">
                 {m.key}: {m.value.quantity.value} {m.value.quantity.unit}
               </p>
             ) : null,
@@ -308,13 +308,13 @@ function AssetCard({ item }: { item: AssetListItem }) {
       </div>
 
       {error ? (
-        <p role="alert" className="mt-2 text-sm text-red-700">
+        <p role="alert" className="mt-2 text-sm text-danger">
           {error}
         </p>
       ) : null}
 
       {editing ? (
-        <div className="mt-3 border-t border-slate-200 pt-3">
+        <div className="mt-3 border-t border-line pt-3">
           <AssetForm asset={asset} onDone={() => setEditing(false)} />
         </div>
       ) : null}
@@ -323,7 +323,7 @@ function AssetCard({ item }: { item: AssetListItem }) {
         <form
           onSubmit={submitReading}
           aria-label={`Reading for ${asset.name}`}
-          className="mt-3 flex flex-wrap items-end gap-3 border-t border-slate-200 pt-3"
+          className="mt-3 flex flex-wrap items-end gap-3 border-t border-line pt-3"
         >
           <label className="block text-sm">
             Meter

@@ -7,9 +7,9 @@ import {
 } from '../../shared/notifier';
 
 const button =
-  'rounded border border-slate-300 bg-white px-3 py-1 text-sm hover:bg-slate-100 disabled:opacity-50';
+  'btn';
 const primary =
-  'rounded bg-emerald-600 px-3 py-1 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-50';
+  'btn btn-primary';
 
 /** Turns browser notifications on or off for this device, and explains what they can and cannot do. */
 export function NotificationsSection() {
@@ -54,18 +54,18 @@ export function NotificationsSection() {
       <h3 id="notifications-heading" className="text-lg font-medium">
         Notifications
       </h3>
-      <p className="text-sm text-slate-600">
+      <p className="text-sm text-muted">
         Reminders always show on the Dashboard. Browser notifications are optional and are chosen
         per device.
       </p>
 
       {permission === 'unsupported' ? (
-        <p className="text-sm text-slate-700">This browser cannot show notifications.</p>
+        <p className="text-sm text-muted">This browser cannot show notifications.</p>
       ) : (
         <div className="flex flex-wrap items-center gap-2">
           {on ? (
             <>
-              <span role="status" className="text-sm text-emerald-800">
+              <span role="status" className="text-sm text-ok">
                 Browser notifications are on.
               </span>
               <button type="button" className={button} onClick={() => void test()}>
@@ -84,12 +84,12 @@ export function NotificationsSection() {
       )}
 
       {message ? (
-        <p role="status" className="text-sm text-slate-700">
+        <p role="status" className="text-sm text-muted">
           {message}
         </p>
       ) : null}
 
-      <p className="text-sm text-slate-600">
+      <p className="text-sm text-muted">
         Limit: a notification appears while the app is open, including in a background tab, and
         anything that came due while it was closed appears when you open it. Nothing can wake a
         closed app until online push arrives in a later version.

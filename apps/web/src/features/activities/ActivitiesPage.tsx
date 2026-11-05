@@ -12,7 +12,7 @@ import { useApp } from '../../app/providers/AppProvider';
 import { describeError, formatDate, useAction, useLiveQuery } from '../../shared/hooks';
 import { CategorySelect, LocationSelect } from '../../shared/pickers';
 
-const small = 'rounded border border-slate-300 px-3 py-1 text-sm hover:bg-slate-100';
+const small = 'btn';
 
 export function ActivitiesPage() {
   const { deps } = useApp();
@@ -45,7 +45,7 @@ export function ActivitiesPage() {
         <h2 className="text-xl font-semibold">Activities</h2>
         <Link
           to="/activities/new"
-          className="rounded bg-emerald-600 px-3 py-1 text-sm font-medium text-white hover:bg-emerald-700"
+          className="rounded bg-brand px-3 py-1 text-sm font-medium text-white hover:bg-brand-hover"
         >
           New activity
         </Link>
@@ -58,7 +58,7 @@ export function ActivitiesPage() {
           placeholder="Search activities"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="w-full max-w-sm rounded border border-slate-300 px-2 py-1"
+          className="w-full max-w-sm field"
         />
       </label>
 
@@ -68,14 +68,14 @@ export function ActivitiesPage() {
           empty="All categories"
           value={categoryFilter}
           onChange={setCategoryFilter}
-          className="mt-1 block rounded border border-slate-300 px-2 py-1"
+          className="mt-1 block field"
         />
         <LocationSelect
           label="Place"
           empty="All places"
           value={locationFilter}
           onChange={setLocationFilter}
-          className="mt-1 block rounded border border-slate-300 px-2 py-1"
+          className="mt-1 block field"
         />
       </div>
 
@@ -89,19 +89,19 @@ export function ActivitiesPage() {
       </label>
 
       {error ? (
-        <p role="alert" className="text-sm text-red-700">
+        <p role="alert" className="text-sm text-danger">
           {error}
         </p>
       ) : null}
 
-      {activities.status === 'loading' ? <p className="text-slate-600">Loading…</p> : null}
+      {activities.status === 'loading' ? <p className="text-muted">Loading…</p> : null}
       {activities.status === 'error' ? (
-        <p role="alert" className="text-red-700">
+        <p role="alert" className="text-danger">
           Could not load activities: {activities.message}
         </p>
       ) : null}
       {activities.status === 'ready' && activities.data.length === 0 ? (
-        <p className="rounded border border-dashed border-slate-300 bg-white p-4 text-slate-700">
+        <p className="card border-dashed p-4 text-muted">
           {search
             ? 'No activities match your search.'
             : 'No activities yet. Create your first one.'}
@@ -113,11 +113,11 @@ export function ActivitiesPage() {
           {activities.data.map(({ activity, schedules, nextDueOn, categoryName, locationPath }) => (
             <li
               key={activity.id}
-              className="flex flex-wrap items-center justify-between gap-2 rounded border border-slate-200 bg-white p-3"
+              className="flex flex-wrap items-center justify-between gap-2 card p-3"
             >
               <div>
                 <p className="font-medium">{activity.name}</p>
-                <p className="text-sm text-slate-600">
+                <p className="text-sm text-muted">
                   <span className="capitalize">{activity.type}</span>
                   {' · '}
                   {activity.archivedAt !== undefined

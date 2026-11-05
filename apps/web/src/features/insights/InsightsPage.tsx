@@ -39,7 +39,7 @@ export function InsightsPage() {
           <select
             value={range}
             onChange={(e) => setRange(e.target.value as Range)}
-            className="rounded border border-slate-300 px-2 py-1"
+            className="field"
           >
             {RANGES.map(([value, label]) => (
               <option key={value} value={value}>
@@ -50,9 +50,9 @@ export function InsightsPage() {
         </label>
       </div>
 
-      {insights.status === 'loading' ? <p className="text-slate-600">Loading…</p> : null}
+      {insights.status === 'loading' ? <p className="text-muted">Loading…</p> : null}
       {insights.status === 'error' ? (
-        <p role="alert" className="text-red-700">
+        <p role="alert" className="text-danger">
           {insights.message}
         </p>
       ) : null}
@@ -64,7 +64,7 @@ export function InsightsPage() {
 function Report({ view }: { view: InsightsView }) {
   if (view.completed + view.skipped === 0 && view.overdueNow === 0 && view.meters.length === 0) {
     return (
-      <p className="text-slate-600">
+      <p className="text-muted">
         Nothing to summarise for this period yet. Complete some work and this page will show how
         reliably it gets done, what it costs, and how often.
       </p>
@@ -98,11 +98,11 @@ function Report({ view }: { view: InsightsView }) {
           Spending
         </h3>
         <p>
-          <span className="text-slate-600">Total: </span>
+          <span className="text-muted">Total: </span>
           <span className="font-medium">{spendText(view.spend)}</span>
         </p>
         {view.spend.length > 1 ? (
-          <p className="text-sm text-slate-600">
+          <p className="text-sm text-muted">
             Costs were recorded in more than one currency, so they are shown separately rather than
             converted.
           </p>
@@ -142,7 +142,7 @@ function Report({ view }: { view: InsightsView }) {
           <div className="overflow-x-auto">
             <table className="w-full min-w-[32rem] text-left text-sm">
               <thead>
-                <tr className="border-b border-slate-200">
+                <tr className="border-b border-line">
                   <th className="py-1 pr-3 font-medium">Activity</th>
                   <th className="py-1 pr-3 font-medium">Done</th>
                   <th className="py-1 pr-3 font-medium">Skipped</th>
@@ -153,7 +153,7 @@ function Report({ view }: { view: InsightsView }) {
               </thead>
               <tbody>
                 {view.activities.map((a) => (
-                  <tr key={a.activityId} className="border-b border-slate-100">
+                  <tr key={a.activityId} className="border-b border-line">
                     <td className="py-1 pr-3">{a.name}</td>
                     <td className="pr-3">{a.completed}</td>
                     <td className="pr-3">{a.skipped}</td>
@@ -196,10 +196,10 @@ function Report({ view }: { view: InsightsView }) {
 
 function Stat({ label, value, note }: { label: string; value: string; note?: string | undefined }) {
   return (
-    <div className="rounded border border-slate-200 bg-white p-3">
-      <dt className="text-sm text-slate-600">{label}</dt>
+    <div className="card p-3">
+      <dt className="text-sm text-muted">{label}</dt>
       <dd className="text-2xl font-semibold">{value}</dd>
-      {note ? <dd className="text-xs text-slate-600">{note}</dd> : null}
+      {note ? <dd className="text-xs text-muted">{note}</dd> : null}
     </div>
   );
 }
@@ -221,14 +221,14 @@ function Months({ months }: { months: readonly MonthInsight[] }) {
           <span className="flex items-center gap-2">
             <span
               aria-hidden="true"
-              className="flex h-3 overflow-hidden rounded bg-slate-100"
+              className="flex h-3 overflow-hidden rounded bg-sunken"
               style={{ width: `${((m.completed + m.skipped) / peak) * 60 + 2}%` }}
             >
               <span
-                className="bg-emerald-600"
+                className="bg-brand"
                 style={{ width: `${(m.completed / Math.max(1, m.completed + m.skipped)) * 100}%` }}
               />
-              <span className="flex-1 bg-slate-400" />
+              <span className="flex-1 bg-faint" />
             </span>
             <span>
               {m.completed} done

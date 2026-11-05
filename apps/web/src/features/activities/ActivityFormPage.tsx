@@ -58,7 +58,7 @@ const WEEKDAYS: [IsoWeekday, string][] = [
 
 type Repeat = 'none' | 'calendar' | 'after_completion' | 'usage';
 
-const field = 'mt-1 block w-full max-w-md rounded border border-slate-300 px-2 py-1';
+const field = 'field mt-1 block w-full max-w-md';
 
 /** What the form shows for a stored schedule. Types the form cannot express are left untouched. */
 function scheduleDefaults(schedule: Schedule | undefined) {
@@ -376,18 +376,18 @@ export function ActivityForm({ initial }: { initial?: ActivityFormInitial | unde
       </label>
 
       {editing && !sd.editable ? (
-        <p className="rounded border border-slate-200 bg-slate-50 p-2 text-sm text-slate-700">
+        <p className="rounded border border-line bg-canvas p-2 text-sm text-muted">
           This activity uses a schedule type that cannot be changed here. It is kept as it is.
         </p>
       ) : null}
       {initial?.schedule && sd.editable ? (
-        <p className="text-sm text-slate-600">
+        <p className="text-sm text-muted">
           To stop an activity repeating, pause or archive it from the Activities list.
         </p>
       ) : null}
 
       {repeat !== 'none' && sd.editable ? (
-        <fieldset className="space-y-3 rounded border border-slate-200 bg-white p-3">
+        <fieldset className="space-y-3 card p-3">
           <legend className="px-1 text-sm font-medium">Schedule</legend>
           {repeat === 'usage' ? (
             <div className="flex flex-wrap items-end gap-3">
@@ -397,7 +397,7 @@ export function ActivityForm({ initial }: { initial?: ActivityFormInitial | unde
                   required
                   value={meterKey}
                   onChange={(e) => setMeterKey(e.target.value)}
-                  className="mt-1 block w-32 rounded border border-slate-300 px-2 py-1"
+                  className="mt-1 block w-32 field"
                 />
               </label>
               <label className="block text-sm">
@@ -408,7 +408,7 @@ export function ActivityForm({ initial }: { initial?: ActivityFormInitial | unde
                   step="any"
                   value={usageEvery}
                   onChange={(e) => setUsageEvery(e.target.value)}
-                  className="mt-1 block w-28 rounded border border-slate-300 px-2 py-1"
+                  className="mt-1 block w-28 field"
                 />
               </label>
               <label className="block text-sm">
@@ -417,7 +417,7 @@ export function ActivityForm({ initial }: { initial?: ActivityFormInitial | unde
                   required
                   value={meterUnit}
                   onChange={(e) => setMeterUnit(e.target.value)}
-                  className="mt-1 block w-20 rounded border border-slate-300 px-2 py-1"
+                  className="mt-1 block w-20 field"
                 />
               </label>
             </div>
@@ -430,7 +430,7 @@ export function ActivityForm({ initial }: { initial?: ActivityFormInitial | unde
                   min="1"
                   value={every}
                   onChange={(e) => setEvery(e.target.value)}
-                  className="mt-1 block w-20 rounded border border-slate-300 px-2 py-1"
+                  className="mt-1 block w-20 field"
                 />
               </label>
               <label className="block text-sm">
@@ -438,7 +438,7 @@ export function ActivityForm({ initial }: { initial?: ActivityFormInitial | unde
                 <select
                   value={unit}
                   onChange={(e) => setUnit(e.target.value as RecurrenceUnit)}
-                  className="mt-1 block rounded border border-slate-300 px-2 py-1"
+                  className="mt-1 block field"
                 >
                   <option value="day">days</option>
                   <option value="week">weeks</option>
@@ -479,7 +479,7 @@ export function ActivityForm({ initial }: { initial?: ActivityFormInitial | unde
                 required
                 value={startsOn}
                 onChange={(e) => setStartsOn(e.target.value as typeof startsOn)}
-                className="mt-1 block rounded border border-slate-300 px-2 py-1"
+                className="mt-1 block field"
               />
             </label>
             <label className="block text-sm">
@@ -489,7 +489,7 @@ export function ActivityForm({ initial }: { initial?: ActivityFormInitial | unde
                 min="0"
                 value={graceDays}
                 onChange={(e) => setGraceDays(e.target.value)}
-                className="mt-1 block w-24 rounded border border-slate-300 px-2 py-1"
+                className="mt-1 block w-24 field"
               />
             </label>
           </div>
@@ -520,7 +520,7 @@ export function ActivityForm({ initial }: { initial?: ActivityFormInitial | unde
       ) : null}
 
       {repeat !== 'none' && sd.editable ? (
-        <fieldset className="space-y-2 rounded border border-slate-200 bg-white p-3">
+        <fieldset className="space-y-2 card p-3">
           <legend className="px-1 text-sm font-medium">Reminder</legend>
           <label className="flex items-center gap-2 text-sm">
             <input type="checkbox" checked={remind} onChange={(e) => setRemind(e.target.checked)} />
@@ -533,7 +533,7 @@ export function ActivityForm({ initial }: { initial?: ActivityFormInitial | unde
                 <select
                   value={leadDays}
                   onChange={(e) => setLeadDays(e.target.value)}
-                  className="mt-1 block rounded border border-slate-300 px-2 py-1"
+                  className="mt-1 block field"
                 >
                   <option value="0">On the day</option>
                   <option value="1">1 day before</option>
@@ -549,7 +549,7 @@ export function ActivityForm({ initial }: { initial?: ActivityFormInitial | unde
                   required
                   value={atTime}
                   onChange={(e) => setAtTime(e.target.value)}
-                  className="mt-1 block rounded border border-slate-300 px-2 py-1"
+                  className="mt-1 block field"
                 />
               </label>
             </div>
@@ -579,7 +579,7 @@ export function ActivityForm({ initial }: { initial?: ActivityFormInitial | unde
                     requirements.map((x) => (x === r ? { ...x, key: e.target.value } : x)),
                   )
                 }
-                className="mt-1 block w-32 rounded border border-slate-300 px-2 py-1"
+                className="mt-1 block w-32 field"
               />
             </label>
             <label className="block text-sm">
@@ -591,7 +591,7 @@ export function ActivityForm({ initial }: { initial?: ActivityFormInitial | unde
                     requirements.map((x) => (x === r ? { ...x, unit: e.target.value } : x)),
                   )
                 }
-                className="mt-1 block w-20 rounded border border-slate-300 px-2 py-1"
+                className="mt-1 block w-20 field"
               />
             </label>
             <label className="flex items-center gap-1 pb-1 text-sm">
@@ -608,7 +608,7 @@ export function ActivityForm({ initial }: { initial?: ActivityFormInitial | unde
             </label>
             <button
               type="button"
-              className="rounded border border-slate-300 px-2 py-1 text-sm hover:bg-slate-100"
+              className="field text-sm hover:bg-sunken"
               onClick={() => setRequirements(requirements.filter((x) => x !== r))}
             >
               Remove
@@ -617,7 +617,7 @@ export function ActivityForm({ initial }: { initial?: ActivityFormInitial | unde
         ))}
         <button
           type="button"
-          className="rounded border border-slate-300 px-3 py-1 text-sm hover:bg-slate-100"
+          className="btn"
           onClick={() =>
             setRequirements([
               ...requirements,
@@ -630,7 +630,7 @@ export function ActivityForm({ initial }: { initial?: ActivityFormInitial | unde
       </fieldset>
 
       {error ? (
-        <p role="alert" className="text-sm text-red-700">
+        <p role="alert" className="text-sm text-danger">
           {error}
         </p>
       ) : null}
@@ -639,14 +639,14 @@ export function ActivityForm({ initial }: { initial?: ActivityFormInitial | unde
         <button
           type="submit"
           disabled={busy}
-          className="rounded bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-50"
+          className="rounded bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover disabled:opacity-50"
         >
           {editing ? 'Save changes' : 'Create activity'}
         </button>
         {editing ? (
           <Link
             to="/activities"
-            className="rounded border border-slate-300 px-4 py-2 text-sm hover:bg-slate-100"
+            className="btn"
           >
             Cancel
           </Link>
@@ -670,17 +670,17 @@ export function ActivityEditPage() {
     return { activity, schedule, reminder: await getActivityReminder(repos, activity.id) };
   }, activityId ?? '');
 
-  if (loaded.status === 'loading') return <p className="text-slate-600">Loading…</p>;
+  if (loaded.status === 'loading') return <p className="text-muted">Loading…</p>;
   if (loaded.status === 'error') {
     return (
-      <p role="alert" className="text-red-700">
+      <p role="alert" className="text-danger">
         {loaded.message}
       </p>
     );
   }
   if (loaded.data === null) {
     return (
-      <p role="alert" className="text-red-700">
+      <p role="alert" className="text-danger">
         That activity no longer exists.{' '}
         <Link to="/activities" className="underline">
           Back to activities

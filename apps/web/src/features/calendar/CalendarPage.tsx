@@ -8,11 +8,11 @@ const WEEKDAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
 /** Every kind has a symbol and a word as well as a colour, so meaning never rests on colour alone. */
 const KINDS: Record<CalendarEntryKind, { symbol: string; label: string; style: string }> = {
-  overdue: { symbol: '⚠', label: 'Overdue', style: 'bg-red-100 text-red-900' },
-  due: { symbol: '●', label: 'Due', style: 'bg-amber-100 text-amber-900' },
-  done: { symbol: '✓', label: 'Done', style: 'bg-emerald-100 text-emerald-900' },
-  skipped: { symbol: '↷', label: 'Skipped', style: 'bg-slate-200 text-slate-700' },
-  projected: { symbol: '○', label: 'Planned', style: 'bg-sky-50 text-sky-900' },
+  overdue: { symbol: '⚠', label: 'Overdue', style: 'bg-danger-soft text-danger' },
+  due: { symbol: '●', label: 'Due', style: 'bg-warn-soft text-warn' },
+  done: { symbol: '✓', label: 'Done', style: 'bg-ok-soft text-ok' },
+  skipped: { symbol: '↷', label: 'Skipped', style: 'bg-sunken text-muted' },
+  projected: { symbol: '○', label: 'Planned', style: 'bg-info-soft text-info' },
 };
 
 const monthTitle = (year: number, month: number) =>
@@ -52,7 +52,7 @@ export function CalendarPage() {
       ? calendar.data.weeks.flat().find((d) => d.date === selected)
       : undefined;
 
-  const nav = 'rounded border border-slate-300 bg-white px-3 py-1 text-sm hover:bg-slate-100';
+  const nav = 'btn';
 
   return (
     <div className="space-y-4">
@@ -79,9 +79,9 @@ export function CalendarPage() {
         </div>
       </div>
 
-      {calendar.status === 'loading' ? <p className="text-slate-600">Loading…</p> : null}
+      {calendar.status === 'loading' ? <p className="text-muted">Loading…</p> : null}
       {calendar.status === 'error' ? (
-        <p role="alert" className="text-red-700">
+        <p role="alert" className="text-danger">
           {calendar.message}
         </p>
       ) : null}
@@ -89,7 +89,7 @@ export function CalendarPage() {
       {calendar.status === 'ready' ? (
         <>
           <div role="grid" aria-label={monthTitle(year, month)} className="text-sm">
-            <div role="row" className="grid grid-cols-7 gap-1 text-center text-xs text-slate-600">
+            <div role="row" className="grid grid-cols-7 gap-1 text-center text-xs text-muted">
               {WEEKDAYS.map((d) => (
                 <div key={d} role="columnheader">
                   {d}
@@ -109,11 +109,11 @@ export function CalendarPage() {
                         aria-pressed={day.date === selected}
                         onClick={() => setSelected(day.date)}
                         className={`block h-16 w-full overflow-hidden rounded border p-1 text-left align-top sm:h-24 ${
-                          day.inMonth ? 'bg-white' : 'bg-slate-50 text-slate-400'
-                        } ${day.date === selected ? 'border-emerald-600 ring-1 ring-emerald-600' : 'border-slate-200'}`}
+                          day.inMonth ? 'bg-surface' : 'bg-canvas text-faint'
+                        } ${day.date === selected ? 'border-brand ring-1 ring-brand' : 'border-line'}`}
                       >
                         <span
-                          className={`text-xs ${isToday ? 'rounded bg-emerald-600 px-1 font-semibold text-white' : ''}`}
+                          className={`text-xs ${isToday ? 'rounded bg-brand px-1 font-semibold text-white' : ''}`}
                         >
                           {Number(day.date.slice(8, 10))}
                         </span>
@@ -144,7 +144,7 @@ export function CalendarPage() {
                 ))}
               </ul>
             ) : (
-              <p className="text-sm text-slate-600">Nothing on this day.</p>
+              <p className="text-sm text-muted">Nothing on this day.</p>
             )}
           </section>
         </>

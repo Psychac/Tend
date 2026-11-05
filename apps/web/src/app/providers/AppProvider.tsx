@@ -173,18 +173,18 @@ export function AppProvider({
   }, [open, notifier, notifyChanged]);
 
   if (state.status === 'loading') {
-    return <p className="p-4 text-slate-600">Opening your data…</p>;
+    return <p className="p-4 text-muted">Opening your data…</p>;
   }
   if (state.status === 'error') {
     return (
-      <div role="alert" className="m-4 rounded border border-red-300 bg-red-50 p-4 text-red-900">
+      <div role="alert" className="m-4 rounded border border-danger-line bg-danger-soft p-4 text-danger">
         <h2 className="font-semibold">Your data could not be opened</h2>
         <p className="mt-1 text-sm">
           Personal Upkeep stores everything on this device, and this browser would not open its
           storage. Private browsing, a full disk, or a browser without the required storage support
           can cause this. Nothing has been lost; try a regular window or another browser.
         </p>
-        <p className="mt-2 text-xs text-red-800">Details: {state.message}</p>
+        <p className="mt-2 text-xs text-danger">Details: {state.message}</p>
       </div>
     );
   }

@@ -8,17 +8,17 @@ export function UpdateBanner({ onReload, onDismiss }: Props) {
   return (
     <div
       role="status"
-      className="fixed inset-x-0 bottom-0 flex flex-wrap items-center justify-center gap-3 bg-slate-800 p-3 text-sm text-white"
+      className="fixed inset-x-0 bottom-0 flex flex-wrap items-center justify-center gap-3 bg-ink p-3 text-sm text-canvas"
     >
       <span>A new version is ready.</span>
       <button
         type="button"
         onClick={onReload}
-        className="rounded bg-emerald-600 px-3 py-1 font-medium hover:bg-emerald-700"
+        className="rounded bg-brand px-3 py-1 font-medium hover:bg-brand-hover"
       >
         Reload to update
       </button>
-      <button type="button" onClick={onDismiss} className="rounded px-3 py-1 hover:bg-slate-700">
+      <button type="button" onClick={onDismiss} className="rounded px-3 py-1 hover:bg-ink/80">
         Later
       </button>
     </div>

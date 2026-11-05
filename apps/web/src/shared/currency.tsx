@@ -58,7 +58,7 @@ export function CurrencySelect({ value, onChange, label }: SelectProps) {
       aria-label={label}
       value={value}
       onChange={(e) => onChange(e.target.value)}
-      className="mt-1 block rounded border border-slate-300 px-2 py-1"
+      className="mt-1 block field"
     >
       {options.some((o) => o.code === value) ? null : <option value={value}>{value}</option>}
       {options.map((o) => (
@@ -101,7 +101,7 @@ export function MoneyField({ label, value, onChange }: FieldProps) {
           inputMode="decimal"
           value={value.amount}
           onChange={(e) => onChange({ amount: e.target.value })}
-          className="mt-1 block w-40 rounded border border-slate-300 px-2 py-1"
+          className="mt-1 block w-40 field"
         />
       </label>
       <CurrencySelect

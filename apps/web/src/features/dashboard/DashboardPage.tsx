@@ -18,7 +18,7 @@ function Section({
   const headingId = `section-${title.toLowerCase().replace(/\s+/g, '-')}`;
   return (
     <section aria-labelledby={headingId} className="space-y-2">
-      <h3 id={headingId} className="text-sm font-semibold uppercase tracking-wide text-slate-600">
+      <h3 id={headingId} className="text-xs font-semibold uppercase tracking-wider text-muted">
         {title}
       </h3>
       <ul className="space-y-2">
@@ -30,16 +30,34 @@ function Section({
   );
 }
 
+function Stat({
+  label,
+  value,
+  tone,
+}: {
+  label: string;
+  value: number;
+  tone: 'danger' | 'brand' | 'info';
+}) {
+  const color = value === 0 ? 'text-faint' : { danger: 'text-danger', brand: 'text-brand', info: 'text-info' }[tone];
+  return (
+    <div className="card text-center" aria-hidden="true">
+      <p className={`text-2xl font-bold tabular-nums ${color}`}>{value}</p>
+      <p className="text-xs font-medium text-muted">{label}</p>
+    </div>
+  );
+}
+
 export function DashboardPage() {
   const dashboard = useLiveQuery(
     ({ repos, deps }) => getDashboard(repos, deps.clock, { timeZone: deviceTimeZone() }),
     'dashboard',
   );
 
-  if (dashboard.status === 'loading') return <p className="text-slate-600">Loading…</p>;
+  if (dashboard.status === 'loading') return <p className="text-muted">Loading…</p>;
   if (dashboard.status === 'error') {
     return (
-      <p role="alert" className="text-red-700">
+      <p role="alert" className="text-danger">
         Could not load your dashboard: {dashboard.message}
       </p>
     );
@@ -50,14 +68,23 @@ export function DashboardPage() {
 
   return (
     <div className="space-y-6">
-      <h2 className="text-xl font-semibold">Dashboard</h2>
+      <div>
+        <h2 className="text-2xl font-semibold">Dashboard</h2>
+        <p className="mt-0.5 text-sm text-muted">{formatDate(d.today)}</p>
+      </div>
+
+      <div className="grid grid-cols-3 gap-3">
+        <Stat label="Overdue" value={d.overdue.length} tone="danger" />
+        <Stat label="Due today" value={d.dueToday.length} tone="brand" />
+        <Stat label="Coming up" value={d.upcoming.length} tone="info" />
+      </div>
 
       <RemindersPanel />
 
       {nothingOpen ? (
-        <p className="rounded border border-dashed border-slate-300 bg-white p-4 text-slate-700">
+        <p className="card border-dashed py-8 text-center text-muted">
           Nothing is due.{' '}
-          <Link to="/activities/new" className="font-medium underline">
+          <Link to="/activities/new" className="font-medium text-brand underline">
             Add an activity
           </Link>{' '}
           to start keeping things up.
@@ -72,15 +99,15 @@ export function DashboardPage() {
         <section aria-labelledby="h-recent" className="space-y-2">
           <h3
             id="h-recent"
-            className="text-sm font-semibold uppercase tracking-wide text-slate-600"
+            className="text-xs font-semibold uppercase tracking-wider text-muted"
           >
             Recently done
           </h3>
-          <ul className="space-y-1 text-sm text-slate-700">
+          <ul className="card divide-y divide-line py-1 text-sm">
             {d.recentCompletions.map(({ completion, activityName }) => (
-              <li key={completion.id}>
+              <li key={completion.id} className="flex justify-between gap-3 py-2">
                 {activityName}{' '}
-                <span className="text-slate-500">
+                <span className="text-muted">
                   on {formatDate(localDateOf(completion.completedAt, deviceTimeZone()))}
                 </span>
               </li>

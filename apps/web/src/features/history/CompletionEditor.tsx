@@ -15,9 +15,9 @@ import { describeError, deviceTimeZone, useAction } from '../../shared/hooks';
 type Done = Extract<HistoryEntry, { kind: 'completed' }>;
 
 const primary =
-  'rounded bg-emerald-600 px-3 py-1 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-50';
+  'btn btn-primary';
 const button =
-  'rounded border border-slate-300 bg-white px-3 py-1 text-sm hover:bg-slate-100 disabled:opacity-50';
+  'btn';
 
 interface Reading {
   readonly key: string;
@@ -119,7 +119,7 @@ export function CompletionEditor({ entry, onDone }: { entry: Done; onDone: () =>
     <form
       onSubmit={submit}
       aria-label={`Edit entry for ${entry.activityName}`}
-      className="mt-3 space-y-3 border-t border-slate-200 pt-3"
+      className="mt-3 space-y-3 border-t border-line pt-3"
     >
       {entry.checklist.length > 0 ? (
         <fieldset>
@@ -151,7 +151,7 @@ export function CompletionEditor({ entry, onDone }: { entry: Done; onDone: () =>
             required={r.required}
             value={values[r.key] ?? ''}
             onChange={(e) => setValues({ ...values, [r.key]: e.target.value })}
-            className="mt-1 block w-40 rounded border border-slate-300 px-2 py-1"
+            className="mt-1 block w-40 field"
           />
         </label>
       ))}
@@ -164,7 +164,7 @@ export function CompletionEditor({ entry, onDone }: { entry: Done; onDone: () =>
             required
             value={doneDate}
             onChange={(e) => setDoneDate(e.target.value)}
-            className="mt-1 block rounded border border-slate-300 px-2 py-1"
+            className="mt-1 block field"
           />
         </label>
         <label className="block text-sm">
@@ -174,7 +174,7 @@ export function CompletionEditor({ entry, onDone }: { entry: Done; onDone: () =>
             required
             value={doneTime}
             onChange={(e) => setDoneTime(e.target.value)}
-            className="mt-1 block rounded border border-slate-300 px-2 py-1"
+            className="mt-1 block field"
           />
         </label>
       </div>
@@ -184,14 +184,14 @@ export function CompletionEditor({ entry, onDone }: { entry: Done; onDone: () =>
         <textarea
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
-          className="mt-1 block w-full rounded border border-slate-300 px-2 py-1"
+          className="mt-1 block w-full field"
         />
       </label>
 
       <MoneyField label="Cost" value={cost} onChange={setCost} />
 
       {error ? (
-        <p role="alert" className="text-sm text-red-700">
+        <p role="alert" className="text-sm text-danger">
           {error}
         </p>
       ) : null}

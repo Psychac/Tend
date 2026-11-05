@@ -1,7 +1,7 @@
 import { listCategories, listLocations } from '@upkeep/application';
 import { useLiveQuery } from './hooks';
 
-const select = 'mt-1 block w-full max-w-md rounded border border-slate-300 px-2 py-1';
+const select = 'field mt-1 block w-full max-w-md';
 
 interface PickerProps {
   readonly label: string;

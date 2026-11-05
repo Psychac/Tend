@@ -10,16 +10,16 @@ export function RemindersPanel() {
   return (
     <section
       aria-labelledby="reminders-heading"
-      className="space-y-2 rounded border border-amber-300 bg-amber-50 p-3"
+      className="space-y-2 rounded border border-warn-line bg-warn-soft p-3"
     >
-      <h3 id="reminders-heading" className="text-sm font-semibold text-amber-900">
+      <h3 id="reminders-heading" className="text-sm font-semibold text-warn">
         Reminders ({fired.length})
       </h3>
       <ul className="space-y-1 text-sm">
         {fired.map((item) => (
           <li key={`${item.reminder.id}|${item.occurrence.id}`}>
             <span className="font-medium">{item.activity.name}</span>{' '}
-            <span className={item.daysUntilDue < 0 ? 'font-medium text-red-800' : 'text-slate-700'}>
+            <span className={item.daysUntilDue < 0 ? 'font-medium text-danger' : 'text-muted'}>
               {dueText(item.daysUntilDue)}
             </span>
           </li>

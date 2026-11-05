@@ -16,11 +16,11 @@ import { useApp } from '../../app/providers/AppProvider';
 import { describeError, useAction, useLiveQuery } from '../../shared/hooks';
 import { LocationSelect } from '../../shared/pickers';
 
-const input = 'mt-1 block rounded border border-slate-300 px-2 py-1';
+const input = 'field mt-1 block';
 const button =
-  'rounded border border-slate-300 bg-white px-3 py-1 text-sm hover:bg-slate-100 disabled:opacity-50';
+  'btn';
 const primary =
-  'rounded bg-emerald-600 px-3 py-1 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-50';
+  'btn btn-primary';
 
 const usage = (activities: number, assets: number): string => {
   const parts = [
@@ -75,13 +75,13 @@ export function CategoriesSection() {
         <h3 id="categories-heading" className="text-lg font-medium">
           Categories
         </h3>
-        <p className="text-sm text-slate-600">
+        <p className="text-sm text-muted">
           Group activities and assets, for example Cleaning, Vehicles or Garden.
         </p>
       </div>
 
       {categories.status === 'ready' && categories.data.length === 0 ? (
-        <p className="text-sm text-slate-600">No categories yet.</p>
+        <p className="text-sm text-muted">No categories yet.</p>
       ) : null}
 
       <ul className="space-y-2">
@@ -89,7 +89,7 @@ export function CategoriesSection() {
           ? categories.data.map((item) => (
               <li
                 key={item.category.id}
-                className="flex flex-wrap items-center justify-between gap-2 rounded border border-slate-200 bg-white p-2"
+                className="flex flex-wrap items-center justify-between gap-2 card p-2"
               >
                 {editing === item.category.id ? (
                   <form
@@ -117,7 +117,7 @@ export function CategoriesSection() {
                   <>
                     <span>
                       <span className="font-medium">{item.category.name}</span>
-                      <span className="ml-2 text-sm text-slate-600">
+                      <span className="ml-2 text-sm text-muted">
                         {usage(item.activityCount, item.assetCount)}
                       </span>
                     </span>
@@ -152,7 +152,7 @@ export function CategoriesSection() {
       </ul>
 
       {error ? (
-        <p role="alert" className="text-sm text-red-700">
+        <p role="alert" className="text-sm text-danger">
           {error}
         </p>
       ) : null}
@@ -205,13 +205,13 @@ export function LocationsSection() {
         <h3 id="locations-heading" className="text-lg font-medium">
           Places
         </h3>
-        <p className="text-sm text-slate-600">
+        <p className="text-sm text-muted">
           Where things are, for example House, then Kitchen inside it, then Pantry inside that.
         </p>
       </div>
 
       {locations.status === 'ready' && locations.data.length === 0 ? (
-        <p className="text-sm text-slate-600">No places yet.</p>
+        <p className="text-sm text-muted">No places yet.</p>
       ) : null}
 
       <ul className="space-y-2">
@@ -220,7 +220,7 @@ export function LocationsSection() {
               <li
                 key={item.location.id}
                 style={{ marginLeft: `${item.depth * 1.25}rem` }}
-                className="rounded border border-slate-200 bg-white p-2"
+                className="card p-2"
               >
                 {editing?.location.id === item.location.id ? (
                   <LocationEditor item={item} onDone={() => setEditing(null)} run={run} />
@@ -228,7 +228,7 @@ export function LocationsSection() {
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <span>
                       <span className="font-medium">{item.location.name}</span>
-                      <span className="ml-2 text-sm text-slate-600">
+                      <span className="ml-2 text-sm text-muted">
                         {item.location.kind} · {usage(item.activityCount, item.assetCount)}
                       </span>
                     </span>
@@ -260,7 +260,7 @@ export function LocationsSection() {
       </ul>
 
       {error ? (
-        <p role="alert" className="text-sm text-red-700">
+        <p role="alert" className="text-sm text-danger">
           {error}
         </p>
       ) : null}

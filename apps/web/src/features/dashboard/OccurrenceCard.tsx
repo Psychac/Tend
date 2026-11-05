@@ -17,9 +17,9 @@ interface Props {
 }
 
 const button =
-  'rounded border border-slate-300 bg-white px-3 py-1 text-sm hover:bg-slate-100 disabled:opacity-50';
+  'btn';
 const primary =
-  'rounded bg-emerald-600 px-3 py-1 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-50';
+  'btn btn-primary';
 
 function timingLabel(item: OccurrenceItem): string | null {
   if (item.timing === 'overdue')
@@ -59,19 +59,23 @@ export function OccurrenceCard({ item, today }: Props) {
   };
 
   return (
-    <li className="rounded border border-slate-200 bg-white p-3">
-      <div className="flex flex-wrap items-start justify-between gap-2">
+    <li
+      className={`card border-l-4 p-3 ${
+        item.timing === 'overdue' ? 'border-l-danger' : item.timing === 'in_grace' ? 'border-l-warn-solid' : 'border-l-brand'
+      }`}
+    >
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <p className="font-medium">{activity.name}</p>
-          <p className="text-sm text-slate-600">
+          <p className="font-semibold">{activity.name}</p>
+          <p className="text-sm text-muted">
             {formatDate(item.dueOn)}
-            {late ? <span className="ml-2 font-medium text-amber-700">{late}</span> : null}
+            {late ? <span className="ml-2 font-medium text-warn">{late}</span> : null}
             {item.occurrence.status === 'snoozed' ? (
-              <span className="ml-2 text-slate-500">(snoozed)</span>
+              <span className="ml-2 text-muted">(snoozed)</span>
             ) : null}
           </p>
         </div>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-2 sm:justify-end">
           <button type="button" className={primary} disabled={busy} onClick={quickDone}>
             Done
           </button>
@@ -102,7 +106,7 @@ export function OccurrenceCard({ item, today }: Props) {
       </div>
 
       {error ? (
-        <p role="alert" className="mt-2 text-sm text-red-700">
+        <p role="alert" className="mt-2 text-sm text-danger">
           {error}
         </p>
       ) : null}
@@ -156,7 +160,7 @@ function CompletionDetails({
   }
 
   return (
-    <form onSubmit={submit} className="mt-3 space-y-3 border-t border-slate-200 pt-3">
+    <form onSubmit={submit} className="mt-3 space-y-3 border-t border-line pt-3">
       {activity.checklist.length > 0 ? (
         <fieldset>
           <legend className="text-sm font-medium">Checklist</legend>
@@ -187,7 +191,7 @@ function CompletionDetails({
             required={r.required}
             value={readings[r.key] ?? ''}
             onChange={(e) => setReadings({ ...readings, [r.key]: e.target.value })}
-            className="mt-1 block w-40 rounded border border-slate-300 px-2 py-1"
+            className="mt-1 block w-40 field"
           />
         </label>
       ))}
@@ -197,7 +201,7 @@ function CompletionDetails({
         <textarea
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
-          className="mt-1 block w-full rounded border border-slate-300 px-2 py-1"
+          className="mt-1 block w-full field"
         />
       </label>
 

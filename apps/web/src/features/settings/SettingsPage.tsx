@@ -14,9 +14,9 @@ import { CurrencySelect, getDefaultCurrency, setDefaultCurrency } from '../../sh
 import { useApp, useChanges } from '../../app/providers/AppProvider';
 
 const button =
-  'rounded border border-slate-300 bg-white px-3 py-1 text-sm hover:bg-slate-100 disabled:opacity-50';
+  'btn';
 const primary =
-  'rounded bg-emerald-600 px-3 py-1 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-50';
+  'btn btn-primary';
 
 /** Hands the browser a file to save. */
 function download(filename: string, text: string): void {
@@ -48,7 +48,7 @@ function CurrencySection() {
       <h3 id="currency-heading" className="text-lg font-medium">
         Currency
       </h3>
-      <p className="text-sm text-slate-600">
+      <p className="text-sm text-muted">
         Pre-selected when you enter a cost or price. You can still pick a different currency each
         time, and totals are never mixed across currencies.
       </p>
@@ -149,7 +149,7 @@ function BackupSection() {
         <h3 id="backup-heading" className="text-lg font-medium">
           Backup and restore
         </h3>
-        <p className="text-sm text-slate-600">
+        <p className="text-sm text-muted">
           Everything is stored on this device only. A backup file is your safety net: keep a recent
           one somewhere other than this device.
         </p>
@@ -160,7 +160,7 @@ function BackupSection() {
           Download backup
         </button>
         {exported ? (
-          <p role="status" className="mt-2 text-sm text-emerald-800">
+          <p role="status" className="mt-2 text-sm text-ok">
             {exported}
           </p>
         ) : null}
@@ -180,21 +180,21 @@ function BackupSection() {
       </div>
 
       {restore.step === 'invalid' ? (
-        <div role="alert" className="rounded border border-red-300 bg-red-50 p-3 text-sm">
-          <p className="font-medium text-red-900">This backup cannot be restored.</p>
-          <ul className="mt-1 list-disc pl-5 text-red-800">
+        <div role="alert" className="rounded border border-danger-line bg-danger-soft p-3 text-sm">
+          <p className="font-medium text-danger">This backup cannot be restored.</p>
+          <ul className="mt-1 list-disc pl-5 text-danger">
             {restore.errors.map((m) => (
               <li key={m}>{m}</li>
             ))}
           </ul>
-          <p className="mt-2 text-red-800">Nothing on this device was changed.</p>
+          <p className="mt-2 text-danger">Nothing on this device was changed.</p>
         </div>
       ) : null}
 
       {renderPreview()}
 
       {restore.step === 'done' ? (
-        <p role="status" className="text-sm text-emerald-800">
+        <p role="status" className="text-sm text-ok">
           {restore.message}
         </p>
       ) : null}
@@ -207,7 +207,7 @@ function BackupSection() {
     const { preview } = current;
     const blocked = preview.problems.length > 0;
     return (
-      <div className="space-y-3 rounded border border-slate-200 bg-white p-3 text-sm">
+      <div className="space-y-3 card p-3 text-sm">
         <p className="font-medium">
           Backup from {current.backup.exportedAt.slice(0, 10)} — preview, nothing has changed yet
         </p>
@@ -261,7 +261,7 @@ function BackupSection() {
         </table>
 
         {blocked ? (
-          <div role="alert" className="text-red-800">
+          <div role="alert" className="text-danger">
             <p className="font-medium">This restore would leave broken links:</p>
             <ul className="list-disc pl-5">
               {preview.problems.slice(0, 5).map((m) => (
