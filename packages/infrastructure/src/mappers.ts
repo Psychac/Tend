@@ -8,6 +8,8 @@ import type {
   CategoryId,
   Completion,
   CompletionId,
+  CompletionVoid,
+  CompletionVoidId,
   EntityMeta,
   Instant,
   LocalDate,
@@ -232,6 +234,24 @@ export const completionMapper: Mapper<Completion> = {
       deviationReason: optStr(r, 'deviation_reason'),
     };
   },
+};
+
+export const completionVoidMapper: Mapper<CompletionVoid> = {
+  toRow: (v) => ({
+    ...metaTo(v.meta),
+    completion_id: v.completionId,
+    replaced_by: nv(v.replacedBy),
+    voided_at: v.voidedAt,
+    reason: nv(v.reason),
+  }),
+  fromRow: (r) => ({
+    id: str(r, 'id') as CompletionVoidId,
+    meta: metaFrom(r),
+    completionId: str(r, 'completion_id') as CompletionId,
+    voidedAt: str(r, 'voided_at') as Instant,
+    replacedBy: optStr<CompletionId>(r, 'replaced_by'),
+    reason: optStr(r, 'reason'),
+  }),
 };
 
 export const measurementMapper: Mapper<Measurement> = {

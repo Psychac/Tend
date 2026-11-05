@@ -6,6 +6,7 @@ import {
   auditMapper,
   categoryMapper,
   completionMapper,
+  completionVoidMapper,
   locationMapper,
   measurementMapper,
   occurrenceMapper,
@@ -122,6 +123,8 @@ class SqlTable<E extends { id: string; meta: EntityMeta }> {
   }
 }
 
+const NOT_VOIDED = 'id NOT IN (SELECT completion_id FROM completion_voids)';
+
 function buildRepositories(runner: Runner): Repositories {
   const activities = new SqlTable(runner, 'activities', activityMapper);
   const assets = new SqlTable(runner, 'assets', assetMapper);
@@ -130,6 +133,7 @@ function buildRepositories(runner: Runner): Repositories {
   const schedules = new SqlTable(runner, 'schedules', scheduleMapper);
   const occurrences = new SqlTable(runner, 'occurrences', occurrenceMapper);
   const completions = new SqlTable(runner, 'completions', completionMapper);
+  const completionVoids = new SqlTable(runner, 'completion_voids', completionVoidMapper);
   const measurements = new SqlTable(runner, 'measurements', measurementMapper);
   const audit = new SqlTable(runner, 'audit_events', auditMapper);
 
@@ -221,6 +225,7 @@ function buildRepositories(runner: Runner): Repositories {
         if (f.activityId !== undefined) add(where, params, 'activity_id = ?', f.activityId);
         if (f.from !== undefined) add(where, params, 'completed_at >= ?', f.from);
         if (f.to !== undefined) add(where, params, 'completed_at <= ?', f.to);
+        if (!f.includeVoided) where.push(NOT_VOIDED);
         return completions.query({
           where,
           params,
@@ -229,10 +234,25 @@ function buildRepositories(runner: Runner): Repositories {
         });
       },
     },
+    completionVoids: {
+      add: (v) => completionVoids.append(v),
+      getByCompletion: async (completionId) =>
+        (
+          await completionVoids.query({
+            where: ['completion_id = ?'],
+            params: [completionId],
+            orderBy: 'voided_at ASC',
+          })
+        )[0] ?? null,
+      list: () => completionVoids.query({ orderBy: 'voided_at ASC' }),
+    },
     measurements: {
       add: (m) => measurements.append(m),
       list: (f) => {
-        const where: string[] = [];
+        // A measurement belongs to its completion: undoing the completion hides it too.
+        const where: string[] = [
+          '(completion_id IS NULL OR completion_id NOT IN (SELECT completion_id FROM completion_voids))',
+        ];
         const params: SqlValue[] = [];
         if (f.assetId !== undefined) add(where, params, 'asset_id = ?', f.assetId);
         if (f.activityId !== undefined) add(where, params, 'activity_id = ?', f.activityId);

@@ -2,6 +2,7 @@ import { completeOccurrence, createActivity, type Deps } from '@upkeep/applicati
 import type { Clock, Id, IdGenerator, Instant, Result, UserId } from '@upkeep/domain';
 import {
   BACKUP_SCHEMA_VERSION,
+  backupChecksum,
   exportBackup,
   parseBackup,
   previewRestore,
@@ -205,5 +206,50 @@ describe('validation', () => {
       tamper(backup, (f) => (f['tables'].activities[0].version = 'one')),
     );
     expect(!wrongType.ok && wrongType.errors.join(' ')).toMatch(/"version" is not a valid integer/);
+  });
+});
+
+describe('older backups', () => {
+  it('restores a format-1 backup, which has no completion_voids table', async () => {
+    const db = await populated();
+    const current = await exportBackup(db, NOW);
+    const v1Tables = Object.fromEntries(
+      Object.entries(current.tables).filter(([table]) => table !== 'completion_voids'),
+    );
+    const v1 = {
+      format: current.format,
+      schemaVersion: 1,
+      exportedAt: NOW,
+      checksum: await backupChecksum(v1Tables as unknown as BackupFile['tables'], 1),
+      tables: v1Tables,
+    };
+
+    const result = await parseBackup(JSON.stringify(v1));
+    if (!result.ok) throw new Error(result.errors.join('; '));
+    expect(result.backup.schemaVersion).toBe(BACKUP_SCHEMA_VERSION);
+    expect(result.backup.tables.completion_voids).toEqual([]);
+
+    const fresh = createNodeSqliteDatabase();
+    await restoreBackup(fresh, result.backup, 'replace');
+    expect((await exportBackup(fresh, NOW)).counts.completions).toBe(1);
+  });
+
+  it('still detects tampering in an older backup', async () => {
+    const db = await populated();
+    const current = await exportBackup(db, NOW);
+    const v1Tables = Object.fromEntries(
+      Object.entries(current.tables).filter(([table]) => table !== 'completion_voids'),
+    );
+    const v1 = {
+      format: current.format,
+      schemaVersion: 1,
+      exportedAt: NOW,
+      checksum: await backupChecksum(v1Tables as unknown as BackupFile['tables'], 1),
+      tables: v1Tables,
+    };
+    const edited = JSON.parse(JSON.stringify(v1)) as Json;
+    edited['tables'].activities[0].name = 'Edited';
+    const result = await parseBackup(JSON.stringify(edited));
+    expect(!result.ok && result.errors[0]).toMatch(/checksum/);
   });
 });

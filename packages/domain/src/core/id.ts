@@ -28,6 +28,7 @@ export type ActivityId = Id<'Activity'>;
 export type ScheduleId = Id<'Schedule'>;
 export type OccurrenceId = Id<'Occurrence'>;
 export type CompletionId = Id<'Completion'>;
+export type CompletionVoidId = Id<'CompletionVoid'>;
 export type MeasurementId = Id<'Measurement'>;
 export type ReminderId = Id<'Reminder'>;
 export type AttachmentId = Id<'Attachment'>;

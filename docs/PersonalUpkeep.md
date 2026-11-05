@@ -1,6 +1,6 @@
 # Personal Upkeep — Product & Engineering Specification
 
-**Version:** 0.4 — Hybrid deployment architecture; gamification deferred; offline-first phasing  
+**Version:** 0.5 — Hybrid deployment architecture; gamification deferred; offline-first phasing; completion corrections  
 **Date:** 5 November 2026  
 **Status:** Proposed baseline for implementation
 
@@ -527,7 +527,7 @@ Initial policies:
 |---|---|
 | Activity metadata | Version check; resolve compatible edits or ask user |
 | Schedule changes | Explicit version check and conflict resolution |
-| Completion records | Append-only; unique operation ID |
+| Completion records | Append-only; unique operation ID. Mistakes are corrected by appending a void (see 8.2), never by editing |
 | Measurements | Append-only; unique operation ID |
 | Audit events | Append-only |
 | XP transactions *(deferred)* | Append-only, idempotent |
@@ -579,6 +579,7 @@ activities
 schedules
 occurrences
 completions
+completion_voids
 measurements
 reminders
 attachments
@@ -600,6 +601,7 @@ Every user-owned table should contain an `owner_id` referencing the authenticate
 - Foreign keys and indexes for ownership and relationship columns.
 - Soft deletion only where recovery or synchronization requires it.
 - Append-only history for completions and measurements (and XP transactions once gamification is built).
+- Corrections to history are appended, not edited. A `completion_voids` row marks a completion as undone or as replaced by a corrected one (`replaced_by`); every list, total and reading ignores voided completions and the measurements recorded with them, and the original stays on record. Editing an entry in the app saves a corrected completion and voids the old one, so the person edits once while every device still agrees on the data.
 
 ### 8.3 PostgreSQL security
 
@@ -1350,6 +1352,7 @@ Not scheduled for the first release. Resolve the open questions in §12.3 before
 | ADR-016 | Gamification (XP, levels, streaks, achievements) deferred past the first release; build the basic app first |
 | ADR-017 | Build fully offline first: PowerSync Web SDK in local-only mode; Supabase, authentication, and sync are Phase 2 |
 | ADR-015 | No separate Dexie application database |
+| ADR-018 | Completions stay append-only; mistakes are fixed by voiding (undo) or by a corrected replacement (edit), recorded in `completion_voids` |
 
 ---
 

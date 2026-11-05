@@ -15,6 +15,7 @@ import type {
   AuditEvent,
   Category,
   Completion,
+  CompletionVoid,
   EntityMeta,
   Location,
   Measurement,
@@ -78,6 +79,7 @@ export function createInMemoryStore(): { repos: Repositories; uow: UnitOfWork } 
   const schedules = new Table<Schedule>();
   const occurrences = new Table<Occurrence>();
   const completions = new Table<Completion>();
+  const completionVoids = new Table<CompletionVoid>();
   const measurements = new Table<Measurement>();
   const audit = new Table<AuditEvent>();
   const tables = [
@@ -88,9 +90,13 @@ export function createInMemoryStore(): { repos: Repositories; uow: UnitOfWork } 
     schedules,
     occurrences,
     completions,
+    completionVoids,
     measurements,
     audit,
   ] as const;
+
+  const isVoided = (completionId: string) =>
+    completionVoids.all().some((v) => v.completionId === completionId);
 
   const repos: Repositories = {
     activities: {
@@ -179,6 +185,7 @@ export function createInMemoryStore(): { repos: Repositories; uow: UnitOfWork } 
             .reverse() // ties on timestamp resolve to the most recently added
             .filter(
               (c) =>
+                (f.includeVoided || !isVoided(c.id)) &&
                 (f.activityId === undefined || c.activityId === f.activityId) &&
                 (f.from === undefined || c.completedAt >= f.from) &&
                 (f.to === undefined || c.completedAt <= f.to),
@@ -189,6 +196,12 @@ export function createInMemoryStore(): { repos: Repositories; uow: UnitOfWork } 
           f,
         ),
     },
+    completionVoids: {
+      add: async (v) => completionVoids.append(v),
+      getByCompletion: async (completionId) =>
+        completionVoids.all().find((v) => v.completionId === completionId) ?? null,
+      list: async () => completionVoids.all(),
+    },
     measurements: {
       add: async (m) => measurements.append(m),
       list: async (f: MeasurementFilter) =>
@@ -198,6 +211,7 @@ export function createInMemoryStore(): { repos: Repositories; uow: UnitOfWork } 
             .reverse() // ties on timestamp resolve to the most recently added
             .filter(
               (m) =>
+                (m.completionId === undefined || !isVoided(m.completionId)) &&
                 (f.assetId === undefined || m.assetId === f.assetId) &&
                 (f.activityId === undefined || m.activityId === f.activityId) &&
                 (f.key === undefined || m.key === f.key) &&

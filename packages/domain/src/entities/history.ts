@@ -5,6 +5,7 @@ import type {
   AuditEventId,
   ChecklistItemId,
   CompletionId,
+  CompletionVoidId,
   DomainError,
   Instant,
   LocalDate,
@@ -143,4 +144,47 @@ export interface AuditEvent {
   readonly action: AuditAction;
   readonly occurredAt: Instant;
   readonly summary?: string | undefined;
+}
+
+/**
+ * Append-only note that a completion should no longer count: it was recorded by
+ * mistake, or replaced by a corrected one. The completion itself is never
+ * changed, so every device agrees on it and the original stays on record.
+ */
+export interface CompletionVoid {
+  readonly id: CompletionVoidId;
+  readonly meta: EntityMeta;
+  readonly completionId: CompletionId;
+  readonly voidedAt: Instant;
+  /** The corrected completion that took its place, if this was an edit rather than an undo. */
+  readonly replacedBy?: CompletionId | undefined;
+  readonly reason?: string | undefined;
+}
+
+export interface NewCompletionVoid {
+  readonly id: CompletionVoidId;
+  readonly ownerId: UserId;
+  readonly now: Instant;
+  readonly completionId: CompletionId;
+  readonly replacedBy?: CompletionId | undefined;
+  readonly reason?: string | undefined;
+}
+
+export function createCompletionVoid(
+  input: NewCompletionVoid,
+): Result<CompletionVoid, DomainError> {
+  const issues = new Issues();
+  issues.check(
+    input.replacedBy === undefined || input.replacedBy !== input.completionId,
+    'replacedBy',
+    'cannot replace itself',
+  );
+  return issues.finish(() => ({
+    id: input.id,
+    meta: newMeta(input.ownerId, input.now),
+    completionId: input.completionId,
+    voidedAt: input.now,
+    replacedBy: input.replacedBy,
+    reason: input.reason?.trim() || undefined,
+  }));
 }

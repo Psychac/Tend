@@ -53,3 +53,24 @@ export function transitionOccurrence(
     snoozedUntil: to === 'snoozed' ? options.snoozedUntil : undefined,
   });
 }
+
+/**
+ * Puts a completed occurrence back to pending, when its completion is undone.
+ * Deliberately separate from `transitionOccurrence`: resolved work stays
+ * resolved except through an undo, which also records a void on the completion.
+ */
+export function reopenOccurrence(
+  occurrence: Occurrence,
+  now: Instant,
+): Result<Occurrence, DomainError> {
+  if (occurrence.status !== 'completed') {
+    return err(invariantError(`Only completed work can be reopened, not ${occurrence.status}`));
+  }
+  return ok({
+    ...occurrence,
+    meta: touch(occurrence.meta, now),
+    status: 'pending',
+    resolvedAt: undefined,
+    snoozedUntil: undefined,
+  });
+}

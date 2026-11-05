@@ -10,6 +10,7 @@ import type {
   CategoryId,
   Completion,
   CompletionId,
+  CompletionVoid,
   Instant,
   LocalDate,
   Location,
@@ -105,6 +106,8 @@ export interface OccurrenceRepository {
 }
 
 export interface CompletionFilter extends Page {
+  /** Voided completions (undone or replaced) are hidden unless asked for. */
+  readonly includeVoided?: boolean | undefined;
   readonly activityId?: ActivityId | undefined;
   readonly from?: Instant | undefined;
   readonly to?: Instant | undefined;
@@ -138,4 +141,12 @@ export interface MeasurementRepository {
 export interface AuditEventRepository {
   add(event: AuditEvent): Promise<void>;
   list(filter: Page): Promise<AuditEvent[]>;
+}
+
+/** Append-only. Hides a completion, and its measurements, from every list. */
+export interface CompletionVoidRepository {
+  add(entry: CompletionVoid): Promise<void>;
+  /** The void for this completion, if it has been undone or replaced. */
+  getByCompletion(completionId: CompletionId): Promise<CompletionVoid | null>;
+  list(): Promise<CompletionVoid[]>;
 }

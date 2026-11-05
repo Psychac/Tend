@@ -12,7 +12,10 @@ import {
   rescheduleOccurrence as rescheduleOccurrenceEntity,
   transitionOccurrence,
   validationError,
+  type Activity,
   type Completion,
+  type Instant,
+  type LocalDate,
   type ChecklistItemId,
   type DomainError,
   type Measurement,
@@ -59,6 +62,92 @@ function toMeasurementValue(m: MeasurementInput): Result<MeasurementValue> {
   return q.ok ? ok({ kind: 'numeric', quantity: q.value }) : q;
 }
 
+/** The details a person can supply about a piece of finished work. */
+export type CompletionDetails = Omit<CompleteOccurrenceInput, 'occurrenceId'>;
+
+/**
+ * Validates what the person entered and builds the completion and its
+ * measurements, without saving anything. Shared by completing and correcting.
+ */
+export function buildCompletion(
+  deps: Deps,
+  activity: Activity,
+  occurrence: { readonly id: OccurrenceId; readonly dueOn: LocalDate },
+  input: CompletionDetails,
+  now: Instant,
+): Result<{ completion: Completion; measurements: Measurement[] }> {
+  const issues: ValidationIssue[] = [];
+
+  let completedAt = now;
+  if (input.completedAt !== undefined) {
+    const parsed = parseInstant(input.completedAt);
+    if (parsed.ok) completedAt = parsed.value;
+    else issues.push({ path: 'completedAt', message: 'must be an ISO-8601 UTC timestamp' });
+  }
+
+  let cost;
+  if (input.cost) {
+    const m = money(input.cost.minor, input.cost.currency);
+    if (m.ok) cost = m.value;
+    else issues.push({ path: 'cost', message: m.error.message });
+  }
+
+  // Checklist results must refer to this activity's items.
+  const itemIds = new Set<string>(activity.checklist.map((c) => c.id));
+  for (const r of input.checklistResults ?? []) {
+    if (!itemIds.has(r.itemId)) {
+      issues.push({ path: 'checklistResults', message: `unknown checklist item ${r.itemId}` });
+    }
+  }
+
+  // Required measurements must be supplied, in the unit the activity expects.
+  const supplied = input.measurements ?? [];
+  for (const req of activity.measurementRequirements) {
+    const m = supplied.find((x) => x.key === req.key);
+    if (!m && req.required) {
+      issues.push({ path: 'measurements', message: `${req.key} is required` });
+    } else if (m?.kind === 'numeric' && m.unit !== req.unit) {
+      issues.push({ path: 'measurements', message: `${req.key} must be recorded in ${req.unit}` });
+    }
+  }
+  if (issues.length > 0) return err(validationError(issues));
+
+  const completion = createCompletion({
+    id: deps.ids.next<'Completion'>(),
+    ownerId: deps.ownerId,
+    now,
+    activityId: activity.id,
+    occurrenceId: occurrence.id,
+    completedAt,
+    plannedFor: occurrence.dueOn,
+    notes: input.notes,
+    cost,
+    checklistResults: input.checklistResults,
+    deviationReason: input.deviationReason,
+  });
+  if (!completion.ok) return completion;
+
+  const measurements: Measurement[] = [];
+  for (const m of supplied) {
+    const value = toMeasurementValue(m);
+    if (!value.ok) return value;
+    const created = createMeasurement({
+      id: deps.ids.next<'Measurement'>(),
+      ownerId: deps.ownerId,
+      now,
+      key: m.key,
+      value: value.value,
+      measuredAt: completedAt,
+      assetId: activity.assetId,
+      activityId: activity.id,
+      completionId: completion.value.id,
+    });
+    if (!created.ok) return created;
+    measurements.push(created.value);
+  }
+  return ok({ completion: completion.value, measurements });
+}
+
 /**
  * Completes an occurrence: records the completion and any measurements,
  * resolves the occurrence, and lets the schedule produce what comes next.
@@ -84,87 +173,18 @@ export async function completeOccurrence(
     );
     if (!activity.ok) return activity;
 
-    const issues: ValidationIssue[] = [];
-
-    let completedAt = now;
-    if (input.completedAt !== undefined) {
-      const parsed = parseInstant(input.completedAt);
-      if (parsed.ok) completedAt = parsed.value;
-      else issues.push({ path: 'completedAt', message: 'must be an ISO-8601 UTC timestamp' });
-    }
-
-    let cost;
-    if (input.cost) {
-      const m = money(input.cost.minor, input.cost.currency);
-      if (m.ok) cost = m.value;
-      else issues.push({ path: 'cost', message: m.error.message });
-    }
-
-    // Checklist results must refer to this activity's items.
-    const itemIds = new Set<string>(activity.value.checklist.map((c) => c.id));
-    for (const r of input.checklistResults ?? []) {
-      if (!itemIds.has(r.itemId)) {
-        issues.push({ path: 'checklistResults', message: `unknown checklist item ${r.itemId}` });
-      }
-    }
-
-    // Required measurements must be supplied, in the unit the activity expects.
-    const supplied = input.measurements ?? [];
-    for (const req of activity.value.measurementRequirements) {
-      const m = supplied.find((s) => s.key === req.key);
-      if (!m && req.required) {
-        issues.push({ path: 'measurements', message: `${req.key} is required` });
-      } else if (m?.kind === 'numeric' && m.unit !== req.unit) {
-        issues.push({
-          path: 'measurements',
-          message: `${req.key} must be recorded in ${req.unit}`,
-        });
-      }
-    }
-    if (issues.length > 0) return err(validationError(issues));
+    const built = buildCompletion(deps, activity.value, occurrence.value, input, now);
+    if (!built.ok) return built;
+    const { completion, measurements } = built.value;
 
     const resolved = transitionOccurrence(occurrence.value, 'completed', now);
     if (!resolved.ok) return resolved;
 
-    const completion = createCompletion({
-      id: deps.ids.next<'Completion'>(),
-      ownerId: deps.ownerId,
-      now,
-      activityId: activity.value.id,
-      occurrenceId: occurrence.value.id,
-      completedAt,
-      plannedFor: occurrence.value.dueOn,
-      notes: input.notes,
-      cost,
-      checklistResults: input.checklistResults,
-      deviationReason: input.deviationReason,
-    });
-    if (!completion.ok) return completion;
-
-    const measurements: Measurement[] = [];
-    for (const m of supplied) {
-      const value = toMeasurementValue(m);
-      if (!value.ok) return value;
-      const created = createMeasurement({
-        id: deps.ids.next<'Measurement'>(),
-        ownerId: deps.ownerId,
-        now,
-        key: m.key,
-        value: value.value,
-        measuredAt: completedAt,
-        assetId: activity.value.assetId,
-        activityId: activity.value.id,
-        completionId: completion.value.id,
-      });
-      if (!created.ok) return created;
-      measurements.push(created.value);
-    }
-
     await repos.occurrences.save(resolved.value);
-    await repos.completions.add(completion.value);
+    await repos.completions.add(completion);
     for (const m of measurements) await repos.measurements.add(m);
     await repos.audit.add(
-      auditEvent(deps, 'completion', completion.value.id, 'created', activity.value.name),
+      auditEvent(deps, 'completion', completion.id, 'created', activity.value.name),
     );
 
     const schedule = occurrence.value.scheduleId
@@ -172,13 +192,13 @@ export async function completeOccurrence(
       : null;
     const nextOccurrences = schedule
       ? await ensureOccurrences(deps, repos, activity.value, schedule, {
-          lastResolvedOn: localDateOf(completion.value.completedAt, schedule.timeZone),
+          lastResolvedOn: localDateOf(completion.completedAt, schedule.timeZone),
         })
       : [];
 
     return ok({
       occurrence: resolved.value,
-      completion: completion.value,
+      completion,
       measurements,
       nextOccurrences,
     });

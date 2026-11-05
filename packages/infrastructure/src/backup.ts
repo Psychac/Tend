@@ -9,7 +9,7 @@ import type { SqlDatabase, SqlExecutor, SqlValue } from './sql';
 
 export const BACKUP_FORMAT = 'personal-upkeep-backup';
 /** Bump when the shape of an export changes, and add a step to `MIGRATIONS`. */
-export const BACKUP_SCHEMA_VERSION = 1;
+export const BACKUP_SCHEMA_VERSION = 2;
 
 export type BackupRow = Readonly<Record<string, SqlValue>>;
 export type BackupTables = Readonly<Record<TableName, readonly BackupRow[]>>;
@@ -37,13 +37,20 @@ const REFERENCES: Readonly<Record<string, Readonly<Record<string, TableName>>>> 
   schedules: { activity_id: 'activities' },
   occurrences: { activity_id: 'activities', schedule_id: 'schedules' },
   completions: { activity_id: 'activities', occurrence_id: 'occurrences' },
+  completion_voids: { completion_id: 'completions', replaced_by: 'completions' },
   measurements: { asset_id: 'assets', activity_id: 'activities', completion_id: 'completions' },
 };
 
-/** Upgrades an older export one version at a time. Empty until the format first changes. */
-const MIGRATIONS: Readonly<
-  Record<number, (file: Record<string, unknown>) => Record<string, unknown>>
-> = {};
+/**
+ * The format version in which each table first appeared (1 if not listed). An
+ * older backup simply has no rows for a newer table, so upgrading it means
+ * adding that table empty; if a later change needs to rewrite rows, add a
+ * per-version step here.
+ */
+const ADDED_IN: Readonly<Partial<Record<TableName, number>>> = { completion_voids: 2 };
+
+const tableNamesFor = (version: number): TableName[] =>
+  TABLE_NAMES.filter((t) => (ADDED_IN[t] ?? 1) <= version);
 
 async function sha256Hex(text: string): Promise<string> {
   const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
@@ -51,14 +58,20 @@ async function sha256Hex(text: string): Promise<string> {
 }
 
 /** Key order and row order are fixed so the same data always hashes the same. */
-function canonical(tables: BackupTables): string {
+function canonical(tables: BackupTables, names: readonly TableName[] = TABLE_NAMES): string {
   return JSON.stringify(
-    TABLE_NAMES.map((t) => {
+    names.map((t) => {
       const columns = ['id', ...Object.keys(defOf(t).columns)];
       return [t, tables[t].map((row) => columns.map((c) => row[c] ?? null))];
     }),
   );
 }
+
+/** The checksum a backup of the given format version must carry for these tables. */
+export const backupChecksum = (
+  tables: BackupTables,
+  version: number = BACKUP_SCHEMA_VERSION,
+): Promise<string> => sha256Hex(canonical(tables, tableNamesFor(version)));
 
 export async function exportBackup(db: SqlExecutor, now: string): Promise<BackupFile> {
   const entries: [TableName, BackupRow[]][] = [];
@@ -109,7 +122,7 @@ export async function parseBackup(text: string): Promise<ParseResult> {
     return { ok: false, errors: ['This file is not a Personal Upkeep backup.'] };
   }
 
-  let file: Record<string, unknown> = raw;
+  const file: Record<string, unknown> = raw;
   const version = file['schemaVersion'];
   if (typeof version !== 'number' || !Number.isInteger(version) || version < 1) {
     return { ok: false, errors: ['The backup has no valid version number.'] };
@@ -122,18 +135,18 @@ export async function parseBackup(text: string): Promise<ParseResult> {
       ],
     };
   }
-  for (let v = version; v < BACKUP_SCHEMA_VERSION; v++) {
-    const migrate = MIGRATIONS[v];
-    if (!migrate) return { ok: false, errors: [`No upgrade path from backup format ${v}.`] };
-    file = migrate(file);
-  }
-
   const rawTables = file['tables'];
   if (!isRecord(rawTables)) return { ok: false, errors: ['The backup has no data section.'] };
 
   const errors: string[] = [];
   const tables: Record<string, BackupRow[]> = {};
+  const fileTables = tableNamesFor(version);
   for (const table of TABLE_NAMES) {
+    // A table that did not exist when this backup was made is simply empty.
+    if (!fileTables.includes(table)) {
+      tables[table] = [];
+      continue;
+    }
     const rows = rawTables[table];
     if (!Array.isArray(rows)) {
       errors.push(`Missing data for "${table}".`);
@@ -166,7 +179,7 @@ export async function parseBackup(text: string): Promise<ParseResult> {
   const broken = findBrokenReferences(typed, undefined);
   if (broken.length > 0) return { ok: false, errors: limit(broken) };
 
-  if ((await sha256Hex(canonical(typed))) !== file['checksum']) {
+  if ((await sha256Hex(canonical(typed, fileTables))) !== file['checksum']) {
     return {
       ok: false,
       errors: ['The backup is damaged or was edited: its checksum does not match its contents.'],
@@ -183,7 +196,11 @@ export async function parseBackup(text: string): Promise<ParseResult> {
         TableName,
         number
       >,
-      checksum: String(file['checksum']),
+      // Upgraded backups are re-signed, so they verify as current-format files afterwards.
+      checksum:
+        version === BACKUP_SCHEMA_VERSION
+          ? String(file['checksum'])
+          : await sha256Hex(canonical(typed)),
       tables: typed,
     },
   };

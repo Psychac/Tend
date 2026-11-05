@@ -1,7 +1,15 @@
 import { useState } from 'react';
-import { getHistory, listActivities, type HistoryEntry } from '@upkeep/application';
+import { getHistory, listActivities, undoCompletion, type HistoryEntry } from '@upkeep/application';
 import { formatMoney, type ActivityId, type Instant } from '@upkeep/domain';
-import { deviceTimeZone, formatDate, useLiveQuery } from '../../shared/hooks';
+import { useApp } from '../../app/providers/AppProvider';
+import {
+  describeError,
+  deviceTimeZone,
+  formatDate,
+  useAction,
+  useLiveQuery,
+} from '../../shared/hooks';
+import { CompletionEditor } from './CompletionEditor';
 
 const PAGE = 30;
 
@@ -138,16 +146,95 @@ function EntryRow({ entry }: { entry: HistoryEntry }) {
     );
   }
 
+  return <DoneRow entry={entry} />;
+}
+
+const small =
+  'rounded border border-slate-300 bg-white px-3 py-1 text-sm hover:bg-slate-100 disabled:opacity-50';
+
+function DoneRow({ entry }: { entry: Extract<HistoryEntry, { kind: 'completed' }> }) {
+  const { deps } = useApp();
+  const act = useAction();
   const { completion } = entry;
+  const [mode, setMode] = useState<'view' | 'edit' | 'confirm-undo'>('view');
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function undo() {
+    setBusy(true);
+    setError(null);
+    const result = await act(() => undoCompletion(deps, { completionId: completion.id }));
+    setBusy(false);
+    if (!result.ok) setError(describeError(result.error));
+  }
+
   return (
     <li className="rounded border border-slate-200 bg-white p-3">
-      <p className="font-medium">
-        {entry.activityName} <span className="text-sm font-normal text-emerald-800">· Done</span>
-      </p>
-      <p className="text-sm text-slate-600">
-        {whenLabel(entry.at)}
-        {completion.plannedFor ? ` · ${timingLabel(entry.daysFromPlanned)}` : ''}
-      </p>
+      <div className="flex flex-wrap items-start justify-between gap-2">
+        <div>
+          <p className="font-medium">
+            {entry.activityName}{' '}
+            <span className="text-sm font-normal text-emerald-800">· Done</span>
+            {entry.edited ? (
+              <span className="ml-1 text-xs font-normal text-slate-500">(edited)</span>
+            ) : null}
+          </p>
+          <p className="text-sm text-slate-600">
+            {whenLabel(entry.at)}
+            {completion.plannedFor ? ` · ${timingLabel(entry.daysFromPlanned)}` : ''}
+          </p>
+        </div>
+        {mode === 'view' ? (
+          <div className="flex gap-2">
+            <button
+              type="button"
+              className={small}
+              aria-label={`Edit ${entry.activityName}`}
+              onClick={() => setMode('edit')}
+            >
+              Edit
+            </button>
+            <button
+              type="button"
+              className={small}
+              aria-label={`Undo ${entry.activityName}`}
+              onClick={() => setMode('confirm-undo')}
+            >
+              Undo
+            </button>
+          </div>
+        ) : null}
+      </div>
+
+      {mode === 'confirm-undo' ? (
+        <div
+          role="alertdialog"
+          aria-label="Confirm undo"
+          className="mt-2 rounded border border-amber-300 bg-amber-50 p-2 text-sm"
+        >
+          <p>
+            Undo this entry? It stops counting, and the work goes back to due. The original stays on
+            record.
+          </p>
+          <div className="mt-2 flex gap-2">
+            <button type="button" className={small} disabled={busy} onClick={() => void undo()}>
+              Yes, undo it
+            </button>
+            <button type="button" className={small} onClick={() => setMode('view')}>
+              Keep it
+            </button>
+          </div>
+        </div>
+      ) : null}
+
+      {error ? (
+        <p role="alert" className="mt-2 text-sm text-red-700">
+          {error}
+        </p>
+      ) : null}
+
+      {mode === 'edit' ? <CompletionEditor entry={entry} onDone={() => setMode('view')} /> : null}
+
       <dl className="mt-1 space-y-0.5 text-sm">
         {completion.cost ? (
           <div className="flex gap-1">

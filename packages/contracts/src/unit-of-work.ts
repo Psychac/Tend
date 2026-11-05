@@ -4,6 +4,7 @@ import type {
   AuditEventRepository,
   CategoryRepository,
   CompletionRepository,
+  CompletionVoidRepository,
   LocationRepository,
   MeasurementRepository,
   OccurrenceRepository,
@@ -18,6 +19,7 @@ export interface Repositories {
   readonly schedules: ScheduleRepository;
   readonly occurrences: OccurrenceRepository;
   readonly completions: CompletionRepository;
+  readonly completionVoids: CompletionVoidRepository;
   readonly measurements: MeasurementRepository;
   readonly audit: AuditEventRepository;
 }

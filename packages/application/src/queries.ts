@@ -8,7 +8,9 @@ import {
   type Activity,
   type ActivityId,
   type Clock,
+  type ChecklistItem,
   type Completion,
+  type MeasurementRequirement,
   type Instant,
   type Measurement,
   type LocalDate,
@@ -147,6 +149,10 @@ export type HistoryEntry =
       readonly activityId: ActivityId;
       readonly activityName: string;
       readonly completion: Completion;
+      /** True when this replaced an earlier version, so the person can see it was corrected. */
+      readonly edited: boolean;
+      readonly checklist: readonly ChecklistItem[];
+      readonly measurementRequirements: readonly MeasurementRequirement[];
       /** Whole days after the planned date it was done; negative if early, 0 if on time or unplanned. */
       readonly daysFromPlanned: number;
       readonly checklistDone: number;
@@ -190,7 +196,7 @@ export async function getHistory(
   const wantCompleted = options.kind !== 'skipped';
   const wantSkipped = options.kind !== 'completed';
 
-  const [activities, completions, skipped] = await Promise.all([
+  const [activities, completions, skipped, voids] = await Promise.all([
     repos.activities.list({ includeArchived: true }),
     wantCompleted
       ? repos.completions.list({ activityId: options.activityId, limit: need })
@@ -203,7 +209,10 @@ export async function getHistory(
           limit: need,
         })
       : Promise.resolve([]),
+    repos.completionVoids.list(),
   ]);
+  const replacements = new Set(voids.flatMap((v) => (v.replacedBy ? [v.replacedBy] : [])));
+  const activityById = new Map(activities.map((a) => [a.id, a]));
   const nameOf = new Map(activities.map((a) => [a.id, a.name]));
   const checklistTotalOf = new Map(activities.map((a) => [a.id, a.checklist.length]));
 
@@ -222,6 +231,10 @@ export async function getHistory(
         activityId: completion.activityId,
         activityName: nameOf.get(completion.activityId) ?? 'Deleted activity',
         completion,
+        edited: replacements.has(completion.id),
+        checklist: activityById.get(completion.activityId)?.checklist ?? [],
+        measurementRequirements:
+          activityById.get(completion.activityId)?.measurementRequirements ?? [],
         daysFromPlanned: planned ? daysBetween(planned, doneOn) : 0,
         checklistDone: completion.checklistResults.filter((r) => r.done).length,
         checklistTotal: checklistTotalOf.get(completion.activityId) ?? 0,

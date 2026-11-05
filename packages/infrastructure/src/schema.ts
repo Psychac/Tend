@@ -105,6 +105,16 @@ export const TABLES = {
     },
     indexes: { by_activity_completed: ['activity_id', 'completed_at'] },
   },
+  completion_voids: {
+    columns: {
+      ...META,
+      completion_id: 'text',
+      replaced_by: 'text',
+      voided_at: 'text',
+      reason: 'text',
+    },
+    indexes: { by_completion: ['completion_id'] },
+  },
   measurements: {
     columns: {
       ...META,

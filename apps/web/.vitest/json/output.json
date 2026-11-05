@@ -1,0 +1,83 @@
+{
+  "numTotalTestSuites": 3,
+  "numPassedTestSuites": 1,
+  "numFailedTestSuites": 2,
+  "numPendingTestSuites": 0,
+  "numTotalTests": 4,
+  "numPassedTests": 0,
+  "numFailedTests": 1,
+  "numPendingTests": 3,
+  "numTodoTests": 0,
+  "snapshot": {
+    "added": 0,
+    "failure": false,
+    "filesAdded": 0,
+    "filesRemoved": 0,
+    "filesRemovedList": [],
+    "filesUnmatched": 0,
+    "filesUpdated": 0,
+    "matched": 0,
+    "total": 0,
+    "unchecked": 0,
+    "uncheckedKeysByFile": [],
+    "unmatched": 0,
+    "updated": 0,
+    "didUpdate": false
+  },
+  "startTime": 1793875009070,
+  "success": false,
+  "testResults": [
+    {
+      "assertionResults": [
+        {
+          "ancestorTitles": ["correcting a past entry"],
+          "fullName": "correcting a past entry edits notes and cost without redoing anything, and marks the entry as edited",
+          "status": "failed",
+          "title": "edits notes and cost without redoing anything, and marks the entry as edited",
+          "duration": 2776.9347,
+          "failureMessages": [
+            "Error: Unable to find an element with the text: oil change. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.\n\nIgnored nodes: comments, script, style\n\u001b[36m<li\u001b[39m\n  \u001b[33mclass\u001b[39m=\u001b[32m\"rounded border border-slate-200 bg-white p-3\"\u001b[39m\n\u001b[36m>\u001b[39m\n  \u001b[36m<div\u001b[39m\n    \u001b[33mclass\u001b[39m=\u001b[32m\"flex flex-wrap items-start justify-between gap-2\"\u001b[39m\n  \u001b[36m>\u001b[39m\n    \u001b[36m<div>\u001b[39m\n      \u001b[36m<p\u001b[39m\n        \u001b[33mclass\u001b[39m=\u001b[32m\"font-medium\"\u001b[39m\n      \u001b[36m>\u001b[39m\n        \u001b[0mService car\u001b[0m\n        \u001b[0m \u001b[0m\n        \u001b[36m<span\u001b[39m\n          \u001b[33mclass\u001b[39m=\u001b[32m\"text-sm font-normal text-emerald-800\"\u001b[39m\n        \u001b[36m>\u001b[39m\n          \u001b[0m· Done\u001b[0m\n        \u001b[36m</span>\u001b[39m\n      \u001b[36m</p>\u001b[39m\n      \u001b[36m<p\u001b[39m\n        \u001b[33mclass\u001b[39m=\u001b[32m\"text-sm text-slate-600\"\u001b[39m\n      \u001b[36m>\u001b[39m\n        \u001b[0mThu, 5 Nov 2026, 16:06\u001b[0m\n        \u001b[0m · on time\u001b[0m\n      \u001b[36m</p>\u001b[39m\n    \u001b[36m</div>\u001b[39m\n    \u001b[36m<div\u001b[39m\n      \u001b[33mclass\u001b[39m=\u001b[32m\"flex gap-2\"\u001b[39m\n    \u001b[36m>\u001b[39m\n      \u001b[36m<button\u001b[39m\n        \u001b[33maria-label\u001b[39m=\u001b[32m\"Edit Service car\"\u001b[39m\n        \u001b[33mclass\u001b[39m=\u001b[32m\"rounded border border-slate-300 bg-white px-3 py-1 text-sm hover:bg-slate-100 disabled:opacity-50\"\u001b[39m\n        \u001b[33mtype\u001b[39m=\u001b[32m\"button\"\u001b[39m\n      \u001b[36m>\u001b[39m\n        \u001b[0mEdit\u001b[0m\n      \u001b[36m</button>\u001b[39m\n      \u001b[36m<button\u001b[39m\n        \u001b[33maria-label\u001b[39m=\u001b[32m\"Undo Service car\"\u001b[39m\n        \u001b[33mclass\u001b[39m=\u001b[32m\"rounded border border-slate-300 bg-white px-3 py-1 text-sm hover:bg-slate-100 disabled:opacity-50\"\u001b[39m\n        \u001b[33mtype\u001b[39m=\u001b[32m\"button\"\u001b[39m\n      \u001b[36m>\u001b[39m\n        \u001b[0mUndo\u001b[0m\n      \u001b[36m</button>\u001b[39m\n    \u001b[36m</div>\u001b[39m\n  \u001b[36m</div>\u001b[39m\n  \u001b[36m<dl\u001b[39m\n    \u001b[33mclass\u001b[39m=\u001b[32m\"mt-1 space-y-0.5 text-sm\"\u001b[39m\n  \u001b[36m>\u001b[39m\n    \u001b[36m<div\u001b[39m\n      \u001b[33mclass\u001b[39m=\u001b[32m\"flex gap-1\"\u001b[39m\n    \u001b[36m>\u001b[39m\n      \u001b[36m<dt\u001b[39m\n        \u001b[33mclass\u001b[39m=\u001b[32m\"text-slate-600\"\u001b[39m\n      \u001b[36m>\u001b[39m\n        \u001b[0mCost:\u001b[0m\n      \u001b[36m</dt>\u001b[39m\n      \u001b[36m<dd>\u001b[39m\n        \u001b[0m₹1,500.00\u001b[0m\n      \u001b[36m</dd>\u001b[39m\n    \u001b[36m</div>\u001b[39m\n    \u001b[36m<p\u001b[39m\n      \u001b[33mclass\u001b[39m=\u001b[32m\"text-slate-700\"\u001b[39m\n    \u001b[36m>\u001b[39m\n      \u001b[0moil chnage\u001b[0m\n    \u001b[36m</p>\u001b[39m\n  \u001b[36m</dl>\u001b[39m\n\u001b[36m</li>\u001b[39m\n    at waitForWrapper (D:\\POC\\LifeKeeper\\node_modules\\.pnpm\\@testing-library+dom@10.4.2\\node_modules\\@testing-library\\dom\\dist\\wait-for.js:163:27)\n    at D:\\POC\\LifeKeeper\\node_modules\\.pnpm\\@testing-library+dom@10.4.2\\node_modules\\@testing-library\\dom\\dist\\query-helpers.js:86:33\n    at D:/POC/LifeKeeper/apps/web/src/app/corrections.test.tsx:42:32\n    at async file:///D:/POC/LifeKeeper/node_modules/.pnpm/vitest@5.1.0_@types+node@26_5845f3a816d75378664799232d727c0e/node_modules/vitest/dist/chunks/run.CjdgFZiW.js:2801:20"
+          ],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": ["correcting a past entry"],
+          "fullName": "correcting a past entry shows validation problems from an edit and keeps the entry as it was",
+          "status": "skipped",
+          "title": "shows validation problems from an edit and keeps the entry as it was",
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": ["correcting a past entry"],
+          "fullName": "correcting a past entry cancelling an edit changes nothing",
+          "status": "skipped",
+          "title": "cancelling an edit changes nothing",
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": ["undoing a completion"],
+          "fullName": "undoing a completion asks first, then removes the entry from history and puts the work back to due",
+          "status": "skipped",
+          "title": "asks first, then removes the entry from history and puts the work back to due",
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        }
+      ],
+      "startTime": 1793875011303,
+      "endTime": 1793875014079.9348,
+      "status": "failed",
+      "message": "",
+      "name": "D:/POC/LifeKeeper/apps/web/src/app/corrections.test.tsx"
+    }
+  ]
+}
