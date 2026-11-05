@@ -5,8 +5,8 @@ import {
   getHistory,
   undoCompletion,
   type Deps,
-} from '@upkeep/application';
-import type { Clock, Id, IdGenerator, Instant, Result, TimeZoneId, UserId } from '@upkeep/domain';
+} from '@tend/application';
+import type { Clock, Id, IdGenerator, Instant, Result, TimeZoneId, UserId } from '@tend/domain';
 import { exportBackup, parseBackup, restoreBackup } from './backup';
 import { createSqlRepositories, createSqlUnitOfWork } from './sql-repositories';
 import { createNodeSqliteDatabase } from './testing/node-sqlite';

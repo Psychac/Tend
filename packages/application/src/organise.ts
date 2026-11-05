@@ -1,4 +1,4 @@
-import type { Repositories } from '@upkeep/contracts';
+import type { Repositories } from '@tend/contracts';
 import {
   createCategory as createCategoryEntity,
   createLocation as createLocationEntity,
@@ -14,7 +14,7 @@ import {
   type LocationId,
   type LocationKind,
   type Result,
-} from '@upkeep/domain';
+} from '@tend/domain';
 import { auditEvent, found, transact, type Deps } from './deps';
 
 const sameName = (a: string, b: string): boolean =>

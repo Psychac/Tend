@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react';
-import { correctCompletion, type HistoryEntry, type MeasurementInput } from '@upkeep/application';
+import { correctCompletion, type HistoryEntry, type MeasurementInput } from '@tend/application';
 import {
   currencyExponent,
   instantFromLocal,
@@ -7,7 +7,7 @@ import {
   localTimeOf,
   parseLocalDate,
   parseMoney,
-} from '@upkeep/domain';
+} from '@tend/domain';
 import { useApp } from '../../app/providers/AppProvider';
 import { MoneyField, useMoneyState } from '../../shared/currency';
 import { describeError, deviceTimeZone, useAction } from '../../shared/hooks';

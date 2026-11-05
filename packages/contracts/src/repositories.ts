@@ -24,7 +24,7 @@ import type {
   OccurrenceStatus,
   Schedule,
   ScheduleId,
-} from '@upkeep/domain';
+} from '@tend/domain';
 
 /**
  * Repositories are scoped to the signed-in user by the implementation; callers

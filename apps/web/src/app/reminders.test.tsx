@@ -1,6 +1,6 @@
 import { cleanup, screen, waitFor, within } from '@testing-library/react';
-import { createActivity, setActivityReminder } from '@upkeep/application';
-import { createNodeSqliteDatabase } from '@upkeep/infrastructure/testing';
+import { createActivity, setActivityReminder } from '@tend/application';
+import { createNodeSqliteDatabase } from '@tend/infrastructure/testing';
 import { createServices } from './providers/AppProvider';
 import { createDaily, fakeNotifier, renderApp } from './test-utils';
 
@@ -114,7 +114,7 @@ describe('reminders on the dashboard', () => {
 
 describe('browser notifications', () => {
   it('shows one notification when the app opens with a due reminder, and not again', async () => {
-    localStorage.setItem('upkeep.browserNotifications', '1');
+    localStorage.setItem('tend.browserNotifications', '1');
     const { notifier, shown } = fakeNotifier('granted');
     const db = await databaseWithReminder();
 
@@ -140,13 +140,13 @@ describe('browser notifications', () => {
     expect(shown).toHaveLength(0); // permission granted, but this device has not opted in
     cleanup();
 
-    localStorage.setItem('upkeep.browserNotifications', '1');
+    localStorage.setItem('tend.browserNotifications', '1');
     renderApp('/', { db, notifier });
     await waitFor(() => expect(shown).toHaveLength(1));
   });
 
   it('combines several due reminders into one notification', async () => {
-    localStorage.setItem('upkeep.browserNotifications', '1');
+    localStorage.setItem('tend.browserNotifications', '1');
     const { notifier, shown } = fakeNotifier('granted');
     const db = await databaseWithReminder('Water plants');
     await addDailyWithReminder(db, 'Take out bins');
@@ -169,7 +169,7 @@ describe('notification settings', () => {
     const { user } = renderApp('/settings', { notifier: f.notifier });
     await user.click(await screen.findByRole('button', { name: 'Turn on browser notifications' }));
     expect(await screen.findByText('Browser notifications are on.')).toBeInTheDocument();
-    expect(localStorage.getItem('upkeep.browserNotifications')).toBe('1');
+    expect(localStorage.getItem('tend.browserNotifications')).toBe('1');
 
     await user.click(screen.getByRole('button', { name: 'Send a test' }));
     expect(await screen.findByText('Test notification sent.')).toBeInTheDocument();
@@ -187,7 +187,7 @@ describe('notification settings', () => {
     const { user } = renderApp('/settings', { notifier: f.notifier });
     await user.click(await screen.findByRole('button', { name: 'Turn on browser notifications' }));
     expect(await screen.findByText(/blocked for this site/i)).toBeInTheDocument();
-    expect(localStorage.getItem('upkeep.browserNotifications')).not.toBe('1');
+    expect(localStorage.getItem('tend.browserNotifications')).not.toBe('1');
   });
 
   it('says plainly when the browser cannot show notifications', async () => {

@@ -1,10 +1,10 @@
 {
-  "name": "personal-upkeep",
+  "name": "tend",
   "private": true,
   "version": "0.0.0",
   "packageManager": "pnpm@12.16.1",
   "scripts": {
-    "dev": "pnpm --filter @upkeep/web dev",
+    "dev": "pnpm --filter @tend/web dev",
     "build": "pnpm -r build",
     "typecheck": "pnpm -r typecheck",
     "test": "pnpm -r test",

@@ -1,7 +1,7 @@
 import { screen, within } from '@testing-library/react';
-import { createActivity } from '@upkeep/application';
-import { exportBackup } from '@upkeep/infrastructure';
-import { createNodeSqliteDatabase } from '@upkeep/infrastructure/testing';
+import { createActivity } from '@tend/application';
+import { exportBackup } from '@tend/infrastructure';
+import { createNodeSqliteDatabase } from '@tend/infrastructure/testing';
 import { createServices } from './providers/AppProvider';
 import { createDaily, renderApp } from './test-utils';
 
@@ -132,7 +132,7 @@ describe('backup and restore', () => {
       await screen.findByLabelText(/restore from a backup file/i),
       new File(['{"hello":1}'], 'notes.json', { type: 'application/json' }),
     );
-    expect(await screen.findByRole('alert')).toHaveTextContent(/not a Personal Upkeep backup/i);
+    expect(await screen.findByRole('alert')).toHaveTextContent(/not a Tend backup/i);
     await user.click(screen.getByRole('link', { name: 'Activities' }));
     expect(await screen.findByText(/no activities yet/i)).toBeInTheDocument();
   });

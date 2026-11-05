@@ -25,7 +25,7 @@ import {
   type Schedule,
   type ScheduleStrategy,
   type TimeZoneId,
-} from '@upkeep/domain';
+} from '@tend/domain';
 import { auditEvent, found, transact, type Deps } from './deps';
 import { ensureOccurrences } from './generation';
 

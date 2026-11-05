@@ -1,4 +1,4 @@
-# Personal Upkeep — Product & Engineering Specification
+# Tend — Product & Engineering Specification
 
 **Version:** 0.6 — Hybrid deployment architecture; gamification deferred; offline-first phasing; completion corrections; reminders  
 **Date:** 5 November 2026  
@@ -10,7 +10,7 @@
 
 **Maintain your life. Don't manage another to-do list.**
 
-Personal Upkeep is a local-first personal maintenance and life-management application. It helps users keep track of the things they own, the activities that need doing, and the history of what has happened.
+Tend is a local-first personal maintenance and life-management application. It helps users keep track of the things they own, the activities that need doing, and the history of what has happened.
 
 It should feel like a personal upkeep companion rather than a conventional task manager: intuitive, engaging, progress-focused, and extensible.
 
@@ -458,7 +458,7 @@ The application must remain usable if synchronization is unavailable for an exte
 - Sync checkpoints and stream processing.
 - Client connection and sync status.
 
-**Personal Upkeep owns:**
+**Tend owns:**
 
 - Domain validation.
 - Authorization decisions beyond basic authentication.
@@ -903,7 +903,7 @@ A backup must be usable independently of the hosting provider and PowerSync depl
 ## 16. Repository structure
 
 ```text
-personal-upkeep/
+tend/
 ├── apps/
 │   └── web/
 │       ├── public/
@@ -1385,7 +1385,7 @@ A feature is complete when:
 
 ## 25. Final architectural position
 
-Personal Upkeep is a **local-first PWA with optional cloud synchronization**, not a cloud application with an offline cache.
+Tend is a **local-first PWA with optional cloud synchronization**, not a cloud application with an offline cache.
 
 The device provides immediate persistence and responsiveness through SQLite WASM. PostgreSQL provides the cross-device data store. PowerSync coordinates replication and upload delivery. The application retains ownership of its domain rules, validation, conflict policies, backup, and user experience.
 

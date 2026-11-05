@@ -7,23 +7,23 @@ import {
   useState,
   type ReactNode,
 } from 'react';
-import { reconcileSchedules, type Deps } from '@upkeep/application';
+import { reconcileSchedules, type Deps } from '@tend/application';
 import { browserNotifier, type Notifier } from '../../shared/notifier';
 import { REMINDER_CHECK_MS, runReminders } from './reminderEngine';
-import type { Repositories } from '@upkeep/contracts';
+import type { Repositories } from '@tend/contracts';
 import {
   instantFromDate,
   type Clock,
   type Id,
   type IdGenerator,
   type UserId,
-} from '@upkeep/domain';
+} from '@tend/domain';
 import {
   createSqlRepositories,
   createSqlUnitOfWork,
   openLocalDatabase,
   type SqlDatabase,
-} from '@upkeep/infrastructure';
+} from '@tend/infrastructure';
 
 /**
  * Phase 1 has no accounts (spec 3.5), so every record belongs to one fixed
@@ -180,7 +180,7 @@ export function AppProvider({
       <div role="alert" className="m-4 rounded border border-danger-line bg-danger-soft p-4 text-danger">
         <h2 className="font-semibold">Your data could not be opened</h2>
         <p className="mt-1 text-sm">
-          Personal Upkeep stores everything on this device, and this browser would not open its
+          Tend stores everything on this device, and this browser would not open its
           storage. Private browsing, a full disk, or a browser without the required storage support
           can cause this. Nothing has been lost; try a regular window or another browser.
         </p>

@@ -1,4 +1,4 @@
-import type { Result } from '@upkeep/domain';
+import type { Result } from '@tend/domain';
 import {
   createActivity,
   createAsset,

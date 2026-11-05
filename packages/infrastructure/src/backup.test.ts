@@ -1,5 +1,5 @@
-import { completeOccurrence, createActivity, type Deps } from '@upkeep/application';
-import type { Clock, Id, IdGenerator, Instant, Result, UserId } from '@upkeep/domain';
+import { completeOccurrence, createActivity, type Deps } from '@tend/application';
+import type { Clock, Id, IdGenerator, Instant, Result, UserId } from '@tend/domain';
 import {
   BACKUP_SCHEMA_VERSION,
   backupChecksum,
@@ -68,7 +68,7 @@ async function parsed(file: BackupFile) {
 describe('export', () => {
   it('includes every table with counts, version and a checksum', async () => {
     const backup = await exportBackup(await populated(), NOW);
-    expect(backup.format).toBe('personal-upkeep-backup');
+    expect(backup.format).toBe('tend-backup');
     expect(backup.schemaVersion).toBe(BACKUP_SCHEMA_VERSION);
     expect(backup.counts.activities).toBe(1);
     expect(backup.counts.completions).toBe(1);
@@ -163,7 +163,7 @@ describe('validation', () => {
     expect(await parseBackup('nope')).toMatchObject({ ok: false });
     expect(await parseBackup('{"a":1}')).toMatchObject({
       ok: false,
-      errors: ['This file is not a Personal Upkeep backup.'],
+      errors: ['This file is not a Tend backup.'],
     });
   });
 

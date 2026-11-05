@@ -11,7 +11,7 @@ import {
   type MeasurementValue,
   type Occurrence,
   type Result,
-} from '@upkeep/domain';
+} from '@tend/domain';
 import { found, transact, type Deps } from './deps';
 import { ensureOccurrences } from './generation';
 import type { MeasurementInput } from './occurrences';

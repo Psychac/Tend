@@ -1,5 +1,5 @@
-import type { Repositories } from '@upkeep/contracts';
-import type { Clock, Id, IdGenerator, Instant, UserId } from '@upkeep/domain';
+import type { Repositories } from '@tend/contracts';
+import type { Clock, Id, IdGenerator, Instant, UserId } from '@tend/domain';
 import type { Deps } from '../deps';
 import { createInMemoryStore } from './in-memory';
 

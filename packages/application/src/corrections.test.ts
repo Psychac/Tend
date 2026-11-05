@@ -1,4 +1,4 @@
-import { createCompletion, type Result, type TimeZoneId } from '@upkeep/domain';
+import { createCompletion, type Result, type TimeZoneId } from '@tend/domain';
 import {
   completeOccurrence,
   correctCompletion,

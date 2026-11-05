@@ -9,7 +9,7 @@ import {
   updateActivity,
   type OutstandingPolicy,
   type ScheduleInput,
-} from '@upkeep/application';
+} from '@tend/application';
 import {
   localDateOf,
   type Activity,
@@ -25,7 +25,7 @@ import {
   type RecurrenceUnit,
   type Schedule,
   type ScheduleStrategy,
-} from '@upkeep/domain';
+} from '@tend/domain';
 import { useApp } from '../../app/providers/AppProvider';
 import { describeError, deviceTimeZone, useAction, useLiveQuery } from '../../shared/hooks';
 import { CategorySelect, LocationSelect } from '../../shared/pickers';

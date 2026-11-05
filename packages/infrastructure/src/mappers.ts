@@ -27,7 +27,7 @@ import type {
   ScheduleId,
   TimeZoneId,
   UserId,
-} from '@upkeep/domain';
+} from '@tend/domain';
 import type { SqlValue } from './sql';
 
 export type Row = Record<string, unknown>;

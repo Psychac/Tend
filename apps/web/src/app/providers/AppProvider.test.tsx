@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
-import { createActivity } from '@upkeep/application';
-import { createNodeSqliteDatabase } from '@upkeep/infrastructure/testing';
+import { createActivity } from '@tend/application';
+import { createNodeSqliteDatabase } from '@tend/infrastructure/testing';
 import { AppProvider, createServices, useApp } from './AppProvider';
 
 function ProbeCount() {

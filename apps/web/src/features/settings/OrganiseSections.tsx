@@ -10,8 +10,8 @@ import {
   updateLocation,
   type CategoryListItem,
   type LocationListItem,
-} from '@upkeep/application';
-import type { CategoryId, Location, LocationId, LocationKind, Result } from '@upkeep/domain';
+} from '@tend/application';
+import type { CategoryId, Location, LocationId, LocationKind, Result } from '@tend/domain';
 import { useApp } from '../../app/providers/AppProvider';
 import { describeError, useAction, useLiveQuery } from '../../shared/hooks';
 import { LocationSelect } from '../../shared/pickers';

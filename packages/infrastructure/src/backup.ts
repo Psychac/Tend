@@ -7,7 +7,7 @@
 import { TABLES, type ColumnType, type TableDef, type TableName } from './schema';
 import type { SqlDatabase, SqlExecutor, SqlValue } from './sql';
 
-export const BACKUP_FORMAT = 'personal-upkeep-backup';
+export const BACKUP_FORMAT = 'tend-backup';
 /** Bump when the shape of an export changes, and add a step to `MIGRATIONS`. */
 export const BACKUP_SCHEMA_VERSION = 3;
 
@@ -125,7 +125,7 @@ export async function parseBackup(text: string): Promise<ParseResult> {
     return { ok: false, errors: ['This is not a valid JSON file.'] };
   }
   if (!isRecord(raw) || raw['format'] !== BACKUP_FORMAT) {
-    return { ok: false, errors: ['This file is not a Personal Upkeep backup.'] };
+    return { ok: false, errors: ['This file is not a Tend backup.'] };
   }
 
   const file: Record<string, unknown> = raw;

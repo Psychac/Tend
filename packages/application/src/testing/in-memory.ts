@@ -8,8 +8,8 @@ import {
   type Page,
   type Repositories,
   type UnitOfWork,
-} from '@upkeep/contracts';
-import { deliveryKey } from '@upkeep/domain';
+} from '@tend/contracts';
+import { deliveryKey } from '@tend/domain';
 import type {
   Activity,
   Asset,
@@ -24,7 +24,7 @@ import type {
   Measurement,
   Occurrence,
   Schedule,
-} from '@upkeep/domain';
+} from '@tend/domain';
 
 interface Row {
   readonly id: string;

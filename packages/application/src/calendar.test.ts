@@ -1,4 +1,4 @@
-import type { LocalDate, Result, TimeZoneId } from '@upkeep/domain';
+import type { LocalDate, Result, TimeZoneId } from '@tend/domain';
 import {
   archiveActivity,
   completeOccurrence,

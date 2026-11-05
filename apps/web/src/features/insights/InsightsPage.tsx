@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { getInsights, type InsightsView, type MonthInsight } from '@upkeep/application';
-import { addDays, formatMoney, localDateOf, type LocalDate, type Money } from '@upkeep/domain';
+import { getInsights, type InsightsView, type MonthInsight } from '@tend/application';
+import { addDays, formatMoney, localDateOf, type LocalDate, type Money } from '@tend/domain';
 import { useApp } from '../../app/providers/AppProvider';
 import { deviceTimeZone, formatDate, useLiveQuery } from '../../shared/hooks';
 

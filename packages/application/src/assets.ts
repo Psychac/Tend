@@ -1,4 +1,4 @@
-import type { Repositories } from '@upkeep/contracts';
+import type { Repositories } from '@tend/contracts';
 import {
   createAsset as createAssetEntity,
   err,
@@ -16,7 +16,7 @@ import {
   type Measurement,
   type Money,
   type Result,
-} from '@upkeep/domain';
+} from '@tend/domain';
 import { auditEvent, found, transact, type Deps } from './deps';
 import { locationPaths } from './organise';
 

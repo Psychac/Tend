@@ -1,4 +1,4 @@
-import type { ReminderItem } from '@upkeep/application';
+import type { ReminderItem } from '@tend/application';
 
 /** 'unsupported' where the browser has no Notification API at all. */
 export type NotificationSupport = 'unsupported' | NotificationPermission;
@@ -56,7 +56,7 @@ export const browserNotifier: Notifier = {
 
 // ---------------------------------------------------------------- per-device choice
 
-const KEY = 'upkeep.browserNotifications';
+const KEY = 'tend.browserNotifications';
 
 /** Whether this device should show browser notifications. A per-device choice, off until asked for. */
 export function getNotificationsEnabled(): boolean {
@@ -93,7 +93,7 @@ export function describeReminders(items: readonly ReminderItem[]): NotificationC
     return {
       title: only.activity.name,
       body: `${dueText(only.daysUntilDue)[0]?.toUpperCase()}${dueText(only.daysUntilDue).slice(1)}`,
-      tag: 'upkeep-reminders',
+      tag: 'tend-reminders',
     };
   }
   const names = items.slice(0, 4).map((i) => i.activity.name);
@@ -101,6 +101,6 @@ export function describeReminders(items: readonly ReminderItem[]): NotificationC
   return {
     title: `${items.length} things need attention`,
     body: names.join(', ') + (more > 0 ? ` and ${more} more` : ''),
-    tag: 'upkeep-reminders',
+    tag: 'tend-reminders',
   };
 }

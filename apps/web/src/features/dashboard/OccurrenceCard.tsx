@@ -5,8 +5,8 @@ import {
   snoozeOccurrence,
   type MeasurementInput,
   type OccurrenceItem,
-} from '@upkeep/application';
-import { addDays, parseMoney, type ChecklistItemId, type LocalDate } from '@upkeep/domain';
+} from '@tend/application';
+import { addDays, parseMoney, type ChecklistItemId, type LocalDate } from '@tend/domain';
 import { useApp } from '../../app/providers/AppProvider';
 import { MoneyField, useMoneyState } from '../../shared/currency';
 import { describeError, formatDate, useAction } from '../../shared/hooks';

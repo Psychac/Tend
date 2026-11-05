@@ -42,9 +42,9 @@ export function NotificationsSection() {
 
   async function test() {
     const shown = await notifier.show({
-      title: 'Personal Upkeep',
+      title: 'Tend',
       body: 'This is how a reminder will look.',
-      tag: 'upkeep-test',
+      tag: 'tend-test',
     });
     setMessage(shown ? 'Test notification sent.' : 'The browser would not show a notification.');
   }

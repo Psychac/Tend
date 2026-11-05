@@ -29,7 +29,7 @@ const NAV = [
 ];
 
 type Theme = 'system' | 'light' | 'dark';
-const THEME_KEY = 'upkeep.theme';
+const THEME_KEY = 'tend.theme';
 const NEXT: Record<Theme, Theme> = { system: 'light', light: 'dark', dark: 'system' };
 
 function readTheme(): Theme {
@@ -71,7 +71,7 @@ export function AppLayout() {
           <span className="grid h-9 w-9 place-items-center rounded-xl bg-brand text-white" aria-hidden="true">
             {icon(<path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.5 2.5-2.4-.6-.6-2.4z" />)}
           </span>
-          <span className="text-base font-semibold tracking-tight">Personal Upkeep</span>
+          <span className="text-base font-semibold tracking-tight">Tend</span>
         </div>
         {NAV.map((item) => (
           <NavLink
@@ -114,7 +114,7 @@ export function AppLayout() {
       </nav>
 
       <header className="sticky top-0 z-10 flex items-center justify-between border-b border-line bg-surface/90 px-4 py-3 backdrop-blur md:hidden">
-        <h1 className="text-base font-semibold tracking-tight">Personal Upkeep</h1>
+        <h1 className="text-base font-semibold tracking-tight">Tend</h1>
         <button
           type="button"
           onClick={cycleTheme}

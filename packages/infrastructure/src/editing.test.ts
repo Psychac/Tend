@@ -5,8 +5,8 @@ import {
   unarchiveActivity,
   updateActivity,
   type Deps,
-} from '@upkeep/application';
-import type { Clock, Id, IdGenerator, Instant, Result, UserId } from '@upkeep/domain';
+} from '@tend/application';
+import type { Clock, Id, IdGenerator, Instant, Result, UserId } from '@tend/domain';
 import { createSqlRepositories, createSqlUnitOfWork } from './sql-repositories';
 import { createNodeSqliteDatabase } from './testing/node-sqlite';
 

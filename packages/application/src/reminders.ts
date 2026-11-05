@@ -1,4 +1,4 @@
-import type { Repositories } from '@upkeep/contracts';
+import type { Repositories } from '@tend/contracts';
 import {
   createReminder,
   daysBetween,
@@ -17,7 +17,7 @@ import {
   type Reminder,
   type Result,
   type TimeZoneId,
-} from '@upkeep/domain';
+} from '@tend/domain';
 import { auditEvent, found, transact, type Deps } from './deps';
 
 export interface SetReminderInput {

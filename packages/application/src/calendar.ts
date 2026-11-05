@@ -1,4 +1,4 @@
-import type { Repositories } from '@upkeep/contracts';
+import type { Repositories } from '@tend/contracts';
 import {
   addDays,
   classifyOccurrence,
@@ -12,7 +12,7 @@ import {
   type LocalDate,
   type OccurrenceId,
   type TimeZoneId,
-} from '@upkeep/domain';
+} from '@tend/domain';
 
 export type CalendarEntryKind =
   /** Outstanding and past its due date (including grace). */

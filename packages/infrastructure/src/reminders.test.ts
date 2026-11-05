@@ -4,8 +4,8 @@ import {
   getReminderStatus,
   setActivityReminder,
   type Deps,
-} from '@upkeep/application';
-import type { Clock, Id, IdGenerator, Instant, Result, TimeZoneId, UserId } from '@upkeep/domain';
+} from '@tend/application';
+import type { Clock, Id, IdGenerator, Instant, Result, TimeZoneId, UserId } from '@tend/domain';
 import {
   BACKUP_SCHEMA_VERSION,
   backupChecksum,

@@ -1,4 +1,4 @@
-import { getReminderStatus, type ReminderStatus } from '@upkeep/application';
+import { getReminderStatus, type ReminderStatus } from '@tend/application';
 import { deviceTimeZone, useLiveQuery, useTick, type Loadable } from '../../shared/hooks';
 
 /** What the person should be reminded about right now; refreshes as time passes. */

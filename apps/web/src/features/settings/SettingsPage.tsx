@@ -7,7 +7,7 @@ import {
   type BackupFile,
   type RestoreMode,
   type RestorePreview,
-} from '@upkeep/infrastructure';
+} from '@tend/infrastructure';
 import { NotificationsSection } from './NotificationsSection';
 import { CategoriesSection, LocationsSection } from './OrganiseSections';
 import { CurrencySelect, getDefaultCurrency, setDefaultCurrency } from '../../shared/currency';
@@ -91,7 +91,7 @@ function BackupSection() {
     setBusy(true);
     const backup = await exportBackup(db, deps.clock.now());
     const day = backup.exportedAt.slice(0, 10);
-    download(`personal-upkeep-backup-${day}.json`, JSON.stringify(backup, null, 2));
+    download(`tend-backup-${day}.json`, JSON.stringify(backup, null, 2));
     setExported(
       `Saved ${backup.counts.activities} activities and ${backup.counts.completions} completions.`,
     );

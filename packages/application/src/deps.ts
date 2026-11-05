@@ -1,4 +1,4 @@
-import { ConflictError, type Repositories, type UnitOfWork } from '@upkeep/contracts';
+import { ConflictError, type Repositories, type UnitOfWork } from '@tend/contracts';
 import {
   conflictError,
   err,
@@ -11,8 +11,8 @@ import {
   type IdGenerator,
   type Result,
   type UserId,
-} from '@upkeep/domain';
-import { ok } from '@upkeep/domain';
+} from '@tend/domain';
+import { ok } from '@tend/domain';
 
 /** Everything a use case needs from the outside world. */
 export interface Deps {

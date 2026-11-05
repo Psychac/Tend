@@ -1,6 +1,6 @@
 import { Link } from 'react-router';
-import { getDashboard, type OccurrenceItem } from '@upkeep/application';
-import { localDateOf, type LocalDate } from '@upkeep/domain';
+import { getDashboard, type OccurrenceItem } from '@tend/application';
+import { localDateOf, type LocalDate } from '@tend/domain';
 import { deviceTimeZone, formatDate, useLiveQuery } from '../../shared/hooks';
 import { RemindersPanel } from '../reminders/RemindersPanel';
 import { OccurrenceCard } from './OccurrenceCard';

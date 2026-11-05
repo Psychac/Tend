@@ -1,4 +1,4 @@
-import { deliverDueReminders } from '@upkeep/application';
+import { deliverDueReminders } from '@tend/application';
 import { deviceTimeZone } from '../../shared/hooks';
 import { describeReminders, getNotificationsEnabled, type Notifier } from '../../shared/notifier';
 import type { AppServices } from './AppProvider';

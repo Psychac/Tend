@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-const STORAGE_KEY = 'upkeep.defaultCurrency';
+const STORAGE_KEY = 'tend.defaultCurrency';
 const FALLBACK_DEFAULT = 'INR';
 
 /** Used only when the runtime cannot list currencies. */

@@ -1,4 +1,4 @@
-import { ConflictError } from '@upkeep/contracts';
+import { ConflictError } from '@tend/contracts';
 import {
   createAsset,
   ok,
@@ -6,7 +6,7 @@ import {
   type LocalDate,
   type Result,
   type ScheduleStrategy,
-} from '@upkeep/domain';
+} from '@tend/domain';
 import {
   archiveActivity,
   completeOccurrence,

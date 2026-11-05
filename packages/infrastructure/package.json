@@ -1,5 +1,5 @@
 {
-  "name": "@upkeep/infrastructure",
+  "name": "@tend/infrastructure",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -14,12 +14,12 @@
     "@powersync/common": "^2.5.0",
     "@powersync/shared-internals": "^1.5.0",
     "@powersync/web": "^2.6.0",
-    "@upkeep/contracts": "workspace:*",
-    "@upkeep/domain": "workspace:*"
+    "@tend/contracts": "workspace:*",
+    "@tend/domain": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^26.6.6",
-    "@upkeep/application": "workspace:*",
+    "@tend/application": "workspace:*",
     "vitest": "^5.1.0"
   },
   "exports": {

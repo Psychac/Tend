@@ -6,14 +6,14 @@ import {
   recordMeasurement,
   setAssetStatus,
   type AssetListItem,
-} from '@upkeep/application';
+} from '@tend/application';
 import {
   currencyExponent,
   parseMoney,
   type Asset,
   type CategoryId,
   type LocationId,
-} from '@upkeep/domain';
+} from '@tend/domain';
 import { MoneyField, useMoneyState } from '../../shared/currency';
 import { CategorySelect, LocationSelect } from '../../shared/pickers';
 import { useApp } from '../../app/providers/AppProvider';

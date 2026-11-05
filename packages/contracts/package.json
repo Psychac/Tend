@@ -1,5 +1,5 @@
 {
-  "name": "@upkeep/contracts",
+  "name": "@tend/contracts",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -13,6 +13,6 @@
     "vitest": "^5.1.0"
   },
   "dependencies": {
-    "@upkeep/domain": "workspace:*"
+    "@tend/domain": "workspace:*"
   }
 }

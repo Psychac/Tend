@@ -7,7 +7,7 @@ import {
   type Result,
   type Schedule,
   type ScheduleId,
-} from '@upkeep/domain';
+} from '@tend/domain';
 import { auditEvent, found, transact, type Deps } from './deps';
 import { ensureOccurrences } from './generation';
 

@@ -6,8 +6,8 @@ import {
   pauseActivitySchedule,
   resumeActivitySchedule,
   unarchiveActivity,
-} from '@upkeep/application';
-import type { CategoryId, LocationId, Result } from '@upkeep/domain';
+} from '@tend/application';
+import type { CategoryId, LocationId, Result } from '@tend/domain';
 import { useApp } from '../../app/providers/AppProvider';
 import { describeError, formatDate, useAction, useLiveQuery } from '../../shared/hooks';
 import { CategorySelect, LocationSelect } from '../../shared/pickers';

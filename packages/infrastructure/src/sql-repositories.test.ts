@@ -7,9 +7,9 @@ import {
   recordMeasurement,
   transact,
   type Deps,
-} from '@upkeep/application';
-import type { Repositories } from '@upkeep/contracts';
-import { ConflictError } from '@upkeep/contracts';
+} from '@tend/application';
+import type { Repositories } from '@tend/contracts';
+import { ConflictError } from '@tend/contracts';
 import {
   createActivity as buildActivity,
   createAsset,
@@ -33,7 +33,7 @@ import {
   type ScheduleId,
   type TimeZoneId,
   type UserId,
-} from '@upkeep/domain';
+} from '@tend/domain';
 import { createSqlRepositories, createSqlUnitOfWork } from './sql-repositories';
 import { createNodeSqliteDatabase } from './testing/node-sqlite';
 

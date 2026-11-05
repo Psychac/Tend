@@ -1,4 +1,4 @@
-import type { Repositories } from '@upkeep/contracts';
+import type { Repositories } from '@tend/contracts';
 import {
   localDateOf,
   missingDueDates,
@@ -8,7 +8,7 @@ import {
   type Occurrence,
   type Schedule,
   type UsageReading,
-} from '@upkeep/domain';
+} from '@tend/domain';
 import type { Deps } from './deps';
 
 const OUTSTANDING = ['pending', 'snoozed'] as const;

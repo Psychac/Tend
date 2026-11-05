@@ -25,7 +25,7 @@ import {
   type Priority,
   type Result,
   type Schedule,
-} from '@upkeep/domain';
+} from '@tend/domain';
 import { parseScheduleDates, type ScheduleInput } from './activities';
 import { auditEvent, found, transact, type Deps } from './deps';
 import { ensureOccurrences, lastResolvedOn, usageReading } from './generation';

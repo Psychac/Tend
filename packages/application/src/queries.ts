@@ -1,4 +1,4 @@
-import type { Repositories } from '@upkeep/contracts';
+import type { Repositories } from '@tend/contracts';
 import { locationPaths } from './organise';
 import {
   addDays,
@@ -21,7 +21,7 @@ import {
   type OccurrenceTiming,
   type Schedule,
   type TimeZoneId,
-} from '@upkeep/domain';
+} from '@tend/domain';
 
 export interface OccurrenceItem {
   readonly occurrence: Occurrence;

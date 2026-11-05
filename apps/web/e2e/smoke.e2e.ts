@@ -17,7 +17,7 @@ test('the app opens its on-device database in a real browser', async ({ page }) 
     const idb = (await indexedDB.databases()).map((d) => d.name ?? '');
     return [...names, ...idb];
   });
-  expect(storage.some((n) => n.includes('personal-upkeep'))).toBe(true);
+  expect(storage.some((n) => n.includes('tend'))).toBe(true);
 
   // It must also survive a reload and open again.
   await page.reload();

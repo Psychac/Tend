@@ -11,8 +11,8 @@ export default defineConfig({
       // A new version waits for the user to accept it, so a reload never discards a half-filled form.
       registerType: 'prompt',
       manifest: {
-        name: 'Personal Upkeep',
-        short_name: 'Upkeep',
+        name: 'Tend',
+        short_name: 'Tend',
         description: 'Keep track of the maintenance your home, vehicles and life need.',
         start_url: '/',
         scope: '/',

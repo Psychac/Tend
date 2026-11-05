@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { getHistory, listActivities, undoCompletion, type HistoryEntry } from '@upkeep/application';
-import { formatMoney, type ActivityId, type Instant } from '@upkeep/domain';
+import { getHistory, listActivities, undoCompletion, type HistoryEntry } from '@tend/application';
+import { formatMoney, type ActivityId, type Instant } from '@tend/domain';
 import { useApp } from '../../app/providers/AppProvider';
 import {
   describeError,

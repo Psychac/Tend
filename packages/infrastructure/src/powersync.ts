@@ -63,7 +63,7 @@ export async function openLocalDatabase(
 ): Promise<PowerSyncSqlDatabase> {
   const powersync = new PowerSyncDatabase({
     schema: buildPowerSyncSchema(),
-    database: { dbFilename: options.dbFilename ?? 'personal-upkeep.db' },
+    database: { dbFilename: options.dbFilename ?? 'tend.db' },
   });
   await powersync.init();
   return new PowerSyncSqlDatabase(powersync);

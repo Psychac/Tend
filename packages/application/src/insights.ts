@@ -1,4 +1,4 @@
-import type { Repositories } from '@upkeep/contracts';
+import type { Repositories } from '@tend/contracts';
 import {
   addDays,
   classifyOccurrence,
@@ -11,7 +11,7 @@ import {
   type LocalDate,
   type Money,
   type TimeZoneId,
-} from '@upkeep/domain';
+} from '@tend/domain';
 
 export interface InsightsOptions {
   /** Inclusive start; omit for everything on record. */

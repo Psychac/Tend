@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import type { SqlDatabase } from '@upkeep/infrastructure';
-import { createNodeSqliteDatabase } from '@upkeep/infrastructure/testing';
+import type { SqlDatabase } from '@tend/infrastructure';
+import { createNodeSqliteDatabase } from '@tend/infrastructure/testing';
 import { createMemoryRouter, RouterProvider } from 'react-router';
 import type { Notifier } from '../shared/notifier';
 import { AppProvider } from './providers/AppProvider';

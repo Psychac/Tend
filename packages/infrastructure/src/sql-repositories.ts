@@ -1,5 +1,5 @@
-import { ConflictError, type Page, type Repositories, type UnitOfWork } from '@upkeep/contracts';
-import { deliveryKey, type EntityMeta } from '@upkeep/domain';
+import { ConflictError, type Page, type Repositories, type UnitOfWork } from '@tend/contracts';
+import { deliveryKey, type EntityMeta } from '@tend/domain';
 import {
   activityMapper,
   assetMapper,

@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { getCalendarMonth, type CalendarEntry, type CalendarEntryKind } from '@upkeep/application';
-import { localDateOf, type LocalDate } from '@upkeep/domain';
+import { getCalendarMonth, type CalendarEntry, type CalendarEntryKind } from '@tend/application';
+import { localDateOf, type LocalDate } from '@tend/domain';
 import { useApp } from '../../app/providers/AppProvider';
 import { deviceTimeZone, formatDate, useLiveQuery } from '../../shared/hooks';
 
