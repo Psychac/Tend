@@ -5,3 +5,4 @@ export * from './schedule';
 export * from './occurrence';
 export * from './history';
 export * from './supporting';
+export * from './reminder';

@@ -35,6 +35,8 @@ export default defineConfig({
         maximumFileSizeToCacheInBytes: 8 * 1024 * 1024,
         navigateFallback: '/index.html',
         cleanupOutdatedCaches: true,
+        // Makes tapping a notification open the app.
+        importScripts: ['notification-click.js'],
       },
     }),
   ],

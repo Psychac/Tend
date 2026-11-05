@@ -1,6 +1,6 @@
 # Personal Upkeep — Product & Engineering Specification
 
-**Version:** 0.5 — Hybrid deployment architecture; gamification deferred; offline-first phasing; completion corrections  
+**Version:** 0.6 — Hybrid deployment architecture; gamification deferred; offline-first phasing; completion corrections; reminders  
 **Date:** 5 November 2026  
 **Status:** Proposed baseline for implementation
 
@@ -582,6 +582,7 @@ completions
 completion_voids
 measurements
 reminders
+reminder_deliveries
 attachments
 audit_events
 ```
@@ -731,6 +732,13 @@ Do not rely on persistent browser timers. A PWA service worker can be suspended,
 The scheduling engine determines whether something is due. Notification adapters only deliver reminders.
 
 The application must remain correct even if a notification is delayed, suppressed, or never delivered.
+
+### 11.1 Phase 1 behaviour
+
+- A reminder belongs to an activity: \`lead_days\` before each due date (0 is the day itself) at a wall-clock \`at_time\` in the person's time zone. A reminder can be switched off without losing it (\`enabled\`).
+- What has fired is computed on demand from the outstanding work and each reminder's time; nothing is stored for it, so it is correct after any length of absence. The Dashboard shows it as a Reminders panel and a count beside Dashboard (and as the app-icon badge where supported). It clears when the work is done, and moves with a snooze.
+- Browser notifications are opt-in per device and need browser permission. Reminders that fire together become one notification. Each delivery is recorded in \`reminder_deliveries\` (reminder, occurrence, due date) so it is not repeated; a snooze changes the due date and so re-arms it. If a notification cannot be shown, it is not recorded, and is offered again later.
+- The check runs at startup, on resume, and once a minute while the app is open. No notification appears while the app is fully closed; that needs Web Push (Phase 2).
 
 ---
 
@@ -1352,6 +1360,7 @@ Not scheduled for the first release. Resolve the open questions in §12.3 before
 | ADR-016 | Gamification (XP, levels, streaks, achievements) deferred past the first release; build the basic app first |
 | ADR-017 | Build fully offline first: PowerSync Web SDK in local-only mode; Supabase, authentication, and sync are Phase 2 |
 | ADR-015 | No separate Dexie application database |
+| ADR-019 | Reminders are computed on demand and delivered at most once per due date; browser notifications are an opt-in per-device channel; no background delivery before Web Push |
 | ADR-018 | Completions stay append-only; mistakes are fixed by voiding (undo) or by a corrected replacement (edit), recorded in `completion_voids` |
 
 ---

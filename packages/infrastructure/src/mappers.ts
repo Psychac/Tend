@@ -10,6 +10,10 @@ import type {
   CompletionId,
   CompletionVoid,
   CompletionVoidId,
+  Reminder,
+  ReminderDelivery,
+  ReminderDeliveryId,
+  ReminderId,
   EntityMeta,
   Instant,
   LocalDate,
@@ -251,6 +255,42 @@ export const completionVoidMapper: Mapper<CompletionVoid> = {
     voidedAt: str(r, 'voided_at') as Instant,
     replacedBy: optStr<CompletionId>(r, 'replaced_by'),
     reason: optStr(r, 'reason'),
+  }),
+};
+
+export const reminderMapper: Mapper<Reminder> = {
+  toRow: (r) => ({
+    ...metaTo(r.meta),
+    activity_id: r.activityId,
+    lead_days: r.leadDays,
+    at_time: r.atTime,
+    enabled: r.enabled ? 1 : 0,
+  }),
+  fromRow: (r) => ({
+    id: str(r, 'id') as ReminderId,
+    meta: metaFrom(r),
+    activityId: str(r, 'activity_id') as ActivityId,
+    leadDays: num(r, 'lead_days'),
+    atTime: str(r, 'at_time'),
+    enabled: num(r, 'enabled') === 1,
+  }),
+};
+
+export const reminderDeliveryMapper: Mapper<ReminderDelivery> = {
+  toRow: (d) => ({
+    ...metaTo(d.meta),
+    reminder_id: d.reminderId,
+    occurrence_id: d.occurrenceId,
+    due_on: d.dueOn,
+    delivered_at: d.deliveredAt,
+  }),
+  fromRow: (r) => ({
+    id: str(r, 'id') as ReminderDeliveryId,
+    meta: metaFrom(r),
+    reminderId: str(r, 'reminder_id') as ReminderId,
+    occurrenceId: str(r, 'occurrence_id') as OccurrenceId,
+    dueOn: str(r, 'due_on') as LocalDate,
+    deliveredAt: str(r, 'delivered_at') as Instant,
   }),
 };
 

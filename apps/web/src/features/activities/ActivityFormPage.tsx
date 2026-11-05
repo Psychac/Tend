@@ -2,7 +2,9 @@ import { useState, type FormEvent } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
 import {
   createActivity,
+  getActivityReminder,
   listAssets,
+  setActivityReminder,
   setActivitySchedule,
   updateActivity,
   type OutstandingPolicy,
@@ -18,6 +20,7 @@ import {
   type ActivityType,
   type IsoWeekday,
   type MeasurementRequirement,
+  type Reminder,
   type Priority,
   type RecurrenceUnit,
   type Schedule,
@@ -29,6 +32,7 @@ import { CategorySelect, LocationSelect } from '../../shared/pickers';
 
 export interface ActivityFormInitial {
   readonly activity: Activity;
+  readonly reminder?: Reminder | null | undefined;
   readonly schedule?: Schedule | undefined;
 }
 
@@ -124,6 +128,9 @@ export function ActivityForm({ initial }: { initial?: ActivityFormInitial | unde
     (original?.measurementRequirements ?? []).map((r) => ({ ...r, rowKey: nextKey() })),
   );
   const [outstanding, setOutstanding] = useState<OutstandingPolicy>('supersede_future');
+  const [remind, setRemind] = useState(initial?.reminder?.enabled ?? false);
+  const [leadDays, setLeadDays] = useState(String(initial?.reminder?.leadDays ?? 0));
+  const [atTime, setAtTime] = useState(initial?.reminder?.atTime ?? '09:00');
   const assets = useLiveQuery(({ repos }) => listAssets(repos));
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -224,6 +231,13 @@ export function ActivityForm({ initial }: { initial?: ActivityFormInitial | unde
           );
         }
       }
+      const savedReminder = await saveReminder(original.id);
+      if (!savedReminder.ok) {
+        setBusy(false);
+        return setError(
+          `Details were saved, but the reminder was not: ${describeError(savedReminder.error)}`,
+        );
+      }
       setBusy(false);
       return navigate('/activities');
     }
@@ -242,9 +256,36 @@ export function ActivityForm({ initial }: { initial?: ActivityFormInitial | unde
         schedule: buildSchedule(),
       }),
     );
+    if (result.ok && remind && repeat !== 'none') {
+      const savedReminder = await saveReminder(result.value.activity.id);
+      if (!savedReminder.ok) {
+        setBusy(false);
+        return setError(
+          `The activity was created, but the reminder was not: ${describeError(savedReminder.error)}`,
+        );
+      }
+    }
     setBusy(false);
     if (result.ok) navigate('/activities');
     else setError(describeError(result.error));
+  }
+
+  /** Saves the reminder choice. Nothing to do if there never was one and none is wanted. */
+  async function saveReminder(activityId: ActivityId) {
+    const wanted = remind && repeat !== 'none';
+    const before = initial?.reminder;
+    const unchanged =
+      (before?.enabled ?? false) === wanted &&
+      (!wanted || (String(before?.leadDays) === leadDays && before?.atTime === atTime));
+    if (unchanged) return { ok: true as const };
+    return act(() =>
+      setActivityReminder(deps, {
+        activityId,
+        leadDays: Number(leadDays),
+        atTime,
+        enabled: wanted,
+      }),
+    );
   }
 
   return (
@@ -478,6 +519,44 @@ export function ActivityForm({ initial }: { initial?: ActivityFormInitial | unde
         </fieldset>
       ) : null}
 
+      {repeat !== 'none' && sd.editable ? (
+        <fieldset className="space-y-2 rounded border border-slate-200 bg-white p-3">
+          <legend className="px-1 text-sm font-medium">Reminder</legend>
+          <label className="flex items-center gap-2 text-sm">
+            <input type="checkbox" checked={remind} onChange={(e) => setRemind(e.target.checked)} />
+            Remind me
+          </label>
+          {remind ? (
+            <div className="flex flex-wrap items-end gap-3">
+              <label className="block text-sm">
+                When
+                <select
+                  value={leadDays}
+                  onChange={(e) => setLeadDays(e.target.value)}
+                  className="mt-1 block rounded border border-slate-300 px-2 py-1"
+                >
+                  <option value="0">On the day</option>
+                  <option value="1">1 day before</option>
+                  <option value="2">2 days before</option>
+                  <option value="3">3 days before</option>
+                  <option value="7">1 week before</option>
+                </select>
+              </label>
+              <label className="block text-sm">
+                At
+                <input
+                  type="time"
+                  required
+                  value={atTime}
+                  onChange={(e) => setAtTime(e.target.value)}
+                  className="mt-1 block rounded border border-slate-300 px-2 py-1"
+                />
+              </label>
+            </div>
+          ) : null}
+        </fieldset>
+      ) : null}
+
       <label className="block text-sm">
         Checklist (one item per line, optional)
         <textarea
@@ -588,7 +667,7 @@ export function ActivityEditPage() {
     const activity = activityId ? await repos.activities.getById(activityId as ActivityId) : null;
     if (!activity) return null;
     const schedule = (await repos.schedules.list()).find((x) => x.activityId === activity.id);
-    return { activity, schedule };
+    return { activity, schedule, reminder: await getActivityReminder(repos, activity.id) };
   }, activityId ?? '');
 
   if (loaded.status === 'loading') return <p className="text-slate-600">Loading…</p>;

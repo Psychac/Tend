@@ -11,6 +11,9 @@ import type {
   Completion,
   CompletionId,
   CompletionVoid,
+  Reminder,
+  ReminderDelivery,
+  ReminderId,
   Instant,
   LocalDate,
   Location,
@@ -149,4 +152,22 @@ export interface CompletionVoidRepository {
   /** The void for this completion, if it has been undone or replaced. */
   getByCompletion(completionId: CompletionId): Promise<CompletionVoid | null>;
   list(): Promise<CompletionVoid[]>;
+}
+
+export interface ReminderFilter {
+  readonly activityId?: ActivityId | undefined;
+}
+
+export interface ReminderRepository {
+  getById(id: ReminderId): Promise<Reminder | null>;
+  list(filter?: ReminderFilter): Promise<Reminder[]>;
+  save(reminder: Reminder): Promise<void>;
+}
+
+/** Append-only record of what has been delivered, so nothing is delivered twice. */
+export interface ReminderDeliveryRepository {
+  add(delivery: ReminderDelivery): Promise<void>;
+  /** The keys (`deliveryKey`) of every delivery on record. */
+  keys(): Promise<Set<string>>;
+  list(): Promise<ReminderDelivery[]>;
 }

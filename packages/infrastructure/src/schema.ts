@@ -105,6 +105,26 @@ export const TABLES = {
     },
     indexes: { by_activity_completed: ['activity_id', 'completed_at'] },
   },
+  reminders: {
+    columns: {
+      ...META,
+      activity_id: 'text',
+      lead_days: 'integer',
+      at_time: 'text',
+      enabled: 'integer',
+    },
+    indexes: { by_activity: ['activity_id'] },
+  },
+  reminder_deliveries: {
+    columns: {
+      ...META,
+      reminder_id: 'text',
+      occurrence_id: 'text',
+      due_on: 'text',
+      delivered_at: 'text',
+    },
+    indexes: { by_reminder: ['reminder_id'] },
+  },
   completion_voids: {
     columns: {
       ...META,

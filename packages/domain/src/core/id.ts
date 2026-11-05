@@ -31,6 +31,7 @@ export type CompletionId = Id<'Completion'>;
 export type CompletionVoidId = Id<'CompletionVoid'>;
 export type MeasurementId = Id<'Measurement'>;
 export type ReminderId = Id<'Reminder'>;
+export type ReminderDeliveryId = Id<'ReminderDelivery'>;
 export type AttachmentId = Id<'Attachment'>;
 export type AuditEventId = Id<'AuditEvent'>;
 export type ChecklistItemId = Id<'ChecklistItem'>;

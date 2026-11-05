@@ -2,6 +2,7 @@ import { Link } from 'react-router';
 import { getDashboard, type OccurrenceItem } from '@upkeep/application';
 import { localDateOf, type LocalDate } from '@upkeep/domain';
 import { deviceTimeZone, formatDate, useLiveQuery } from '../../shared/hooks';
+import { RemindersPanel } from '../reminders/RemindersPanel';
 import { OccurrenceCard } from './OccurrenceCard';
 
 function Section({
@@ -50,6 +51,8 @@ export function DashboardPage() {
   return (
     <div className="space-y-6">
       <h2 className="text-xl font-semibold">Dashboard</h2>
+
+      <RemindersPanel />
 
       {nothingOpen ? (
         <p className="rounded border border-dashed border-slate-300 bg-white p-4 text-slate-700">

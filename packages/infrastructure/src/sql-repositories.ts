@@ -1,5 +1,5 @@
 import { ConflictError, type Page, type Repositories, type UnitOfWork } from '@upkeep/contracts';
-import type { EntityMeta } from '@upkeep/domain';
+import { deliveryKey, type EntityMeta } from '@upkeep/domain';
 import {
   activityMapper,
   assetMapper,
@@ -9,6 +9,8 @@ import {
   completionVoidMapper,
   locationMapper,
   measurementMapper,
+  reminderDeliveryMapper,
+  reminderMapper,
   occurrenceMapper,
   scheduleMapper,
   type Mapper,
@@ -134,6 +136,8 @@ function buildRepositories(runner: Runner): Repositories {
   const occurrences = new SqlTable(runner, 'occurrences', occurrenceMapper);
   const completions = new SqlTable(runner, 'completions', completionMapper);
   const completionVoids = new SqlTable(runner, 'completion_voids', completionVoidMapper);
+  const reminders = new SqlTable(runner, 'reminders', reminderMapper);
+  const reminderDeliveries = new SqlTable(runner, 'reminder_deliveries', reminderDeliveryMapper);
   const measurements = new SqlTable(runner, 'measurements', measurementMapper);
   const audit = new SqlTable(runner, 'audit_events', auditMapper);
 
@@ -233,6 +237,24 @@ function buildRepositories(runner: Runner): Repositories {
           page: f,
         });
       },
+    },
+    reminders: {
+      getById: (id) => reminders.getById(id),
+      list: (f) => {
+        const where: string[] = [];
+        const params: SqlValue[] = [];
+        if (f?.activityId !== undefined) add(where, params, 'activity_id = ?', f.activityId);
+        return reminders.query({ where, params, orderBy: 'created_at ASC' });
+      },
+      save: (r) => reminders.save(r),
+    },
+    reminderDeliveries: {
+      add: (d) => reminderDeliveries.append(d),
+      keys: async () => {
+        const rows = await reminderDeliveries.query({ orderBy: 'delivered_at ASC' });
+        return new Set(rows.map((d) => deliveryKey(d.reminderId, d.occurrenceId, d.dueOn)));
+      },
+      list: () => reminderDeliveries.query({ orderBy: 'delivered_at ASC' }),
     },
     completionVoids: {
       add: (v) => completionVoids.append(v),

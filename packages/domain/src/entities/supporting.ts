@@ -1,12 +1,10 @@
 import { Issues, isNonBlank } from '../core';
 import type {
-  ActivityId,
   AttachmentId,
   CategoryId,
   DomainError,
   Instant,
   LocationId,
-  ReminderId,
   Result,
   UserId,
 } from '../core';
@@ -27,18 +25,6 @@ export interface Location {
   readonly name: string;
   readonly kind: LocationKind;
   readonly parentId?: LocationId | undefined;
-}
-
-export type ReminderChannel = 'in_app' | 'browser';
-
-/** Delivery preference only; whether something is due is decided by scheduling (spec 11). */
-export interface Reminder {
-  readonly id: ReminderId;
-  readonly meta: EntityMeta;
-  readonly activityId: ActivityId;
-  readonly channel: ReminderChannel;
-  readonly leadMinutes: number;
-  readonly enabled: boolean;
 }
 
 export type AttachmentStatus = 'pending_upload' | 'uploaded' | 'failed' | 'missing';

@@ -10,3 +10,4 @@ export * from './insights';
 export * from './editing';
 export * from './corrections';
 export * from './organise';
+export * from './reminders';

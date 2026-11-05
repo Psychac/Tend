@@ -9,6 +9,7 @@ import {
   type Repositories,
   type UnitOfWork,
 } from '@upkeep/contracts';
+import { deliveryKey } from '@upkeep/domain';
 import type {
   Activity,
   Asset,
@@ -16,6 +17,8 @@ import type {
   Category,
   Completion,
   CompletionVoid,
+  Reminder,
+  ReminderDelivery,
   EntityMeta,
   Location,
   Measurement,
@@ -80,6 +83,8 @@ export function createInMemoryStore(): { repos: Repositories; uow: UnitOfWork } 
   const occurrences = new Table<Occurrence>();
   const completions = new Table<Completion>();
   const completionVoids = new Table<CompletionVoid>();
+  const reminders = new Table<Reminder>();
+  const reminderDeliveries = new Table<ReminderDelivery>();
   const measurements = new Table<Measurement>();
   const audit = new Table<AuditEvent>();
   const tables = [
@@ -91,6 +96,8 @@ export function createInMemoryStore(): { repos: Repositories; uow: UnitOfWork } 
     occurrences,
     completions,
     completionVoids,
+    reminders,
+    reminderDeliveries,
     measurements,
     audit,
   ] as const;
@@ -195,6 +202,20 @@ export function createInMemoryStore(): { repos: Repositories; uow: UnitOfWork } 
             ),
           f,
         ),
+    },
+    reminders: {
+      getById: async (id) => reminders.get(id),
+      list: async (f) =>
+        reminders.all().filter((r) => f?.activityId === undefined || r.activityId === f.activityId),
+      save: async (r) => reminders.save(r),
+    },
+    reminderDeliveries: {
+      add: async (d) => reminderDeliveries.append(d),
+      keys: async () =>
+        new Set(
+          reminderDeliveries.all().map((d) => deliveryKey(d.reminderId, d.occurrenceId, d.dueOn)),
+        ),
+      list: async () => reminderDeliveries.all(),
     },
     completionVoids: {
       add: async (v) => completionVoids.append(v),

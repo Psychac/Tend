@@ -9,7 +9,7 @@ import type { SqlDatabase, SqlExecutor, SqlValue } from './sql';
 
 export const BACKUP_FORMAT = 'personal-upkeep-backup';
 /** Bump when the shape of an export changes, and add a step to `MIGRATIONS`. */
-export const BACKUP_SCHEMA_VERSION = 2;
+export const BACKUP_SCHEMA_VERSION = 3;
 
 export type BackupRow = Readonly<Record<string, SqlValue>>;
 export type BackupTables = Readonly<Record<TableName, readonly BackupRow[]>>;
@@ -38,6 +38,8 @@ const REFERENCES: Readonly<Record<string, Readonly<Record<string, TableName>>>> 
   occurrences: { activity_id: 'activities', schedule_id: 'schedules' },
   completions: { activity_id: 'activities', occurrence_id: 'occurrences' },
   completion_voids: { completion_id: 'completions', replaced_by: 'completions' },
+  reminders: { activity_id: 'activities' },
+  reminder_deliveries: { reminder_id: 'reminders', occurrence_id: 'occurrences' },
   measurements: { asset_id: 'assets', activity_id: 'activities', completion_id: 'completions' },
 };
 
@@ -47,7 +49,11 @@ const REFERENCES: Readonly<Record<string, Readonly<Record<string, TableName>>>> 
  * adding that table empty; if a later change needs to rewrite rows, add a
  * per-version step here.
  */
-const ADDED_IN: Readonly<Partial<Record<TableName, number>>> = { completion_voids: 2 };
+const ADDED_IN: Readonly<Partial<Record<TableName, number>>> = {
+  completion_voids: 2,
+  reminders: 3,
+  reminder_deliveries: 3,
+};
 
 const tableNamesFor = (version: number): TableName[] =>
   TABLE_NAMES.filter((t) => (ADDED_IN[t] ?? 1) <= version);

@@ -8,6 +8,8 @@ import type {
   LocationRepository,
   MeasurementRepository,
   OccurrenceRepository,
+  ReminderDeliveryRepository,
+  ReminderRepository,
   ScheduleRepository,
 } from './repositories';
 
@@ -20,6 +22,8 @@ export interface Repositories {
   readonly occurrences: OccurrenceRepository;
   readonly completions: CompletionRepository;
   readonly completionVoids: CompletionVoidRepository;
+  readonly reminders: ReminderRepository;
+  readonly reminderDeliveries: ReminderDeliveryRepository;
   readonly measurements: MeasurementRepository;
   readonly audit: AuditEventRepository;
 }

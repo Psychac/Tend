@@ -8,6 +8,8 @@ import {
   type ReactNode,
 } from 'react';
 import { reconcileSchedules, type Deps } from '@upkeep/application';
+import { browserNotifier, type Notifier } from '../../shared/notifier';
+import { REMINDER_CHECK_MS, runReminders } from './reminderEngine';
 import type { Repositories } from '@upkeep/contracts';
 import {
   instantFromDate,
@@ -34,6 +36,8 @@ export interface AppServices {
   readonly repos: Repositories;
   /** The raw database, for whole-database operations such as backup and restore. */
   readonly db: SqlDatabase;
+  /** How browser notifications are shown; replaceable in tests. */
+  readonly notifier: Notifier;
 }
 
 const systemClock: Clock = { now: () => instantFromDate(new Date()) };
@@ -44,7 +48,7 @@ const uuidGenerator: IdGenerator = {
   },
 };
 
-export function createServices(db: SqlDatabase): AppServices {
+export function createServices(db: SqlDatabase, notifier: Notifier = browserNotifier): AppServices {
   return {
     deps: {
       ownerId: LOCAL_OWNER_ID,
@@ -54,6 +58,7 @@ export function createServices(db: SqlDatabase): AppServices {
     },
     repos: createSqlRepositories(db),
     db,
+    notifier,
   };
 }
 
@@ -103,6 +108,7 @@ interface Props {
   readonly children: ReactNode;
   /** Replaceable in tests. */
   readonly open?: () => Promise<SqlDatabase>;
+  readonly notifier?: Notifier;
 }
 
 /**
@@ -110,7 +116,11 @@ interface Props {
  * startup and whenever the app becomes visible again (spec 11). If storage
  * cannot be opened the user is told, rather than shown a broken app (spec 9.3).
  */
-export function AppProvider({ children, open = openSharedDatabase }: Props) {
+export function AppProvider({
+  children,
+  open = openSharedDatabase,
+  notifier = browserNotifier,
+}: Props) {
   const [state, setState] = useState<State>({ status: 'loading' });
   const [revision, setRevision] = useState(0);
   const notifyChanged = useCallback(() => setRevision((r) => r + 1), []);
@@ -119,16 +129,23 @@ export function AppProvider({ children, open = openSharedDatabase }: Props) {
   useEffect(() => {
     let cancelled = false;
     let onVisible: (() => void) | undefined;
+    let timer: ReturnType<typeof setInterval> | undefined;
 
     open()
       .then((db) => {
         if (cancelled) return;
-        const services = createServices(db);
+        const services = createServices(db, notifier);
+        const remind = () =>
+          runReminders(services, notifier).catch((e: unknown) =>
+            console.error('Reminder check failed', e),
+          );
         const reconcile = () => {
           // A failed reconcile must never stop the app from working.
           reconcileSchedules(services.deps)
             .then(() => {
               if (!cancelled) notifyChanged();
+              // Reminders look at what is outstanding, so they run once it is up to date.
+              return remind();
             })
             .catch((e: unknown) => console.error('Schedule reconciliation failed', e));
         };
@@ -137,6 +154,9 @@ export function AppProvider({ children, open = openSharedDatabase }: Props) {
           if (document.visibilityState === 'visible') reconcile();
         };
         document.addEventListener('visibilitychange', onVisible);
+        // While the app is open, keep checking. Opening or returning to the app also checks,
+        // so nothing depends on this timer running (spec 11).
+        timer = setInterval(() => void remind(), REMINDER_CHECK_MS);
         setState({ status: 'ready', services });
       })
       .catch((e: unknown) => {
@@ -148,8 +168,9 @@ export function AppProvider({ children, open = openSharedDatabase }: Props) {
     return () => {
       cancelled = true;
       if (onVisible) document.removeEventListener('visibilitychange', onVisible);
+      if (timer) clearInterval(timer);
     };
-  }, [open, notifyChanged]);
+  }, [open, notifier, notifyChanged]);
 
   if (state.status === 'loading') {
     return <p className="p-4 text-slate-600">Opening your data…</p>;

@@ -65,3 +65,13 @@ export function formatDate(date: string): string {
     timeZone: 'UTC',
   });
 }
+
+/** A number that goes up every `ms`, so a screen showing "right now" can refresh as time passes. */
+export function useTick(ms = 60_000): number {
+  const [tick, setTick] = useState(0);
+  useEffect(() => {
+    const id = setInterval(() => setTick((t) => t + 1), ms);
+    return () => clearInterval(id);
+  }, [ms]);
+  return tick;
+}
