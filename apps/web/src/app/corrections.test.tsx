@@ -1,4 +1,4 @@
-import { screen, within } from '@testing-library/react';
+import { fireEvent, screen, within } from '@testing-library/react';
 import { createDaily, renderApp } from './test-utils';
 
 /** Creates a daily activity, completes today's item with a cost, and opens History. */
@@ -97,5 +97,39 @@ describe('undoing a completion', () => {
     const dueToday = await screen.findByRole('region', { name: 'Due today' });
     expect(within(dueToday).getByText('Water plants')).toBeInTheDocument();
     expect(screen.queryByRole('region', { name: 'Recently done' })).not.toBeInTheDocument();
+  });
+});
+
+describe('correcting when it was done', () => {
+  it('moves an entry to another day and shows the new timing', async () => {
+    const { user } = renderApp('/activities/new');
+    await doneWithCost(user, 'Water plants', '5', 'USD');
+
+    await user.click(await screen.findByRole('button', { name: 'Edit Water plants' }));
+    const form = await screen.findByRole('form', { name: 'Edit entry for Water plants' });
+    const date = within(form).getByLabelText('Done on') as HTMLInputElement;
+    expect(date.value).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    const day = new Date(`${date.value}T00:00:00Z`);
+    day.setUTCDate(day.getUTCDate() - 1);
+    const yesterday = day.toISOString().slice(0, 10);
+    fireEvent.change(date, { target: { value: yesterday } });
+    await user.click(within(form).getByRole('button', { name: 'Save changes' }));
+
+    // Planned for today, now recorded as done a day earlier.
+    expect(await screen.findByText(/1 day early/)).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Edit Water plants' }));
+    expect((await screen.findByLabelText('Done on')) as HTMLInputElement).toHaveValue(yesterday);
+  });
+
+  it('refuses a date in the future', async () => {
+    const { user } = renderApp('/activities/new');
+    await doneWithCost(user, 'Water plants', '5', 'USD');
+    await user.click(await screen.findByRole('button', { name: 'Edit Water plants' }));
+    const form = await screen.findByRole('form', { name: 'Edit entry for Water plants' });
+    fireEvent.change(within(form).getByLabelText('Done on'), { target: { value: '2099-01-01' } });
+    await user.click(within(form).getByRole('button', { name: 'Save changes' }));
+    expect(await within(form).findByRole('alert')).toHaveTextContent(
+      /completedAt: cannot be in the future/,
+    );
   });
 });

@@ -1,5 +1,6 @@
 import {
   createCompletionVoid,
+  localDateOf,
   err,
   invariantError,
   ok,
@@ -12,6 +13,7 @@ import {
   type Result,
 } from '@upkeep/domain';
 import { auditEvent, found, transact, type Deps } from './deps';
+import { ensureOccurrences } from './generation';
 import { buildCompletion, type CompletionDetails } from './occurrences';
 
 const alreadyVoided = () => err(invariantError('This entry was already undone or corrected'));
@@ -113,27 +115,28 @@ export async function correctCompletion(
     );
     if (!original.ok) return original;
     if (await repos.completionVoids.getByCompletion(original.value.id)) return alreadyVoided();
-    if (!original.value.occurrenceId) {
-      return err(invariantError('Only completions of scheduled work can be corrected'));
-    }
-
     const activity = found(
       'Activity',
       original.value.activityId,
       await repos.activities.getById(original.value.activityId),
     );
     if (!activity.ok) return activity;
-    const occurrence = found(
-      'Occurrence',
-      original.value.occurrenceId,
-      await repos.occurrences.getById(original.value.occurrenceId),
-    );
-    if (!occurrence.ok) return occurrence;
+    // Work done outside any schedule has no occurrence; it can still be corrected.
+    let occurrence: Occurrence | undefined;
+    if (original.value.occurrenceId) {
+      const loaded = found(
+        'Occurrence',
+        original.value.occurrenceId,
+        await repos.occurrences.getById(original.value.occurrenceId),
+      );
+      if (!loaded.ok) return loaded;
+      occurrence = loaded.value;
+    }
 
     const built = buildCompletion(
       deps,
       activity.value,
-      occurrence.value,
+      occurrence,
       { ...input.details, completedAt: input.details.completedAt ?? original.value.completedAt },
       now,
     );
@@ -152,6 +155,35 @@ export async function correctCompletion(
     await repos.completions.add(completion);
     for (const m of measurements) await repos.measurements.add(m);
     await repos.completionVoids.add(voided.value);
+
+    // After-completion schedules count from the latest completion. If this one moved, the
+    // follow-on item that was based on the old date must be recalculated from the new one.
+    const schedule = occurrence?.scheduleId
+      ? await repos.schedules.getById(occurrence.scheduleId)
+      : null;
+    if (
+      schedule?.strategy.kind === 'completion_interval' &&
+      completion.completedAt !== original.value.completedAt
+    ) {
+      const [latest] = await repos.completions.list({
+        activityId: completion.activityId,
+        limit: 1,
+      });
+      if (latest?.id === completion.id) {
+        const open = await repos.occurrences.list({
+          activityId: completion.activityId,
+          status: ['pending', 'snoozed'],
+        });
+        for (const other of open.filter((o) => o.scheduleId === schedule.id)) {
+          const gone = transitionOccurrence(other, 'superseded', now);
+          if (gone.ok) await repos.occurrences.save(gone.value);
+        }
+        await ensureOccurrences(deps, repos, activity.value, schedule, {
+          lastResolvedOn: localDateOf(completion.completedAt, schedule.timeZone),
+        });
+      }
+    }
+
     await repos.audit.add(
       auditEvent(deps, 'completion', completion.id, 'updated', `${activity.value.name}: corrected`),
     );

@@ -1,4 +1,4 @@
-import type { Result, TimeZoneId } from '@upkeep/domain';
+import { createCompletion, type Result, type TimeZoneId } from '@upkeep/domain';
 import {
   completeOccurrence,
   correctCompletion,
@@ -319,5 +319,115 @@ describe('correctCompletion', () => {
     const undone = must(await undoCompletion(h.deps, { completionId: fixed.completion.id }));
     expect(undone.reopened?.status).toBe('pending');
     expect((await history(h)).entries).toHaveLength(0);
+  });
+});
+
+describe('correcting unplanned work', () => {
+  it('can edit and undo a completion that was never part of a schedule', async () => {
+    const h = createHarness();
+    const a = must(await createActivity(h.deps, { name: 'Fix gate', type: 'maintenance' }));
+    const made = createCompletion({
+      id: h.deps.ids.next<'Completion'>(),
+      ownerId: h.deps.ownerId,
+      now: h.clock.now(),
+      activityId: a.activity.id,
+      notes: 'sticky hinge',
+    });
+    const unplanned = must(made);
+    await h.repos.completions.add(unplanned);
+
+    const fixed = must(
+      await correctCompletion(h.deps, {
+        completionId: unplanned.id,
+        details: { notes: 'loose hinge' },
+      }),
+    );
+    expect(fixed.completion.occurrenceId).toBeUndefined();
+    expect(fixed.completion.plannedFor).toBeUndefined();
+    const [entry] = (await history(h)).entries;
+    expect(entry?.kind === 'completed' && entry.completion.notes).toBe('loose hinge');
+    expect(entry?.kind === 'completed' && entry.edited).toBe(true);
+
+    const undone = must(await undoCompletion(h.deps, { completionId: fixed.completion.id }));
+    expect(undone.reopened).toBeUndefined(); // there was no scheduled work to bring back
+    expect((await history(h)).entries).toHaveLength(0);
+  });
+});
+
+describe('correcting when it was done', () => {
+  it('moves the entry to the new day and recalculates lateness', async () => {
+    const h = createHarness();
+    const a = must(
+      await createActivity(h.deps, { name: 'Chore', type: 'routine', schedule: daily }),
+    );
+    h.clock.set('2026-11-08T06:30:00.000Z');
+    const done = must(await completeOccurrence(h.deps, { occurrenceId: a.occurrences[0]!.id })); // due Nov 5, done Nov 8
+
+    const fixed = must(
+      await correctCompletion(h.deps, {
+        completionId: done.completion.id,
+        details: { completedAt: '2026-11-05T10:00:00.000Z' }, // actually did it on the 5th
+      }),
+    );
+    expect(fixed.completion.completedAt).toBe('2026-11-05T10:00:00.000Z');
+    const [entry] = (await history(h)).entries;
+    expect(entry?.kind === 'completed' && entry.daysFromPlanned).toBe(0);
+  });
+
+  it('refuses a date in the future and leaves the entry alone', async () => {
+    const h = createHarness();
+    const a = must(
+      await createActivity(h.deps, { name: 'Chore', type: 'routine', schedule: daily }),
+    );
+    const done = must(await completeOccurrence(h.deps, { occurrenceId: a.occurrences[0]!.id }));
+    const bad = await correctCompletion(h.deps, {
+      completionId: done.completion.id,
+      details: { completedAt: '2027-01-01T00:00:00.000Z' },
+    });
+    expect(!bad.ok && bad.error.issues[0]?.path).toBe('completedAt');
+    expect(
+      (await history(h)).entries[0]?.kind === 'completed' && (await history(h)).entries[0],
+    ).toBeTruthy();
+    expect(await h.repos.completions.list({ includeVoided: true })).toHaveLength(1);
+  });
+
+  it('recalculates the next item of an after-completion schedule from the corrected date', async () => {
+    const h = createHarness();
+    const a = must(
+      await createActivity(h.deps, {
+        name: 'Descale',
+        type: 'cleaning',
+        schedule: afterCompletion,
+      }),
+    );
+    h.clock.set('2026-11-10T06:30:00.000Z');
+    const done = must(await completeOccurrence(h.deps, { occurrenceId: a.occurrences[0]!.id }));
+    expect(done.nextOccurrences[0]?.dueOn).toBe('2026-12-10'); // 30 days after Nov 10
+
+    must(
+      await correctCompletion(h.deps, {
+        completionId: done.completion.id,
+        details: { completedAt: '2026-11-05T06:30:00.000Z' }, // really done on the 5th
+      }),
+    );
+    const open = await h.repos.occurrences.list({ status: ['pending', 'snoozed'] });
+    expect(open.map((o) => o.dueOn)).toEqual(['2026-12-05']); // one item, now 30 days after Nov 5
+  });
+
+  it('leaves a calendar schedule alone when the date moves', async () => {
+    const h = createHarness();
+    const a = must(
+      await createActivity(h.deps, { name: 'Chore', type: 'routine', schedule: daily }),
+    );
+    const done = must(await completeOccurrence(h.deps, { occurrenceId: a.occurrences[0]!.id }));
+    const before = (await h.repos.occurrences.list({ status: ['pending'] })).map((o) => o.dueOn);
+    must(
+      await correctCompletion(h.deps, {
+        completionId: done.completion.id,
+        details: { completedAt: '2026-11-05T01:00:00.000Z' },
+      }),
+    );
+    const after = (await h.repos.occurrences.list({ status: ['pending'] })).map((o) => o.dueOn);
+    expect(after).toEqual(before);
   });
 });

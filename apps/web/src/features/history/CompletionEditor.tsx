@@ -1,9 +1,16 @@
 import { useState, type FormEvent } from 'react';
 import { correctCompletion, type HistoryEntry, type MeasurementInput } from '@upkeep/application';
-import { currencyExponent, parseMoney } from '@upkeep/domain';
+import {
+  currencyExponent,
+  instantFromLocal,
+  localDateOf,
+  localTimeOf,
+  parseLocalDate,
+  parseMoney,
+} from '@upkeep/domain';
 import { useApp } from '../../app/providers/AppProvider';
 import { MoneyField, useMoneyState } from '../../shared/currency';
-import { describeError, useAction } from '../../shared/hooks';
+import { describeError, deviceTimeZone, useAction } from '../../shared/hooks';
 
 type Done = Extract<HistoryEntry, { kind: 'completed' }>;
 
@@ -27,6 +34,11 @@ export function CompletionEditor({ entry, onDone }: { entry: Done; onDone: () =>
   const act = useAction();
   const { completion } = entry;
 
+  const timeZone = deviceTimeZone();
+  const originalDate = localDateOf(completion.completedAt, timeZone);
+  const originalTime = localTimeOf(completion.completedAt, timeZone);
+  const [doneDate, setDoneDate] = useState<string>(originalDate);
+  const [doneTime, setDoneTime] = useState(originalTime);
   const [notes, setNotes] = useState(completion.notes ?? '');
   const [cost, setCost] = useMoneyState(
     completion.cost
@@ -68,6 +80,15 @@ export function CompletionEditor({ entry, onDone }: { entry: Done; onDone: () =>
     const parsedCost = cost.amount.trim() ? parseMoney(cost.amount, cost.currency) : undefined;
     if (parsedCost && !parsedCost.ok) return setError(describeError(parsedCost.error));
 
+    // Only send a new time if the person changed it, so an untouched entry keeps its exact original.
+    let completedAt: string | undefined;
+    if (doneDate !== originalDate || doneTime !== originalTime) {
+      const date = parseLocalDate(doneDate);
+      if (!date.ok || !/^\d{2}:\d{2}$/.test(doneTime))
+        return setError('Choose the date and time it was done.');
+      completedAt = instantFromLocal(date.value, doneTime, timeZone);
+    }
+
     const measurements: MeasurementInput[] = readings.flatMap((r) =>
       values[r.key]
         ? [{ kind: 'numeric' as const, key: r.key, value: Number(values[r.key]), unit: r.unit }]
@@ -78,6 +99,7 @@ export function CompletionEditor({ entry, onDone }: { entry: Done; onDone: () =>
       correctCompletion(deps, {
         completionId: completion.id,
         details: {
+          completedAt,
           notes: notes || undefined,
           cost: parsedCost?.ok ? parsedCost.value : undefined,
           checklistResults: entry.checklist.map((c) => ({
@@ -133,6 +155,29 @@ export function CompletionEditor({ entry, onDone }: { entry: Done; onDone: () =>
           />
         </label>
       ))}
+
+      <div className="flex flex-wrap gap-3">
+        <label className="block text-sm">
+          Done on
+          <input
+            type="date"
+            required
+            value={doneDate}
+            onChange={(e) => setDoneDate(e.target.value)}
+            className="mt-1 block rounded border border-slate-300 px-2 py-1"
+          />
+        </label>
+        <label className="block text-sm">
+          At
+          <input
+            type="time"
+            required
+            value={doneTime}
+            onChange={(e) => setDoneTime(e.target.value)}
+            className="mt-1 block rounded border border-slate-300 px-2 py-1"
+          />
+        </label>
+      </div>
 
       <label className="block text-sm">
         Notes

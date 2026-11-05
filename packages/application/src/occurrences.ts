@@ -72,7 +72,8 @@ export type CompletionDetails = Omit<CompleteOccurrenceInput, 'occurrenceId'>;
 export function buildCompletion(
   deps: Deps,
   activity: Activity,
-  occurrence: { readonly id: OccurrenceId; readonly dueOn: LocalDate },
+  /** Absent for work that was done outside any schedule. */
+  occurrence: { readonly id: OccurrenceId; readonly dueOn: LocalDate } | undefined,
   input: CompletionDetails,
   now: Instant,
 ): Result<{ completion: Completion; measurements: Measurement[] }> {
@@ -117,9 +118,9 @@ export function buildCompletion(
     ownerId: deps.ownerId,
     now,
     activityId: activity.id,
-    occurrenceId: occurrence.id,
+    occurrenceId: occurrence?.id,
     completedAt,
-    plannedFor: occurrence.dueOn,
+    plannedFor: occurrence?.dueOn,
     notes: input.notes,
     cost,
     checklistResults: input.checklistResults,
