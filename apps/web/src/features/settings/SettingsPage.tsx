@@ -8,6 +8,7 @@ import {
   type RestoreMode,
   type RestorePreview,
 } from '@upkeep/infrastructure';
+import { CategoriesSection, LocationsSection } from './OrganiseSections';
 import { CurrencySelect, getDefaultCurrency, setDefaultCurrency } from '../../shared/currency';
 import { useApp, useChanges } from '../../app/providers/AppProvider';
 
@@ -30,6 +31,8 @@ export function SettingsPage() {
   return (
     <div className="max-w-2xl space-y-8">
       <h2 className="text-xl font-semibold">Settings</h2>
+      <CategoriesSection />
+      <LocationsSection />
       <CurrencySection />
       <BackupSection />
     </div>

@@ -13,6 +13,8 @@ import {
   type Activity,
   type ActivityId,
   type AssetId,
+  type CategoryId,
+  type LocationId,
   type ActivityType,
   type IsoWeekday,
   type MeasurementRequirement,
@@ -23,6 +25,7 @@ import {
 } from '@upkeep/domain';
 import { useApp } from '../../app/providers/AppProvider';
 import { describeError, deviceTimeZone, useAction, useLiveQuery } from '../../shared/hooks';
+import { CategorySelect, LocationSelect } from '../../shared/pickers';
 
 export interface ActivityFormInitial {
   readonly activity: Activity;
@@ -112,6 +115,8 @@ export function ActivityForm({ initial }: { initial?: ActivityFormInitial | unde
     original?.checklist.map((c) => c.label).join('\n') ?? '',
   );
   const [assetId, setAssetId] = useState(original?.assetId ?? '');
+  const [categoryId, setCategoryId] = useState<string>(original?.categoryId ?? '');
+  const [locationId, setLocationId] = useState<string>(original?.locationId ?? '');
   const [meterKey, setMeterKey] = useState(sd.meterKey);
   const [meterUnit, setMeterUnit] = useState(sd.meterUnit);
   const [usageEvery, setUsageEvery] = useState(sd.usageEvery);
@@ -196,8 +201,8 @@ export function ActivityForm({ initial }: { initial?: ActivityFormInitial | unde
           type,
           priority,
           assetId: assetId ? (assetId as AssetId) : undefined,
-          categoryId: original.categoryId,
-          locationId: original.locationId,
+          categoryId: categoryId ? (categoryId as CategoryId) : undefined,
+          locationId: locationId ? (locationId as LocationId) : undefined,
           estimatedMinutes: original.estimatedMinutes,
           checklist: checklistEdits,
           measurementRequirements: requirementList(),
@@ -232,6 +237,8 @@ export function ActivityForm({ initial }: { initial?: ActivityFormInitial | unde
         checklist: checklistLines(),
         measurementRequirements: requirementList(),
         assetId: assetId ? (assetId as AssetId) : undefined,
+        categoryId: categoryId ? (categoryId as CategoryId) : undefined,
+        locationId: locationId ? (locationId as LocationId) : undefined,
         schedule: buildSchedule(),
       }),
     );
@@ -285,6 +292,11 @@ export function ActivityForm({ initial }: { initial?: ActivityFormInitial | unde
             <option value="high">High</option>
           </select>
         </label>
+      </div>
+
+      <div className="flex flex-wrap gap-4">
+        <CategorySelect label="Category" value={categoryId} onChange={setCategoryId} />
+        <LocationSelect label="Place" value={locationId} onChange={setLocationId} />
       </div>
 
       <label className="block text-sm">

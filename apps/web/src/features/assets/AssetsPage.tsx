@@ -7,8 +7,15 @@ import {
   setAssetStatus,
   type AssetListItem,
 } from '@upkeep/application';
-import { currencyExponent, parseMoney, type Asset } from '@upkeep/domain';
+import {
+  currencyExponent,
+  parseMoney,
+  type Asset,
+  type CategoryId,
+  type LocationId,
+} from '@upkeep/domain';
 import { MoneyField, useMoneyState } from '../../shared/currency';
+import { CategorySelect, LocationSelect } from '../../shared/pickers';
 import { useApp } from '../../app/providers/AppProvider';
 import { describeError, formatDate, useAction, useLiveQuery } from '../../shared/hooks';
 
@@ -21,10 +28,18 @@ const primary =
 export function AssetsPage() {
   const [search, setSearch] = useState('');
   const [showInactive, setShowInactive] = useState(false);
+  const [categoryFilter, setCategoryFilter] = useState('');
+  const [locationFilter, setLocationFilter] = useState('');
   const [adding, setAdding] = useState(false);
   const assets = useLiveQuery(
-    ({ repos }) => listAssets(repos, { search, includeInactive: showInactive }),
-    `${search}|${showInactive}`,
+    ({ repos }) =>
+      listAssets(repos, {
+        search,
+        includeInactive: showInactive,
+        categoryId: categoryFilter ? (categoryFilter as CategoryId) : undefined,
+        locationId: locationFilter ? (locationFilter as LocationId) : undefined,
+      }),
+    `${search}|${showInactive}|${categoryFilter}|${locationFilter}`,
   );
 
   return (
@@ -45,6 +60,23 @@ export function AssetsPage() {
         onChange={(e) => setSearch(e.target.value)}
         className="block w-full max-w-md rounded border border-slate-300 px-2 py-1"
       />
+
+      <div className="flex flex-wrap gap-4">
+        <CategorySelect
+          label="Category"
+          empty="All categories"
+          value={categoryFilter}
+          onChange={setCategoryFilter}
+          className="mt-1 block rounded border border-slate-300 px-2 py-1"
+        />
+        <LocationSelect
+          label="Place"
+          empty="All places"
+          value={locationFilter}
+          onChange={setLocationFilter}
+          className="mt-1 block rounded border border-slate-300 px-2 py-1"
+        />
+      </div>
 
       <label className="flex items-center gap-2 text-sm">
         <input
@@ -100,6 +132,8 @@ function AssetForm({ asset, onDone }: { asset?: Asset | undefined; onDone: () =>
   );
   const [warranty, setWarranty] = useState(asset?.warranty?.expiresOn ?? '');
   const [notes, setNotes] = useState(asset?.notes ?? '');
+  const [categoryId, setCategoryId] = useState<string>(asset?.categoryId ?? '');
+  const [locationId, setLocationId] = useState<string>(asset?.locationId ?? '');
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -113,6 +147,8 @@ function AssetForm({ asset, onDone }: { asset?: Asset | undefined; onDone: () =>
     }
     setBusy(true);
     const details = {
+      categoryId: categoryId ? (categoryId as CategoryId) : undefined,
+      locationId: locationId ? (locationId as LocationId) : undefined,
       name,
       vendor,
       notes,
@@ -162,6 +198,10 @@ function AssetForm({ asset, onDone }: { asset?: Asset | undefined; onDone: () =>
             className={field}
           />
         </label>
+      </div>
+      <div className="flex flex-wrap gap-4">
+        <CategorySelect label="Category" value={categoryId} onChange={setCategoryId} />
+        <LocationSelect label="Place" value={locationId} onChange={setLocationId} />
       </div>
       <label className="block text-sm">
         Notes
@@ -233,6 +273,8 @@ function AssetCard({ item }: { item: AssetListItem }) {
             {item.activityCount} {item.activityCount === 1 ? 'activity' : 'activities'}
             {asset.status !== 'active' ? ` · ${asset.status.replace('_', ' ')}` : ''}
             {asset.warranty ? ` · warranty ends ${formatDate(asset.warranty.expiresOn)}` : ''}
+            {item.categoryName ? ` · ${item.categoryName}` : ''}
+            {item.locationPath ? ` · ${item.locationPath}` : ''}
           </p>
           {item.latestReadings.map((m) =>
             m.value.kind === 'numeric' ? (

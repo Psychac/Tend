@@ -3,21 +3,27 @@ import {
   createAsset as createAssetEntity,
   err,
   invariantError,
+  notFoundError,
   ok,
   parseLocalDate,
   touch,
   validationError,
   type Asset,
   type AssetStatus,
+  type CategoryId,
+  type LocationId,
   type LocalDate,
   type Measurement,
   type Money,
   type Result,
 } from '@upkeep/domain';
 import { auditEvent, found, transact, type Deps } from './deps';
+import { locationPaths } from './organise';
 
 export interface CreateAssetInput {
   readonly name: string;
+  readonly categoryId?: CategoryId | undefined;
+  readonly locationId?: LocationId | undefined;
   readonly notes?: string | undefined;
   readonly vendor?: string | undefined;
   /** YYYY-MM-DD */
@@ -42,11 +48,20 @@ export async function createAsset(deps: Deps, input: CreateAssetInput): Promise<
     const warrantyExpiresOn = optionalDate('warrantyExpiresOn', input.warrantyExpiresOn);
     if (!warrantyExpiresOn.ok) return warrantyExpiresOn;
 
+    if (input.categoryId && !(await repos.categories.getById(input.categoryId))) {
+      return err(notFoundError('Category', input.categoryId));
+    }
+    if (input.locationId && !(await repos.locations.getById(input.locationId))) {
+      return err(notFoundError('Location', input.locationId));
+    }
+
     const created = createAssetEntity({
       id: deps.ids.next<'Asset'>(),
       ownerId: deps.ownerId,
       now: deps.clock.now(),
       name: input.name,
+      categoryId: input.categoryId,
+      locationId: input.locationId,
       purchase: {
         date: purchaseDate.value,
         price: input.purchasePrice,
@@ -91,6 +106,9 @@ export async function setAssetStatus(
 
 export interface AssetListItem {
   readonly asset: Asset;
+  readonly categoryName?: string | undefined;
+  /** "House › Garage" */
+  readonly locationPath?: string | undefined;
   readonly activityCount: number;
   /** The most recent numeric reading for each meter on this asset. */
   readonly latestReadings: readonly Measurement[];
@@ -98,6 +116,8 @@ export interface AssetListItem {
 
 export interface AssetListOptions {
   readonly search?: string | undefined;
+  readonly categoryId?: CategoryId | undefined;
+  readonly locationId?: LocationId | undefined;
   /** Include retired and disposed assets. Off by default. */
   readonly includeInactive?: boolean | undefined;
 }
@@ -106,10 +126,18 @@ export async function listAssets(
   repos: Repositories,
   options: AssetListOptions = {},
 ): Promise<AssetListItem[]> {
-  const [assets, activities] = await Promise.all([
-    repos.assets.list({ search: options.search }),
+  const [assets, activities, categories, locations] = await Promise.all([
+    repos.assets.list({
+      search: options.search,
+      categoryId: options.categoryId,
+      locationId: options.locationId,
+    }),
     repos.activities.list({}),
+    repos.categories.list(),
+    repos.locations.list(),
   ]);
+  const categoryName = new Map(categories.map((c) => [c.id, c.name]));
+  const paths = locationPaths(locations);
   const visible = assets.filter(
     (a) => options.includeInactive || a.status === 'active' || a.status === 'in_storage',
   );
@@ -123,6 +151,8 @@ export async function listAssets(
       }
       return {
         asset,
+        categoryName: asset.categoryId ? categoryName.get(asset.categoryId) : undefined,
+        locationPath: asset.locationId ? paths.get(asset.locationId) : undefined,
         activityCount: activities.filter((a) => a.assetId === asset.id).length,
         latestReadings: [...latest.values()],
       };

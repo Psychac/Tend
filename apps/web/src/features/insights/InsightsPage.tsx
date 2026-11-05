@@ -118,6 +118,22 @@ function Report({ view }: { view: InsightsView }) {
         </section>
       ) : null}
 
+      {view.categories.length > 0 ? (
+        <section aria-labelledby="categories-heading" className="space-y-2">
+          <h3 id="categories-heading" className="text-lg font-medium">
+            By category
+          </h3>
+          <ul className="space-y-1 text-sm">
+            {view.categories.map((c) => (
+              <li key={c.name}>
+                <span className="font-medium">{c.name}</span>: {c.completed} done
+                {c.spend.length > 0 ? ` · ${spendText(c.spend)}` : ''}
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
+
       {view.activities.length > 0 ? (
         <section aria-labelledby="activities-heading" className="space-y-2">
           <h3 id="activities-heading" className="text-lg font-medium">

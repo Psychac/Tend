@@ -1,4 +1,5 @@
 import type { Repositories } from '@upkeep/contracts';
+import { locationPaths } from './organise';
 import {
   addDays,
   classifyOccurrence,
@@ -8,7 +9,9 @@ import {
   type Activity,
   type ActivityId,
   type Clock,
+  type CategoryId,
   type ChecklistItem,
+  type LocationId,
   type Completion,
   type MeasurementRequirement,
   type Instant,
@@ -110,6 +113,9 @@ export async function getDashboard(
 
 export interface ActivityListItem {
   readonly activity: Activity;
+  readonly categoryName?: string | undefined;
+  /** "Kitchen › Pantry" */
+  readonly locationPath?: string | undefined;
   readonly schedules: readonly Schedule[];
   /** Due date of the nearest outstanding occurrence, if any. */
   readonly nextDueOn?: LocalDate | undefined;
@@ -117,6 +123,8 @@ export interface ActivityListItem {
 
 export interface ActivityListOptions {
   readonly search?: string | undefined;
+  readonly categoryId?: CategoryId | undefined;
+  readonly locationId?: LocationId | undefined;
   readonly includeArchived?: boolean | undefined;
 }
 
@@ -124,11 +132,20 @@ export async function listActivities(
   repos: Repositories,
   options: ActivityListOptions = {},
 ): Promise<ActivityListItem[]> {
-  const [activities, schedules, outstanding] = await Promise.all([
-    repos.activities.list({ search: options.search, includeArchived: options.includeArchived }),
+  const [activities, schedules, outstanding, categories, locations] = await Promise.all([
+    repos.activities.list({
+      search: options.search,
+      categoryId: options.categoryId,
+      locationId: options.locationId,
+      includeArchived: options.includeArchived,
+    }),
     repos.schedules.list(),
     repos.occurrences.list({ status: ['pending', 'snoozed'] }),
+    repos.categories.list(),
+    repos.locations.list(),
   ]);
+  const categoryName = new Map(categories.map((c) => [c.id, c.name]));
+  const paths = locationPaths(locations);
   const nextByActivity = new Map<ActivityId, LocalDate>();
   for (const o of outstanding) {
     const due = effectiveDueOn(o);
@@ -139,6 +156,8 @@ export async function listActivities(
     activity,
     schedules: schedules.filter((s) => s.activityId === activity.id),
     nextDueOn: nextByActivity.get(activity.id),
+    categoryName: activity.categoryId ? categoryName.get(activity.categoryId) : undefined,
+    locationPath: activity.locationId ? paths.get(activity.locationId) : undefined,
   }));
 }
 

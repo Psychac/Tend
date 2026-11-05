@@ -3,6 +3,7 @@ import {
   completeOccurrence,
   createActivity,
   createAsset,
+  createCategory,
   getInsights,
   recordMeasurement,
   skipOccurrence,
@@ -161,5 +162,44 @@ describe('getInsights', () => {
     });
     expect(meter?.first.value).toBe(10000);
     expect(meter?.last.value).toBe(10600);
+  });
+});
+
+describe('getInsights by category', () => {
+  it('groups work and spending by category, and stays empty when nothing is filed', async () => {
+    const h = createHarness();
+    expect((await insights(h, '2026-11-05')).categories).toEqual([]);
+
+    const cleaning = must(await createCategory(h.deps, { name: 'Cleaning' }));
+    const a = must(
+      await createActivity(h.deps, {
+        name: 'Mop',
+        type: 'cleaning',
+        categoryId: cleaning.id,
+        schedule: daily,
+      }),
+    );
+    const b = must(
+      await createActivity(h.deps, { name: 'Pay rent', type: 'administrative', schedule: daily }),
+    );
+    must(
+      await completeOccurrence(h.deps, {
+        occurrenceId: a.occurrences[0]!.id,
+        cost: { minor: 300, currency: 'INR' },
+      }),
+    );
+    must(
+      await completeOccurrence(h.deps, {
+        occurrenceId: a.occurrences[1]!.id,
+        cost: { minor: 200, currency: 'INR' },
+      }),
+    );
+    must(await completeOccurrence(h.deps, { occurrenceId: b.occurrences[0]!.id }));
+
+    const view = await insights(h, '2026-11-05');
+    expect(view.categories).toEqual([
+      { name: 'Cleaning', completed: 2, spend: [{ currency: 'INR', minor: 500 }] },
+      { name: 'No category', completed: 1, spend: [] },
+    ]);
   });
 });

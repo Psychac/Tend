@@ -31,6 +31,13 @@ export interface ActivityInsight {
   readonly spend: readonly Money[];
 }
 
+export interface CategoryInsight {
+  /** "No category" for work whose activity has none. */
+  readonly name: string;
+  readonly completed: number;
+  readonly spend: readonly Money[];
+}
+
 export interface MonthInsight {
   /** YYYY-MM */
   readonly month: string;
@@ -64,6 +71,8 @@ export interface InsightsView {
   readonly spend: readonly Money[];
   readonly months: readonly MonthInsight[];
   readonly activities: readonly ActivityInsight[];
+  /** Empty unless some work belongs to a category. */
+  readonly categories: readonly CategoryInsight[];
   readonly meters: readonly MeterInsight[];
 }
 
@@ -95,7 +104,7 @@ export async function getInsights(
   options: InsightsOptions,
 ): Promise<InsightsView> {
   const { from, today, timeZone } = options;
-  const [activities, schedules, outstanding, skipped, completions, assets, readings] =
+  const [activities, schedules, outstanding, skipped, completions, assets, readings, categoryList] =
     await Promise.all([
       repos.activities.list({ includeArchived: true }),
       repos.schedules.list(),
@@ -107,6 +116,7 @@ export async function getInsights(
       }),
       repos.assets.list({}),
       repos.measurements.list({ limit: 5000 }),
+      repos.categories.list(),
     ]);
   const graceOf = new Map(schedules.map((s) => [s.id, s.policy.graceDays]));
 
@@ -173,6 +183,27 @@ export async function getInsights(
     .filter((a) => a.completed + a.skipped > 0)
     .sort((a, b) => b.completed - a.completed || a.name.localeCompare(b.name));
 
+  // Per category: only worth showing once something has been filed under one.
+  const categoryOf = new Map(activities.map((a) => [a.id, a.categoryId]));
+  const categoryNames = new Map(categoryList.map((c) => [c.id, c.name]));
+  const byCategory = new Map<string, { completed: number; costs: Money[] }>();
+  for (const { c } of done) {
+    const id = categoryOf.get(c.activityId);
+    const name = (id && categoryNames.get(id)) || 'No category';
+    const entry = byCategory.get(name) ?? { completed: 0, costs: [] };
+    entry.completed += 1;
+    if (c.cost) entry.costs.push(c.cost);
+    byCategory.set(name, entry);
+  }
+  const categories: CategoryInsight[] = [...byCategory]
+    .map(([name, v]) => ({ name, completed: v.completed, spend: totalsByCurrency(v.costs) }))
+    .sort(
+      (a, b) =>
+        (a.name === 'No category' ? 1 : 0) - (b.name === 'No category' ? 1 : 0) ||
+        b.completed - a.completed ||
+        a.name.localeCompare(b.name),
+    );
+
   // Meters: first and last numeric reading per asset and key within the range.
   const assetName = new Map(assets.map((a) => [a.id, a.name]));
   const groups = new Map<
@@ -225,6 +256,7 @@ export async function getInsights(
     spend: totalsByCurrency(costs),
     months,
     activities: perActivity,
+    categories: categories.some((c) => c.name !== 'No category') ? categories : [],
     meters,
   };
 }

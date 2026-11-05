@@ -226,6 +226,8 @@ export async function setActivitySchedule(
 export interface UpdateAssetInput {
   readonly assetId: AssetId;
   readonly name: string;
+  readonly categoryId?: CategoryId | undefined;
+  readonly locationId?: LocationId | undefined;
   readonly notes?: string | undefined;
   readonly vendor?: string | undefined;
   readonly purchaseDate?: string | undefined;
@@ -253,13 +255,20 @@ export async function updateAsset(deps: Deps, input: UpdateAssetInput): Promise<
     const warranty = date('warrantyExpiresOn', input.warrantyExpiresOn);
     if (!warranty.ok) return warranty;
 
+    if (input.categoryId && !(await repos.categories.getById(input.categoryId))) {
+      return err(notFoundError('Category', input.categoryId));
+    }
+    if (input.locationId && !(await repos.locations.getById(input.locationId))) {
+      return err(notFoundError('Location', input.locationId));
+    }
+
     const validated = createAssetEntity({
       id: existing.id,
       ownerId: existing.meta.ownerId,
       now,
       name: input.name,
-      categoryId: existing.categoryId,
-      locationId: existing.locationId,
+      categoryId: input.categoryId,
+      locationId: input.locationId,
       status: existing.status,
       purchase: {
         date: purchaseDate.value,

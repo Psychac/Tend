@@ -7,9 +7,10 @@ import {
   resumeActivitySchedule,
   unarchiveActivity,
 } from '@upkeep/application';
-import type { Result } from '@upkeep/domain';
+import type { CategoryId, LocationId, Result } from '@upkeep/domain';
 import { useApp } from '../../app/providers/AppProvider';
 import { describeError, formatDate, useAction, useLiveQuery } from '../../shared/hooks';
+import { CategorySelect, LocationSelect } from '../../shared/pickers';
 
 const small = 'rounded border border-slate-300 px-3 py-1 text-sm hover:bg-slate-100';
 
@@ -18,6 +19,8 @@ export function ActivitiesPage() {
   const act = useAction();
   const [search, setSearch] = useState('');
   const [showArchived, setShowArchived] = useState(false);
+  const [categoryFilter, setCategoryFilter] = useState('');
+  const [locationFilter, setLocationFilter] = useState('');
   const [error, setError] = useState<string | null>(null);
 
   async function run(work: () => Promise<Result<unknown>>) {
@@ -27,8 +30,13 @@ export function ActivitiesPage() {
   }
   const activities = useLiveQuery(
     ({ repos }) =>
-      listActivities(repos, { search: search || undefined, includeArchived: showArchived }),
-    `s:${search}|${showArchived}`,
+      listActivities(repos, {
+        search: search || undefined,
+        includeArchived: showArchived,
+        categoryId: categoryFilter ? (categoryFilter as CategoryId) : undefined,
+        locationId: locationFilter ? (locationFilter as LocationId) : undefined,
+      }),
+    `s:${search}|${showArchived}|${categoryFilter}|${locationFilter}`,
   );
 
   return (
@@ -53,6 +61,23 @@ export function ActivitiesPage() {
           className="w-full max-w-sm rounded border border-slate-300 px-2 py-1"
         />
       </label>
+
+      <div className="flex flex-wrap gap-4">
+        <CategorySelect
+          label="Category"
+          empty="All categories"
+          value={categoryFilter}
+          onChange={setCategoryFilter}
+          className="mt-1 block rounded border border-slate-300 px-2 py-1"
+        />
+        <LocationSelect
+          label="Place"
+          empty="All places"
+          value={locationFilter}
+          onChange={setLocationFilter}
+          className="mt-1 block rounded border border-slate-300 px-2 py-1"
+        />
+      </div>
 
       <label className="flex items-center gap-2 text-sm">
         <input
@@ -85,7 +110,7 @@ export function ActivitiesPage() {
 
       {activities.status === 'ready' ? (
         <ul className="space-y-2">
-          {activities.data.map(({ activity, schedules, nextDueOn }) => (
+          {activities.data.map(({ activity, schedules, nextDueOn, categoryName, locationPath }) => (
             <li
               key={activity.id}
               className="flex flex-wrap items-center justify-between gap-2 rounded border border-slate-200 bg-white p-3"
@@ -103,6 +128,8 @@ export function ActivitiesPage() {
                         ? 'Recurring (paused)'
                         : 'Recurring'}
                   {nextDueOn ? ` · next ${formatDate(nextDueOn)}` : ''}
+                  {categoryName ? ` · ${categoryName}` : ''}
+                  {locationPath ? ` · ${locationPath}` : ''}
                 </p>
               </div>
               <div className="flex flex-wrap gap-2">
