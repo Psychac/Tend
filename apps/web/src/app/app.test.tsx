@@ -307,3 +307,33 @@ describe('calendar', () => {
     expect(await screen.findByText(/nothing on this day/i)).toBeInTheDocument();
   });
 });
+
+describe('insights', () => {
+  it('starts with an explanation instead of empty charts', async () => {
+    renderApp('/insights');
+    expect(await screen.findByText(/nothing to summarise/i)).toBeInTheDocument();
+  });
+
+  it('summarises completions, with spending kept separate per currency', async () => {
+    const { user } = renderApp('/activities/new');
+    await createDaily(user, 'Service car');
+    await user.click(await screen.findByRole('link', { name: 'Dashboard' }));
+
+    const complete = async (amount: string, currency: string) => {
+      const dueToday = await screen.findByRole('region', { name: 'Due today' });
+      await user.click(within(dueToday).getByRole('button', { name: 'Details' }));
+      await user.type(within(dueToday).getByLabelText('Cost'), amount);
+      await user.selectOptions(within(dueToday).getByLabelText('Cost currency'), currency);
+      await user.click(within(dueToday).getByRole('button', { name: 'Save and mark done' }));
+      await screen.findByRole('region', { name: 'Recently done' });
+    };
+    await complete('100', 'USD');
+    await user.click(screen.getByRole('link', { name: 'Insights' }));
+
+    const summary = await screen.findByRole('region', { name: 'Summary' });
+    expect(within(summary).getByText('Done').nextElementSibling).toHaveTextContent('1');
+    const spending = screen.getByRole('region', { name: 'Spending' });
+    expect(within(spending).getByText('$100.00')).toBeInTheDocument();
+    expect(screen.getByRole('region', { name: 'By activity' })).toHaveTextContent('Service car');
+  });
+});

@@ -7,7 +7,7 @@ import { CalendarPage } from '../../features/calendar/CalendarPage';
 import { DashboardPage } from '../../features/dashboard/DashboardPage';
 import { SettingsPage } from '../../features/settings/SettingsPage';
 import { HistoryPage } from '../../features/history/HistoryPage';
-import { PlaceholderPage } from '../../shared/PlaceholderPage';
+import { InsightsPage } from '../../features/insights/InsightsPage';
 
 export const routes = [
   {
@@ -20,7 +20,7 @@ export const routes = [
       { path: 'assets', element: <AssetsPage /> },
       { path: 'calendar', element: <CalendarPage /> },
       { path: 'history', element: <HistoryPage /> },
-      { path: 'insights', element: <PlaceholderPage title="Insights" /> },
+      { path: 'insights', element: <InsightsPage /> },
       { path: 'settings', element: <SettingsPage /> },
     ],
   },
