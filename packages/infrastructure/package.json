@@ -1,0 +1,29 @@
+{
+  "name": "@upkeep/infrastructure",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "vitest run --passWithNoTests"
+  },
+  "dependencies": {
+    "@journeyapps/wa-sqlite": "^2.0.10",
+    "@powersync/common": "^2.5.0",
+    "@powersync/shared-internals": "^1.5.0",
+    "@powersync/web": "^2.6.0",
+    "@upkeep/contracts": "workspace:*",
+    "@upkeep/domain": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.6",
+    "@upkeep/application": "workspace:*",
+    "vitest": "^5.1.0"
+  },
+  "exports": {
+    ".": "./src/index.ts",
+    "./testing": "./src/testing/node-sqlite.ts"
+  }
+}

@@ -1,6 +1,6 @@
 # Personal Upkeep — Product & Engineering Specification
 
-**Version:** 0.3 — Hybrid deployment architecture; gamification deferred past first release  
+**Version:** 0.4 — Hybrid deployment architecture; gamification deferred; offline-first phasing  
 **Date:** 5 November 2026  
 **Status:** Proposed baseline for implementation
 
@@ -153,6 +153,21 @@ Adopt a **hybrid-ready architecture**:
 - Do not make Oracle Cloud a runtime dependency for the initial release.
 
 This gives us the option to migrate infrastructure without rebuilding the product.
+
+### 3.5 Delivery phasing: offline first, sync later
+
+The product is built in two phases.
+
+**Phase 1: fully offline.** The app is complete and usable on a single device with no account and no network. Data lives in the local SQLite database through the PowerSync Web SDK running **local-only**: the database is created and used normally, but it is never connected to a backend. There is no Supabase project, no PowerSync Cloud instance, no authentication, and no upload handler in this phase. Export and restore (§15) are the user's data-safety mechanism.
+
+**Phase 2: synchronization.** Connect the same local database to PowerSync and Supabase, add authentication, Sync Streams, the upload handler, RLS, and sync status UX.
+
+Rules that keep Phase 2 cheap:
+
+- Phase 1 uses the PowerSync SDK and the schema conventions of §8 (UUID keys, `owner_id`, `version`, append-only history) so no local data migration is needed when sync is enabled.
+- Application and domain code depend only on repository contracts, never on the SDK (§9.2).
+- With no account in Phase 1, a fixed local owner id is used; Phase 2 reassigns records to the authenticated user as part of first sign-in.
+- Sections 7.4 to 7.7, 8.3, 10 (remote storage), and 17 to 18 describe Phase 2 and are not built in Phase 1.
 
 ---
 
@@ -1182,14 +1197,14 @@ The first release is acceptable when:
 5. Occurrence generation is bounded and idempotent.
 6. Completion history and measurements are preserved.
 7. The app works offline after installation and initial setup.
-8. Local writes are queued and synchronize after reconnection.
-9. A second device receives synchronized changes.
-10. Ownership and RLS boundaries are tested.
+8. *(Phase 2: sync)* Local writes are queued and synchronize after reconnection.
+9. *(Phase 2: sync)* A second device receives synchronized changes.
+10. *(Phase 2: sync)* Ownership and RLS boundaries are tested.
 11. Users can export and restore their data.
 12. Occurrence outcomes and completion history are recorded faithfully so gamification can be added later without migration (gamification itself is deferred, see §12).
 13. Sync state is visible and understandable.
 14. The PWA can be deployed to Vercel.
-15. The PowerSync deployment can be switched by configuration without changing feature code.
+15. *(Phase 2: sync)* The PowerSync deployment can be switched by configuration without changing feature code.
 
 ---
 
@@ -1217,13 +1232,15 @@ The first release is acceptable when:
 - Integrate PowerSync Web SDK.
 - Configure SQLite WASM persistence.
 - Implement database initialization and migrations.
-- Implement authentication integration.
-- Configure development PostgreSQL.
-- Configure PowerSync replication.
-- Define initial Sync Streams.
-- Implement upload handler.
+- Implement authentication integration. *(Phase 2)*
+- Configure development PostgreSQL. *(Phase 2)*
+- Configure PowerSync replication. *(Phase 2)*
+- Define initial Sync Streams. *(Phase 2)*
+- Implement upload handler. *(Phase 2)*
 - Implement sync status indicators.
-- Test offline writes and reconnect behaviour.
+- Test offline writes and reconnect behaviour. *(offline persistence is Phase 1; reconnect is Phase 2)*
+
+Phase 1 scope for this epic: PowerSync Web SDK in local-only mode, SQLite WASM persistence, schema and local migrations, repository implementations, and storage-failure handling.
 
 ### Epic 3 — Activities
 
@@ -1331,6 +1348,7 @@ Not scheduled for the first release. Resolve the open questions in §12.3 before
 | ADR-013 | Oracle ARM as an optional self-hosting target |
 | ADR-014 | Gamification isolated from scheduling |
 | ADR-016 | Gamification (XP, levels, streaks, achievements) deferred past the first release; build the basic app first |
+| ADR-017 | Build fully offline first: PowerSync Web SDK in local-only mode; Supabase, authentication, and sync are Phase 2 |
 | ADR-015 | No separate Dexie application database |
 
 ---
