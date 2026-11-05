@@ -6,8 +6,9 @@ import {
   type MeasurementInput,
   type OccurrenceItem,
 } from '@upkeep/application';
-import { addDays, type ChecklistItemId, type LocalDate } from '@upkeep/domain';
+import { addDays, parseMoney, type ChecklistItemId, type LocalDate } from '@upkeep/domain';
 import { useApp } from '../../app/providers/AppProvider';
+import { MoneyField, useMoneyState } from '../../shared/currency';
 import { describeError, formatDate, useAction } from '../../shared/hooks';
 
 interface Props {
@@ -123,7 +124,7 @@ function CompletionDetails({
   const { deps } = useApp();
   const { activity, occurrence } = item;
   const [notes, setNotes] = useState('');
-  const [cost, setCost] = useState('');
+  const [cost, setCost] = useMoneyState();
   const [done, setDone] = useState<Set<string>>(new Set());
   const [readings, setReadings] = useState<Record<string, string>>({});
 
@@ -135,11 +136,16 @@ function CompletionDetails({
         ? [{ kind: 'numeric' as const, key: r.key, value: Number(raw), unit: r.unit }]
         : [];
     });
+    const parsedCost = cost.amount.trim() ? parseMoney(cost.amount, cost.currency) : undefined;
+    if (parsedCost && !parsedCost.ok) {
+      void onSubmit(async () => parsedCost);
+      return;
+    }
     void onSubmit(() =>
       completeOccurrence(deps, {
         occurrenceId: occurrence.id,
         notes: notes || undefined,
-        cost: cost ? { minor: Math.round(Number(cost) * 100), currency: 'INR' } : undefined,
+        cost: parsedCost?.ok ? parsedCost.value : undefined,
         checklistResults: activity.checklist.map((c) => ({
           itemId: c.id as ChecklistItemId,
           done: done.has(c.id),
@@ -195,17 +201,7 @@ function CompletionDetails({
         />
       </label>
 
-      <label className="block text-sm">
-        Cost (INR)
-        <input
-          type="number"
-          min="0"
-          step="0.01"
-          value={cost}
-          onChange={(e) => setCost(e.target.value)}
-          className="mt-1 block w-40 rounded border border-slate-300 px-2 py-1"
-        />
-      </label>
+      <MoneyField label="Cost" value={cost} onChange={setCost} />
 
       <button type="submit" disabled={busy} className={primary}>
         Save and mark done

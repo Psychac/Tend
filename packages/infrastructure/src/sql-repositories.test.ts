@@ -1,7 +1,9 @@
 import {
   completeOccurrence,
   createActivity,
+  getHistory,
   reconcileSchedules,
+  skipOccurrence,
   recordMeasurement,
   transact,
   type Deps,
@@ -457,5 +459,43 @@ describe('application use cases against SQL', () => {
     );
     expect(await reading(50000, '2026-11-09T06:30:00.000Z')).toBe(0);
     expect(await reading(50500, '2026-11-10T06:30:00.000Z')).toBe(1);
+  });
+});
+
+describe('history over SQL', () => {
+  it('returns completions and skips newest first, with paging', async () => {
+    const { deps, repos, clock } = setup();
+    const created = must(
+      await createActivity(deps, {
+        name: 'Daily chore',
+        type: 'routine',
+        schedule: {
+          strategy: { kind: 'calendar', interval: { every: 1, unit: 'day' } },
+          timeZone: 'Asia/Kolkata',
+          startsOn: '2026-11-05',
+        },
+      }),
+    );
+    must(
+      await completeOccurrence(deps, {
+        occurrenceId: created.occurrences[0]!.id,
+        cost: { minor: 1234, currency: 'KWD' },
+        measurements: [],
+      }),
+    );
+    clock.set('2026-11-06T06:30:00.000Z');
+    must(await skipOccurrence(deps, { occurrenceId: created.occurrences[1]!.id }));
+
+    const all = await getHistory(repos, { timeZone: 'Asia/Kolkata' as TimeZoneId });
+    expect(all.entries.map((e) => e.kind)).toEqual(['skipped', 'completed']);
+    const done = all.entries[1];
+    expect(done?.kind === 'completed' && done.completion.cost).toEqual({
+      minor: 1234,
+      currency: 'KWD',
+    });
+
+    const page = await getHistory(repos, { timeZone: 'Asia/Kolkata' as TimeZoneId, limit: 1 });
+    expect(page.entries).toHaveLength(1);
+    expect(page.hasMore).toBe(true);
   });
 });

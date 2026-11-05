@@ -8,6 +8,7 @@ import {
   type RestoreMode,
   type RestorePreview,
 } from '@upkeep/infrastructure';
+import { CurrencySelect, getDefaultCurrency, setDefaultCurrency } from '../../shared/currency';
 import { useApp, useChanges } from '../../app/providers/AppProvider';
 
 const button =
@@ -29,8 +30,35 @@ export function SettingsPage() {
   return (
     <div className="max-w-2xl space-y-8">
       <h2 className="text-xl font-semibold">Settings</h2>
+      <CurrencySection />
       <BackupSection />
     </div>
+  );
+}
+
+function CurrencySection() {
+  const [currency, setCurrency] = useState(getDefaultCurrency);
+  return (
+    <section aria-labelledby="currency-heading" className="space-y-2">
+      <h3 id="currency-heading" className="text-lg font-medium">
+        Currency
+      </h3>
+      <p className="text-sm text-slate-600">
+        Pre-selected when you enter a cost or price. You can still pick a different currency each
+        time, and totals are never mixed across currencies.
+      </p>
+      <label className="block text-sm">
+        Default currency
+        <CurrencySelect
+          label="Default currency"
+          value={currency}
+          onChange={(code) => {
+            setCurrency(code);
+            setDefaultCurrency(code);
+          }}
+        />
+      </label>
+    </section>
   );
 }
 

@@ -9,6 +9,8 @@ import {
   type ActivityId,
   type Clock,
   type Completion,
+  type Instant,
+  type Measurement,
   type LocalDate,
   type Occurrence,
   type OccurrenceTiming,
@@ -136,4 +138,107 @@ export async function listActivities(
     schedules: schedules.filter((s) => s.activityId === activity.id),
     nextDueOn: nextByActivity.get(activity.id),
   }));
+}
+
+export type HistoryEntry =
+  | {
+      readonly kind: 'completed';
+      readonly at: Instant;
+      readonly activityId: ActivityId;
+      readonly activityName: string;
+      readonly completion: Completion;
+      /** Whole days after the planned date it was done; negative if early, 0 if on time or unplanned. */
+      readonly daysFromPlanned: number;
+      readonly checklistDone: number;
+      readonly checklistTotal: number;
+      readonly measurements: readonly Measurement[];
+    }
+  | {
+      readonly kind: 'skipped';
+      readonly at: Instant;
+      readonly activityId: ActivityId;
+      readonly activityName: string;
+      readonly occurrence: Occurrence;
+    };
+
+export interface HistoryOptions {
+  readonly activityId?: ActivityId | undefined;
+  readonly kind?: 'completed' | 'skipped' | undefined;
+  readonly limit?: number | undefined;
+  readonly offset?: number | undefined;
+  /** Needed to read dates in the user's own zone. */
+  readonly timeZone: TimeZoneId;
+}
+
+export interface HistoryPage {
+  readonly entries: readonly HistoryEntry[];
+  readonly hasMore: boolean;
+}
+
+/**
+ * What happened, newest first: completions (with planned-versus-actual timing,
+ * cost, checklist progress and measurements) and skipped occurrences. Archived
+ * and deleted activities still appear, because history is never rewritten.
+ */
+export async function getHistory(
+  repos: Repositories,
+  options: HistoryOptions,
+): Promise<HistoryPage> {
+  const limit = options.limit ?? 30;
+  const offset = options.offset ?? 0;
+  const need = offset + limit + 1;
+  const wantCompleted = options.kind !== 'skipped';
+  const wantSkipped = options.kind !== 'completed';
+
+  const [activities, completions, skipped] = await Promise.all([
+    repos.activities.list({ includeArchived: true }),
+    wantCompleted
+      ? repos.completions.list({ activityId: options.activityId, limit: need })
+      : Promise.resolve([]),
+    wantSkipped
+      ? repos.occurrences.list({
+          activityId: options.activityId,
+          status: ['skipped'],
+          order: 'due_desc',
+          limit: need,
+        })
+      : Promise.resolve([]),
+  ]);
+  const nameOf = new Map(activities.map((a) => [a.id, a.name]));
+  const checklistTotalOf = new Map(activities.map((a) => [a.id, a.checklist.length]));
+
+  const oldestCompletion = completions.at(-1)?.completedAt;
+  const measurements = oldestCompletion
+    ? await repos.measurements.list({ activityId: options.activityId, from: oldestCompletion })
+    : [];
+
+  const entries: HistoryEntry[] = [
+    ...completions.map((completion): HistoryEntry => {
+      const planned = completion.plannedFor;
+      const doneOn = localDateOf(completion.completedAt, options.timeZone);
+      return {
+        kind: 'completed',
+        at: completion.completedAt,
+        activityId: completion.activityId,
+        activityName: nameOf.get(completion.activityId) ?? 'Deleted activity',
+        completion,
+        daysFromPlanned: planned ? daysBetween(planned, doneOn) : 0,
+        checklistDone: completion.checklistResults.filter((r) => r.done).length,
+        checklistTotal: checklistTotalOf.get(completion.activityId) ?? 0,
+        measurements: measurements.filter((m) => m.completionId === completion.id),
+      };
+    }),
+    ...skipped.map((occurrence): HistoryEntry => ({
+      kind: 'skipped',
+      at: occurrence.resolvedAt ?? occurrence.meta.updatedAt,
+      activityId: occurrence.activityId,
+      activityName: nameOf.get(occurrence.activityId) ?? 'Deleted activity',
+      occurrence,
+    })),
+  ].sort((a, b) => (a.at < b.at ? 1 : a.at > b.at ? -1 : 0));
+
+  return {
+    entries: entries.slice(offset, offset + limit),
+    hasMore: entries.length > offset + limit,
+  };
 }

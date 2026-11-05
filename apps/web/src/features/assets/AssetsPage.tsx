@@ -6,6 +6,8 @@ import {
   setAssetStatus,
   type AssetListItem,
 } from '@upkeep/application';
+import { parseMoney } from '@upkeep/domain';
+import { MoneyField, useMoneyState } from '../../shared/currency';
 import { useApp } from '../../app/providers/AppProvider';
 import { describeError, formatDate, useAction, useLiveQuery } from '../../shared/hooks';
 
@@ -67,7 +69,7 @@ function AssetForm({ onDone }: { onDone: () => void }) {
   const [name, setName] = useState('');
   const [vendor, setVendor] = useState('');
   const [purchaseDate, setPurchaseDate] = useState('');
-  const [price, setPrice] = useState('');
+  const [price, setPrice] = useMoneyState();
   const [warranty, setWarranty] = useState('');
   const [notes, setNotes] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -75,8 +77,13 @@ function AssetForm({ onDone }: { onDone: () => void }) {
 
   async function submit(e: FormEvent) {
     e.preventDefault();
-    setBusy(true);
     setError(null);
+    const parsedPrice = price.amount.trim() ? parseMoney(price.amount, price.currency) : undefined;
+    if (parsedPrice && !parsedPrice.ok) {
+      setError(describeError(parsedPrice.error));
+      return;
+    }
+    setBusy(true);
     const result = await act(() =>
       createAsset(deps, {
         name,
@@ -84,9 +91,7 @@ function AssetForm({ onDone }: { onDone: () => void }) {
         notes,
         purchaseDate,
         warrantyExpiresOn: warranty,
-        purchasePrice: price
-          ? { minor: Math.round(Number(price) * 100), currency: 'INR' }
-          : undefined,
+        purchasePrice: parsedPrice?.ok ? parsedPrice.value : undefined,
       }),
     );
     setBusy(false);
@@ -109,17 +114,7 @@ function AssetForm({ onDone }: { onDone: () => void }) {
           Bought from
           <input value={vendor} onChange={(e) => setVendor(e.target.value)} className={field} />
         </label>
-        <label className="block text-sm">
-          Price (INR)
-          <input
-            type="number"
-            min="0"
-            step="0.01"
-            value={price}
-            onChange={(e) => setPrice(e.target.value)}
-            className={field}
-          />
-        </label>
+        <MoneyField label="Price" value={price} onChange={setPrice} />
         <label className="block text-sm">
           Purchase date
           <input

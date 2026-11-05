@@ -75,7 +75,7 @@ describe('create, complete and manage an activity', () => {
     await user.click(within(dueToday).getByRole('button', { name: 'Details' }));
     await user.click(within(dueToday).getByRole('checkbox', { name: 'Check oil' }));
     await user.type(within(dueToday).getByLabelText('Notes'), 'All fine');
-    await user.type(within(dueToday).getByLabelText('Cost (INR)'), '1500');
+    await user.type(within(dueToday).getByLabelText('Cost'), '1500');
     await user.click(within(dueToday).getByRole('button', { name: 'Save and mark done' }));
 
     const recent = await screen.findByRole('region', { name: 'Recently done' });
@@ -203,5 +203,71 @@ describe('assets and usage-based maintenance', () => {
     await user.click(screen.getByRole('button', { name: 'Save asset' }));
     await user.click(await screen.findByRole('button', { name: 'Retire' }));
     expect(await screen.findByText(/no assets yet/i)).toBeInTheDocument();
+  });
+});
+
+describe('history and multi-currency cost', () => {
+  it('records a cost in a chosen currency and shows it, with timing, in history', async () => {
+    const { user } = renderApp('/activities/new');
+    await createDaily(user, 'Service car');
+    await user.click(await screen.findByRole('link', { name: 'Dashboard' }));
+
+    const dueToday = await screen.findByRole('region', { name: 'Due today' });
+    await user.click(within(dueToday).getByRole('button', { name: 'Details' }));
+    await user.type(within(dueToday).getByLabelText('Cost'), '1,500.50');
+    await user.selectOptions(within(dueToday).getByLabelText('Cost currency'), 'USD');
+    await user.type(within(dueToday).getByLabelText('Notes'), 'New filter');
+    await user.click(within(dueToday).getByRole('button', { name: 'Save and mark done' }));
+    await screen.findByRole('region', { name: 'Recently done' });
+
+    await user.click(screen.getByRole('link', { name: 'History' }));
+    const entry = await screen.findByRole('listitem');
+    expect(within(entry).getByText(/· Done/)).toBeInTheDocument();
+    expect(within(entry).getByText('$1,500.50')).toBeInTheDocument();
+    expect(within(entry).getByText(/on time/)).toBeInTheDocument();
+    expect(within(entry).getByText('New filter')).toBeInTheDocument();
+  });
+
+  it('refuses more decimal places than the currency has', async () => {
+    const { user } = renderApp('/activities/new');
+    await createDaily(user, 'Wash car');
+    await user.click(await screen.findByRole('link', { name: 'Dashboard' }));
+
+    const dueToday = await screen.findByRole('region', { name: 'Due today' });
+    await user.click(within(dueToday).getByRole('button', { name: 'Details' }));
+    await user.type(within(dueToday).getByLabelText('Cost'), '10.5');
+    await user.selectOptions(within(dueToday).getByLabelText('Cost currency'), 'JPY');
+    await user.click(within(dueToday).getByRole('button', { name: 'Save and mark done' }));
+
+    expect(await within(dueToday).findByRole('alert')).toHaveTextContent(
+      /JPY has no decimal places/,
+    );
+  });
+
+  it('shows skipped work and filters history', async () => {
+    const { user } = renderApp('/activities/new');
+    await createDaily(user, 'Take out bins');
+    await user.click(await screen.findByRole('link', { name: 'Dashboard' }));
+    const dueToday = await screen.findByRole('region', { name: 'Due today' });
+    await user.click(within(dueToday).getByRole('button', { name: 'Skip' }));
+
+    await user.click(await screen.findByRole('link', { name: 'History' }));
+    expect(await screen.findByText(/Skipped/, { selector: 'span' })).toBeInTheDocument();
+    await user.selectOptions(screen.getByLabelText('Show'), 'completed');
+    expect(await screen.findByText(/nothing matches these filters/i)).toBeInTheDocument();
+  });
+
+  it('starts with an empty history message', async () => {
+    renderApp('/history');
+    expect(await screen.findByText(/nothing has been done yet/i)).toBeInTheDocument();
+  });
+
+  it('uses the default currency chosen in settings', async () => {
+    const { user } = renderApp('/settings');
+    await user.selectOptions(await screen.findByLabelText('Default currency'), 'EUR');
+    await user.click(screen.getByRole('link', { name: 'Assets' }));
+    await user.click(await screen.findByRole('button', { name: 'Add asset' }));
+    expect(screen.getByLabelText('Price currency')).toHaveValue('EUR');
+    localStorage.clear();
   });
 });
