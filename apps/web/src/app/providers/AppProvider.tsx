@@ -32,6 +32,8 @@ export const LOCAL_OWNER_ID = '00000000-0000-4000-8000-000000000001' as UserId;
 export interface AppServices {
   readonly deps: Deps;
   readonly repos: Repositories;
+  /** The raw database, for whole-database operations such as backup and restore. */
+  readonly db: SqlDatabase;
 }
 
 const systemClock: Clock = { now: () => instantFromDate(new Date()) };
@@ -51,6 +53,7 @@ export function createServices(db: SqlDatabase): AppServices {
       uow: createSqlUnitOfWork(db),
     },
     repos: createSqlRepositories(db),
+    db,
   };
 }
 

@@ -1,8 +1,10 @@
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { createActivity } from '@upkeep/application';
+import { exportBackup } from '@upkeep/infrastructure';
 import { createNodeSqliteDatabase } from '@upkeep/infrastructure/testing';
 import { createMemoryRouter, RouterProvider } from 'react-router';
-import { AppProvider } from './providers/AppProvider';
+import { AppProvider, createServices } from './providers/AppProvider';
 import { routes } from './router/router';
 
 function renderApp(path = '/') {
@@ -116,5 +118,43 @@ describe('create, complete and manage an activity', () => {
 
     await user.click(screen.getByRole('button', { name: 'Archive' }));
     expect(await screen.findByText(/no activities match/i)).toBeInTheDocument();
+  });
+});
+
+describe('backup and restore', () => {
+  /** A backup file made from a separate device that has one activity. */
+  async function backupWith(name: string): Promise<File> {
+    const other = createNodeSqliteDatabase();
+    const services = createServices(other);
+    const created = await createActivity(services.deps, { name, type: 'routine' });
+    if (!created.ok) throw new Error(created.error.message);
+    const backup = await exportBackup(other, '2026-11-05T06:30:00.000Z');
+    return new File([JSON.stringify(backup)], 'backup.json', { type: 'application/json' });
+  }
+
+  it('previews a backup, then merges it into this device', async () => {
+    const { user } = renderApp('/settings');
+    await user.upload(
+      await screen.findByLabelText(/restore from a backup file/i),
+      await backupWith('Imported chore'),
+    );
+
+    expect(await screen.findByText(/nothing has changed yet/i)).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Merge into my data' }));
+    expect(await screen.findByText('Backup restored.')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('link', { name: 'Activities' }));
+    expect(await screen.findByText('Imported chore')).toBeInTheDocument();
+  });
+
+  it('explains a file that is not a backup and changes nothing', async () => {
+    const { user } = renderApp('/settings');
+    await user.upload(
+      await screen.findByLabelText(/restore from a backup file/i),
+      new File(['{"hello":1}'], 'notes.json', { type: 'application/json' }),
+    );
+    expect(await screen.findByRole('alert')).toHaveTextContent(/not a Personal Upkeep backup/i);
+    await user.click(screen.getByRole('link', { name: 'Activities' }));
+    expect(await screen.findByText(/no activities yet/i)).toBeInTheDocument();
   });
 });
