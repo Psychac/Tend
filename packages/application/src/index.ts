@@ -5,3 +5,4 @@ export * from './schedules';
 export * from './measurements';
 export * from './queries';
 export * from './assets';
+export * from './calendar';

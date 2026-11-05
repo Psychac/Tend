@@ -3,6 +3,7 @@ import { AppLayout } from '../layouts/AppLayout';
 import { ActivitiesPage } from '../../features/activities/ActivitiesPage';
 import { ActivityFormPage } from '../../features/activities/ActivityFormPage';
 import { AssetsPage } from '../../features/assets/AssetsPage';
+import { CalendarPage } from '../../features/calendar/CalendarPage';
 import { DashboardPage } from '../../features/dashboard/DashboardPage';
 import { SettingsPage } from '../../features/settings/SettingsPage';
 import { HistoryPage } from '../../features/history/HistoryPage';
@@ -17,7 +18,7 @@ export const routes = [
       { path: 'activities', element: <ActivitiesPage /> },
       { path: 'activities/new', element: <ActivityFormPage /> },
       { path: 'assets', element: <AssetsPage /> },
-      { path: 'calendar', element: <PlaceholderPage title="Calendar" /> },
+      { path: 'calendar', element: <CalendarPage /> },
       { path: 'history', element: <HistoryPage /> },
       { path: 'insights', element: <PlaceholderPage title="Insights" /> },
       { path: 'settings', element: <SettingsPage /> },

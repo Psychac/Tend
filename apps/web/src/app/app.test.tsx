@@ -271,3 +271,39 @@ describe('history and multi-currency cost', () => {
     localStorage.clear();
   });
 });
+
+describe('calendar', () => {
+  // The calendar is date-specific, so pin the date (only Date is faked; timers stay real).
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date('2026-11-05T06:30:00.000Z'));
+  });
+  afterEach(() => vi.useRealTimers());
+
+  it('shows an activity on its due day and lets you move between months', async () => {
+    const { user } = renderApp('/activities/new');
+    await createDaily(user, 'Water plants');
+    await user.click(await screen.findByRole('link', { name: 'Calendar' }));
+
+    // Today (Thu 5 Nov 2026 in the test clock) is selected and lists the activity.
+    const day = await screen.findByRole('region', { name: /Thu,? 5 Nov/ });
+    expect(within(day).getByText(/Water plants/)).toBeInTheDocument();
+    expect(within(day).getByText(/· Due/)).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Next month' }));
+    expect(await screen.findByRole('grid', { name: 'December 2026' })).toBeInTheDocument();
+    // Daily schedules are projected into the future.
+    await user.click(screen.getByRole('button', { name: /Thu,? 17 Dec/ }));
+    const later = await screen.findByRole('region', { name: /Thu,? 17 Dec/ });
+    expect(within(later).getByText(/· Planned/)).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Today' }));
+    expect(await screen.findByRole('grid', { name: 'November 2026' })).toBeInTheDocument();
+  });
+
+  it('shows an empty day plainly', async () => {
+    const { user } = renderApp('/calendar');
+    await user.click(await screen.findByRole('button', { name: /Fri,? 6 Nov/ }));
+    expect(await screen.findByText(/nothing on this day/i)).toBeInTheDocument();
+  });
+});
