@@ -1,30 +1,9 @@
-import { render, screen, within } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { screen, within } from '@testing-library/react';
 import { createActivity } from '@upkeep/application';
 import { exportBackup } from '@upkeep/infrastructure';
 import { createNodeSqliteDatabase } from '@upkeep/infrastructure/testing';
-import { createMemoryRouter, RouterProvider } from 'react-router';
-import { AppProvider, createServices } from './providers/AppProvider';
-import { routes } from './router/router';
-
-function renderApp(path = '/') {
-  const db = createNodeSqliteDatabase();
-  const router = createMemoryRouter(routes, { initialEntries: [path] });
-  render(
-    <AppProvider open={() => Promise.resolve(db)}>
-      <RouterProvider router={router} />
-    </AppProvider>,
-  );
-  return { user: userEvent.setup(), router };
-}
-
-/** Creates a daily activity starting today through the real form. */
-async function createDaily(user: ReturnType<typeof userEvent.setup>, name: string) {
-  await user.type(await screen.findByLabelText('Name'), name);
-  await user.selectOptions(screen.getByLabelText('Repeats'), 'calendar');
-  await user.selectOptions(screen.getByLabelText('Unit'), 'day');
-  await user.click(screen.getByRole('button', { name: 'Create activity' }));
-}
+import { createServices } from './providers/AppProvider';
+import { createDaily, renderApp } from './test-utils';
 
 describe('navigation', () => {
   it('shows the primary navigation and an empty dashboard prompt', async () => {
@@ -116,7 +95,7 @@ describe('create, complete and manage an activity', () => {
     expect(await screen.findByText('Clean AC filter')).toBeInTheDocument();
     expect(screen.queryByText('Pay rent')).not.toBeInTheDocument();
 
-    await user.click(screen.getByRole('button', { name: 'Archive' }));
+    await user.click(screen.getByRole('button', { name: /Archive/ }));
     expect(await screen.findByText(/no activities match/i)).toBeInTheDocument();
   });
 });

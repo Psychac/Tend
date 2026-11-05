@@ -2,11 +2,12 @@ import { useState, type FormEvent } from 'react';
 import {
   createAsset,
   listAssets,
+  updateAsset,
   recordMeasurement,
   setAssetStatus,
   type AssetListItem,
 } from '@upkeep/application';
-import { parseMoney } from '@upkeep/domain';
+import { currencyExponent, parseMoney, type Asset } from '@upkeep/domain';
 import { MoneyField, useMoneyState } from '../../shared/currency';
 import { useApp } from '../../app/providers/AppProvider';
 import { describeError, formatDate, useAction, useLiveQuery } from '../../shared/hooks';
@@ -19,8 +20,12 @@ const primary =
 
 export function AssetsPage() {
   const [search, setSearch] = useState('');
+  const [showInactive, setShowInactive] = useState(false);
   const [adding, setAdding] = useState(false);
-  const assets = useLiveQuery(({ repos }) => listAssets(repos, { search }), search);
+  const assets = useLiveQuery(
+    ({ repos }) => listAssets(repos, { search, includeInactive: showInactive }),
+    `${search}|${showInactive}`,
+  );
 
   return (
     <div className="space-y-4">
@@ -40,6 +45,15 @@ export function AssetsPage() {
         onChange={(e) => setSearch(e.target.value)}
         className="block w-full max-w-md rounded border border-slate-300 px-2 py-1"
       />
+
+      <label className="flex items-center gap-2 text-sm">
+        <input
+          type="checkbox"
+          checked={showInactive}
+          onChange={(e) => setShowInactive(e.target.checked)}
+        />
+        Show retired and disposed
+      </label>
 
       {assets.status === 'loading' ? <p className="text-slate-600">Loading…</p> : null}
       {assets.status === 'error' ? (
@@ -63,15 +77,29 @@ export function AssetsPage() {
   );
 }
 
-function AssetForm({ onDone }: { onDone: () => void }) {
+/** An amount as the person would type it: 150050 USD minor units is "1500.50". */
+function amountText(minor: number, currency: string): string {
+  const exponent = currencyExponent(currency);
+  return (minor / 10 ** exponent).toFixed(exponent);
+}
+
+/** Creates an asset, or edits `asset` when given. */
+function AssetForm({ asset, onDone }: { asset?: Asset | undefined; onDone: () => void }) {
   const { deps } = useApp();
   const act = useAction();
-  const [name, setName] = useState('');
-  const [vendor, setVendor] = useState('');
-  const [purchaseDate, setPurchaseDate] = useState('');
-  const [price, setPrice] = useMoneyState();
-  const [warranty, setWarranty] = useState('');
-  const [notes, setNotes] = useState('');
+  const [name, setName] = useState(asset?.name ?? '');
+  const [vendor, setVendor] = useState(asset?.purchase.vendor ?? '');
+  const [purchaseDate, setPurchaseDate] = useState(asset?.purchase.date ?? '');
+  const [price, setPrice] = useMoneyState(
+    asset?.purchase.price
+      ? {
+          amount: amountText(asset.purchase.price.minor, asset.purchase.price.currency),
+          currency: asset.purchase.price.currency,
+        }
+      : undefined,
+  );
+  const [warranty, setWarranty] = useState(asset?.warranty?.expiresOn ?? '');
+  const [notes, setNotes] = useState(asset?.notes ?? '');
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -84,15 +112,16 @@ function AssetForm({ onDone }: { onDone: () => void }) {
       return;
     }
     setBusy(true);
+    const details = {
+      name,
+      vendor,
+      notes,
+      purchaseDate,
+      warrantyExpiresOn: warranty,
+      purchasePrice: parsedPrice?.ok ? parsedPrice.value : undefined,
+    };
     const result = await act(() =>
-      createAsset(deps, {
-        name,
-        vendor,
-        notes,
-        purchaseDate,
-        warrantyExpiresOn: warranty,
-        purchasePrice: parsedPrice?.ok ? parsedPrice.value : undefined,
-      }),
+      asset ? updateAsset(deps, { assetId: asset.id, ...details }) : createAsset(deps, details),
     );
     setBusy(false);
     if (result.ok) onDone();
@@ -102,7 +131,7 @@ function AssetForm({ onDone }: { onDone: () => void }) {
   return (
     <form
       onSubmit={submit}
-      aria-label="New asset"
+      aria-label={asset ? `Edit ${asset.name}` : 'New asset'}
       className="max-w-xl space-y-3 rounded border border-slate-200 bg-white p-3"
     >
       <label className="block text-sm">
@@ -144,7 +173,7 @@ function AssetForm({ onDone }: { onDone: () => void }) {
         </p>
       ) : null}
       <button type="submit" disabled={busy} className={primary}>
-        Save asset
+        {asset ? 'Save changes' : 'Save asset'}
       </button>
     </form>
   );
@@ -155,6 +184,7 @@ function AssetCard({ item }: { item: AssetListItem }) {
   const act = useAction();
   const { asset } = item;
   const [reading, setReading] = useState(false);
+  const [editing, setEditing] = useState(false);
   const [key, setKey] = useState(item.latestReadings[0]?.key ?? 'odometer');
   const [value, setValue] = useState('');
   const [unit, setUnit] = useState(
@@ -182,9 +212,14 @@ function AssetCard({ item }: { item: AssetListItem }) {
     } else setError(describeError(result.error));
   }
 
-  async function retire() {
+  const inactive = asset.status === 'retired' || asset.status === 'disposed';
+
+  async function toggleActive() {
     setBusy(true);
-    const result = await act(() => setAssetStatus(deps, { assetId: asset.id, status: 'retired' }));
+    setError(null);
+    const result = await act(() =>
+      setAssetStatus(deps, { assetId: asset.id, status: inactive ? 'active' : 'retired' }),
+    );
     setBusy(false);
     if (!result.ok) setError(describeError(result.error));
   }
@@ -208,11 +243,24 @@ function AssetCard({ item }: { item: AssetListItem }) {
           )}
         </div>
         <div className="flex gap-2">
+          <button
+            type="button"
+            className={button}
+            aria-label={`Edit ${asset.name}`}
+            onClick={() => setEditing(!editing)}
+          >
+            Edit
+          </button>
           <button type="button" className={button} onClick={() => setReading(!reading)}>
             Record a reading
           </button>
-          <button type="button" className={button} disabled={busy} onClick={() => void retire()}>
-            Retire
+          <button
+            type="button"
+            className={button}
+            disabled={busy}
+            onClick={() => void toggleActive()}
+          >
+            {inactive ? 'Reactivate' : 'Retire'}
           </button>
         </div>
       </div>
@@ -221,6 +269,12 @@ function AssetCard({ item }: { item: AssetListItem }) {
         <p role="alert" className="mt-2 text-sm text-red-700">
           {error}
         </p>
+      ) : null}
+
+      {editing ? (
+        <div className="mt-3 border-t border-slate-200 pt-3">
+          <AssetForm asset={asset} onDone={() => setEditing(false)} />
+        </div>
       ) : null}
 
       {reading ? (

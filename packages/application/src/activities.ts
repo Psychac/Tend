@@ -58,7 +58,7 @@ export interface CreateActivityResult {
   readonly occurrences: readonly Occurrence[];
 }
 
-function parseScheduleDates(
+export function parseScheduleDates(
   input: ScheduleInput,
 ): Result<{ startsOn: LocalDate; endsOn?: LocalDate; timeZone: TimeZoneId }, DomainError> {
   const timeZone = parseTimeZone(input.timeZone);

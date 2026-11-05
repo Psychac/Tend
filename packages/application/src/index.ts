@@ -7,3 +7,4 @@ export * from './queries';
 export * from './assets';
 export * from './calendar';
 export * from './insights';
+export * from './editing';

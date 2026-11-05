@@ -76,11 +76,12 @@ export interface MoneyState {
 }
 
 /** Form state for an amount plus its currency, starting from the device's default currency. */
-export function useMoneyState(): [MoneyState, (next: Partial<MoneyState>) => void] {
-  const [state, setState] = useState<MoneyState>(() => ({
-    amount: '',
-    currency: getDefaultCurrency(),
-  }));
+export function useMoneyState(
+  initial?: MoneyState,
+): [MoneyState, (next: Partial<MoneyState>) => void] {
+  const [state, setState] = useState<MoneyState>(
+    () => initial ?? { amount: '', currency: getDefaultCurrency() },
+  );
   return [state, (next) => setState((s) => ({ ...s, ...next }))];
 }
 

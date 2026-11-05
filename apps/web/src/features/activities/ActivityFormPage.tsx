@@ -1,17 +1,33 @@
 import { useState, type FormEvent } from 'react';
-import { useNavigate } from 'react-router';
-import { createActivity, listAssets, type ScheduleInput } from '@upkeep/application';
+import { Link, useNavigate, useParams } from 'react-router';
+import {
+  createActivity,
+  listAssets,
+  setActivitySchedule,
+  updateActivity,
+  type OutstandingPolicy,
+  type ScheduleInput,
+} from '@upkeep/application';
 import {
   localDateOf,
+  type Activity,
+  type ActivityId,
   type AssetId,
   type ActivityType,
   type IsoWeekday,
+  type MeasurementRequirement,
   type Priority,
   type RecurrenceUnit,
+  type Schedule,
   type ScheduleStrategy,
 } from '@upkeep/domain';
 import { useApp } from '../../app/providers/AppProvider';
 import { describeError, deviceTimeZone, useAction, useLiveQuery } from '../../shared/hooks';
+
+export interface ActivityFormInitial {
+  readonly activity: Activity;
+  readonly schedule?: Schedule | undefined;
+}
 
 const TYPES: ActivityType[] = [
   'cleaning',
@@ -37,26 +53,72 @@ type Repeat = 'none' | 'calendar' | 'after_completion' | 'usage';
 
 const field = 'mt-1 block w-full max-w-md rounded border border-slate-300 px-2 py-1';
 
-export function ActivityFormPage() {
+/** What the form shows for a stored schedule. Types the form cannot express are left untouched. */
+function scheduleDefaults(schedule: Schedule | undefined) {
+  const s = schedule?.strategy;
+  return {
+    editable: !s || s.kind === 'calendar' || s.kind === 'completion_interval' || s.kind === 'usage',
+    repeat: (!s
+      ? 'none'
+      : s.kind === 'calendar'
+        ? 'calendar'
+        : s.kind === 'completion_interval'
+          ? 'after_completion'
+          : s.kind === 'usage'
+            ? 'usage'
+            : 'none') as Repeat,
+    every: s && 'interval' in s ? String(s.interval.every) : '1',
+    unit: (s && 'interval' in s ? s.interval.unit : 'week') as RecurrenceUnit,
+    weekdays: (s?.kind === 'calendar' ? (s.byWeekday ?? []) : []) as IsoWeekday[],
+    meterKey: s?.kind === 'usage' ? s.meterKey : 'odometer',
+    meterUnit: s?.kind === 'usage' ? s.every.unit : 'km',
+    usageEvery: s?.kind === 'usage' ? String(s.every.value) : '5000',
+    startsOn: schedule?.startsOn,
+    graceDays: String(schedule?.policy.graceDays ?? 0),
+  };
+}
+
+const nextKey = (() => {
+  let n = 0;
+  return () => `r${(n += 1)}`;
+})();
+
+interface RequirementRow extends MeasurementRequirement {
+  readonly rowKey: string;
+}
+
+/** Creates a new activity, or edits `initial` when given. */
+export function ActivityForm({ initial }: { initial?: ActivityFormInitial | undefined }) {
   const { deps } = useApp();
   const act = useAction();
   const navigate = useNavigate();
+  const editing = initial !== undefined;
+  const sd = scheduleDefaults(initial?.schedule);
+  const original = initial?.activity;
 
-  const [name, setName] = useState('');
-  const [description, setDescription] = useState('');
-  const [type, setType] = useState<ActivityType>('routine');
-  const [priority, setPriority] = useState<Priority>('normal');
-  const [repeat, setRepeat] = useState<Repeat>('none');
-  const [every, setEvery] = useState('1');
-  const [unit, setUnit] = useState<RecurrenceUnit>('week');
-  const [weekdays, setWeekdays] = useState<IsoWeekday[]>([]);
-  const [startsOn, setStartsOn] = useState(() => localDateOf(deps.clock.now(), deviceTimeZone()));
-  const [graceDays, setGraceDays] = useState('0');
-  const [checklist, setChecklist] = useState('');
-  const [assetId, setAssetId] = useState('');
-  const [meterKey, setMeterKey] = useState('odometer');
-  const [meterUnit, setMeterUnit] = useState('km');
-  const [usageEvery, setUsageEvery] = useState('5000');
+  const [name, setName] = useState(original?.name ?? '');
+  const [description, setDescription] = useState(original?.description ?? '');
+  const [type, setType] = useState<ActivityType>(original?.type ?? 'routine');
+  const [priority, setPriority] = useState<Priority>(original?.priority ?? 'normal');
+  const [repeat, setRepeat] = useState<Repeat>(sd.repeat);
+  const [every, setEvery] = useState(sd.every);
+  const [unit, setUnit] = useState<RecurrenceUnit>(sd.unit);
+  const [weekdays, setWeekdays] = useState<IsoWeekday[]>(sd.weekdays);
+  const [startsOn, setStartsOn] = useState(
+    () => sd.startsOn ?? localDateOf(deps.clock.now(), deviceTimeZone()),
+  );
+  const [graceDays, setGraceDays] = useState(sd.graceDays);
+  const [checklist, setChecklist] = useState(
+    original?.checklist.map((c) => c.label).join('\n') ?? '',
+  );
+  const [assetId, setAssetId] = useState(original?.assetId ?? '');
+  const [meterKey, setMeterKey] = useState(sd.meterKey);
+  const [meterUnit, setMeterUnit] = useState(sd.meterUnit);
+  const [usageEvery, setUsageEvery] = useState(sd.usageEvery);
+  const [requirements, setRequirements] = useState<RequirementRow[]>(() =>
+    (original?.measurementRequirements ?? []).map((r) => ({ ...r, rowKey: nextKey() })),
+  );
+  const [outstanding, setOutstanding] = useState<OutstandingPolicy>('supersede_future');
   const assets = useLiveQuery(({ repos }) => listAssets(repos));
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -81,20 +143,94 @@ export function ActivityFormPage() {
     return { strategy, timeZone: deviceTimeZone(), startsOn, graceDays: Number(graceDays) };
   }
 
+  const checklistLines = () =>
+    checklist
+      .split('\n')
+      .map((l) => l.trim())
+      .filter(Boolean);
+
+  const requirementList = (): MeasurementRequirement[] =>
+    requirements.map(({ key, unit: u, required }) => ({
+      key: key.trim(),
+      unit: u.trim(),
+      required,
+    }));
+
+  /** The schedule as stored, in the same shape the form builds, to detect real changes. */
+  function currentSchedule(): ScheduleInput | undefined {
+    const stored = initial?.schedule;
+    if (!stored) return undefined;
+    const base = {
+      timeZone: deviceTimeZone(),
+      startsOn: stored.startsOn,
+      graceDays: stored.policy.graceDays,
+    };
+    const st = stored.strategy;
+    if (st.kind === 'calendar') {
+      return {
+        ...base,
+        strategy: { kind: 'calendar', interval: st.interval, byWeekday: st.byWeekday },
+      };
+    }
+    return { ...base, strategy: st };
+  }
+
   async function submit(e: FormEvent) {
     e.preventDefault();
     setBusy(true);
     setError(null);
+
+    if (original) {
+      // Reuse the id of any checklist line that is unchanged, so past results still match it.
+      const free = [...original.checklist];
+      const checklistEdits = checklistLines().map((label) => {
+        const at = free.findIndex((c) => c.label === label);
+        const match = at >= 0 ? free.splice(at, 1)[0] : undefined;
+        return { id: match?.id, label };
+      });
+      const updated = await act(() =>
+        updateActivity(deps, {
+          activityId: original.id,
+          name,
+          description: description || undefined,
+          type,
+          priority,
+          assetId: assetId ? (assetId as AssetId) : undefined,
+          categoryId: original.categoryId,
+          locationId: original.locationId,
+          estimatedMinutes: original.estimatedMinutes,
+          checklist: checklistEdits,
+          measurementRequirements: requirementList(),
+        }),
+      );
+      if (!updated.ok) {
+        setBusy(false);
+        return setError(describeError(updated.error));
+      }
+      const schedule = sd.editable ? buildSchedule() : undefined;
+      if (schedule && JSON.stringify(schedule) !== JSON.stringify(currentSchedule())) {
+        const result = await act(() =>
+          setActivitySchedule(deps, { activityId: original.id, schedule, outstanding }),
+        );
+        if (!result.ok) {
+          setBusy(false);
+          return setError(
+            `Details were saved, but the schedule was not: ${describeError(result.error)}`,
+          );
+        }
+      }
+      setBusy(false);
+      return navigate('/activities');
+    }
+
     const result = await act(() =>
       createActivity(deps, {
         name,
         description: description || undefined,
         type,
         priority,
-        checklist: checklist
-          .split('\n')
-          .map((l) => l.trim())
-          .filter(Boolean),
+        checklist: checklistLines(),
+        measurementRequirements: requirementList(),
         assetId: assetId ? (assetId as AssetId) : undefined,
         schedule: buildSchedule(),
       }),
@@ -106,7 +242,7 @@ export function ActivityFormPage() {
 
   return (
     <form onSubmit={submit} className="max-w-xl space-y-4">
-      <h2 className="text-xl font-semibold">New activity</h2>
+      <h2 className="text-xl font-semibold">{editing ? 'Edit activity' : 'New activity'}</h2>
 
       <label className="block text-sm">
         Name
@@ -179,14 +315,25 @@ export function ActivityFormPage() {
           onChange={(e) => setRepeat(e.target.value as Repeat)}
           className={field}
         >
-          <option value="none">Does not repeat</option>
+          {initial?.schedule ? null : <option value="none">Does not repeat</option>}
           <option value="calendar">On a fixed calendar (e.g. every week)</option>
           <option value="after_completion">After I complete it (e.g. 30 days later)</option>
           {assetId ? <option value="usage">By usage (e.g. every 5,000 km)</option> : null}
         </select>
       </label>
 
-      {repeat !== 'none' ? (
+      {editing && !sd.editable ? (
+        <p className="rounded border border-slate-200 bg-slate-50 p-2 text-sm text-slate-700">
+          This activity uses a schedule type that cannot be changed here. It is kept as it is.
+        </p>
+      ) : null}
+      {initial?.schedule && sd.editable ? (
+        <p className="text-sm text-slate-600">
+          To stop an activity repeating, pause or archive it from the Activities list.
+        </p>
+      ) : null}
+
+      {repeat !== 'none' && sd.editable ? (
         <fieldset className="space-y-3 rounded border border-slate-200 bg-white p-3">
           <legend className="px-1 text-sm font-medium">Schedule</legend>
           {repeat === 'usage' ? (
@@ -293,6 +440,29 @@ export function ActivityFormPage() {
               />
             </label>
           </div>
+          {initial?.schedule ? (
+            <fieldset>
+              <legend className="text-sm font-medium">Upcoming items already created</legend>
+              <label className="flex items-start gap-2 text-sm">
+                <input
+                  type="radio"
+                  name="outstanding"
+                  checked={outstanding === 'supersede_future'}
+                  onChange={() => setOutstanding('supersede_future')}
+                />
+                <span>Update them to match the new schedule (overdue items are always kept)</span>
+              </label>
+              <label className="flex items-start gap-2 text-sm">
+                <input
+                  type="radio"
+                  name="outstanding"
+                  checked={outstanding === 'keep_outstanding'}
+                  onChange={() => setOutstanding('keep_outstanding')}
+                />
+                <span>Keep them as they are</span>
+              </label>
+            </fieldset>
+          ) : null}
         </fieldset>
       ) : null}
 
@@ -305,19 +475,128 @@ export function ActivityFormPage() {
         />
       </label>
 
+      <fieldset className="space-y-2">
+        <legend className="text-sm font-medium">Readings to record when done (optional)</legend>
+        {requirements.map((r) => (
+          <div key={r.rowKey} className="flex flex-wrap items-end gap-2">
+            <label className="block text-sm">
+              Reading
+              <input
+                value={r.key}
+                onChange={(e) =>
+                  setRequirements(
+                    requirements.map((x) => (x === r ? { ...x, key: e.target.value } : x)),
+                  )
+                }
+                className="mt-1 block w-32 rounded border border-slate-300 px-2 py-1"
+              />
+            </label>
+            <label className="block text-sm">
+              Unit
+              <input
+                value={r.unit}
+                onChange={(e) =>
+                  setRequirements(
+                    requirements.map((x) => (x === r ? { ...x, unit: e.target.value } : x)),
+                  )
+                }
+                className="mt-1 block w-20 rounded border border-slate-300 px-2 py-1"
+              />
+            </label>
+            <label className="flex items-center gap-1 pb-1 text-sm">
+              <input
+                type="checkbox"
+                checked={r.required}
+                onChange={(e) =>
+                  setRequirements(
+                    requirements.map((x) => (x === r ? { ...x, required: e.target.checked } : x)),
+                  )
+                }
+              />
+              Required
+            </label>
+            <button
+              type="button"
+              className="rounded border border-slate-300 px-2 py-1 text-sm hover:bg-slate-100"
+              onClick={() => setRequirements(requirements.filter((x) => x !== r))}
+            >
+              Remove
+            </button>
+          </div>
+        ))}
+        <button
+          type="button"
+          className="rounded border border-slate-300 px-3 py-1 text-sm hover:bg-slate-100"
+          onClick={() =>
+            setRequirements([
+              ...requirements,
+              { key: '', unit: '', required: false, rowKey: nextKey() },
+            ])
+          }
+        >
+          Add a reading
+        </button>
+      </fieldset>
+
       {error ? (
         <p role="alert" className="text-sm text-red-700">
           {error}
         </p>
       ) : null}
 
-      <button
-        type="submit"
-        disabled={busy}
-        className="rounded bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-50"
-      >
-        Create activity
-      </button>
+      <div className="flex gap-2">
+        <button
+          type="submit"
+          disabled={busy}
+          className="rounded bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-50"
+        >
+          {editing ? 'Save changes' : 'Create activity'}
+        </button>
+        {editing ? (
+          <Link
+            to="/activities"
+            className="rounded border border-slate-300 px-4 py-2 text-sm hover:bg-slate-100"
+          >
+            Cancel
+          </Link>
+        ) : null}
+      </div>
     </form>
   );
+}
+
+export function ActivityFormPage() {
+  return <ActivityForm />;
+}
+
+/** Loads one activity (and its schedule) and shows it in the form. */
+export function ActivityEditPage() {
+  const { activityId } = useParams();
+  const loaded = useLiveQuery(async ({ repos }) => {
+    const activity = activityId ? await repos.activities.getById(activityId as ActivityId) : null;
+    if (!activity) return null;
+    const schedule = (await repos.schedules.list()).find((x) => x.activityId === activity.id);
+    return { activity, schedule };
+  }, activityId ?? '');
+
+  if (loaded.status === 'loading') return <p className="text-slate-600">Loading…</p>;
+  if (loaded.status === 'error') {
+    return (
+      <p role="alert" className="text-red-700">
+        {loaded.message}
+      </p>
+    );
+  }
+  if (loaded.data === null) {
+    return (
+      <p role="alert" className="text-red-700">
+        That activity no longer exists.{' '}
+        <Link to="/activities" className="underline">
+          Back to activities
+        </Link>
+      </p>
+    );
+  }
+  // Keyed so the form starts from the stored values once, and keeps what you type afterwards.
+  return <ActivityForm key={activityId} initial={loaded.data} />;
 }

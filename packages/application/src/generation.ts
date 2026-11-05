@@ -17,7 +17,7 @@ const OUTSTANDING = ['pending', 'snoozed'] as const;
  * The most recent date work was resolved: the latest completion or skip.
  * Used to restart completion-interval schedules.
  */
-async function lastResolvedOn(
+export async function lastResolvedOn(
   repos: Repositories,
   schedule: Schedule,
 ): Promise<LocalDate | undefined> {
@@ -101,7 +101,13 @@ export async function ensureOccurrences(
     // Usage occurrences are always due "today"; the one-open-at-a-time rule above
     // already prevents duplicates, so a resolved same-day occurrence must not block a new one.
     existingDueDates:
-      schedule.strategy.kind === 'usage' ? [] : [...outstanding, ...upcoming].map((o) => o.dueOn),
+      schedule.strategy.kind === 'usage'
+        ? []
+        : [...outstanding, ...upcoming]
+            // Superseded and cancelled work no longer counts: its date may legitimately return
+            // (for example when an archived activity is restored).
+            .filter((o) => o.status !== 'superseded' && o.status !== 'cancelled')
+            .map((o) => o.dueOn),
     lastResolvedOn:
       schedule.strategy.kind === 'completion_interval'
         ? (hint.lastResolvedOn ?? (await lastResolvedOn(repos, schedule)))

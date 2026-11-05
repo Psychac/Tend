@@ -1,17 +1,34 @@
 import { useState } from 'react';
 import { Link } from 'react-router';
-import { archiveActivity, listActivities } from '@upkeep/application';
+import {
+  archiveActivity,
+  listActivities,
+  pauseActivitySchedule,
+  resumeActivitySchedule,
+  unarchiveActivity,
+} from '@upkeep/application';
+import type { Result } from '@upkeep/domain';
 import { useApp } from '../../app/providers/AppProvider';
 import { describeError, formatDate, useAction, useLiveQuery } from '../../shared/hooks';
+
+const small = 'rounded border border-slate-300 px-3 py-1 text-sm hover:bg-slate-100';
 
 export function ActivitiesPage() {
   const { deps } = useApp();
   const act = useAction();
   const [search, setSearch] = useState('');
+  const [showArchived, setShowArchived] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  async function run(work: () => Promise<Result<unknown>>) {
+    setError(null);
+    const r = await act(work);
+    if (!r.ok) setError(describeError(r.error));
+  }
   const activities = useLiveQuery(
-    ({ repos }) => listActivities(repos, { search: search || undefined }),
-    `s:${search}`,
+    ({ repos }) =>
+      listActivities(repos, { search: search || undefined, includeArchived: showArchived }),
+    `s:${search}|${showArchived}`,
   );
 
   return (
@@ -35,6 +52,15 @@ export function ActivitiesPage() {
           onChange={(e) => setSearch(e.target.value)}
           className="w-full max-w-sm rounded border border-slate-300 px-2 py-1"
         />
+      </label>
+
+      <label className="flex items-center gap-2 text-sm">
+        <input
+          type="checkbox"
+          checked={showArchived}
+          onChange={(e) => setShowArchived(e.target.checked)}
+        />
+        Show archived
       </label>
 
       {error ? (
@@ -69,21 +95,62 @@ export function ActivitiesPage() {
                 <p className="text-sm text-slate-600">
                   <span className="capitalize">{activity.type}</span>
                   {' · '}
-                  {schedules.length === 0 ? 'One-off' : 'Recurring'}
+                  {activity.archivedAt !== undefined
+                    ? 'Archived'
+                    : schedules.length === 0
+                      ? 'One-off'
+                      : schedules[0]?.pausedAt !== undefined
+                        ? 'Recurring (paused)'
+                        : 'Recurring'}
                   {nextDueOn ? ` · next ${formatDate(nextDueOn)}` : ''}
                 </p>
               </div>
-              <button
-                type="button"
-                className="rounded border border-slate-300 px-3 py-1 text-sm hover:bg-slate-100"
-                onClick={async () => {
-                  setError(null);
-                  const r = await act(() => archiveActivity(deps, { activityId: activity.id }));
-                  if (!r.ok) setError(describeError(r.error));
-                }}
-              >
-                Archive
-              </button>
+              <div className="flex flex-wrap gap-2">
+                {activity.archivedAt === undefined ? (
+                  <Link
+                    to={`/activities/${activity.id}/edit`}
+                    className={small}
+                    aria-label={`Edit ${activity.name}`}
+                  >
+                    Edit
+                  </Link>
+                ) : null}
+                {activity.archivedAt === undefined && schedules[0] ? (
+                  <button
+                    type="button"
+                    className={small}
+                    aria-label={`${schedules[0].pausedAt === undefined ? 'Pause' : 'Resume'} ${activity.name}`}
+                    onClick={() =>
+                      run(() =>
+                        schedules[0]!.pausedAt === undefined
+                          ? pauseActivitySchedule(deps, { scheduleId: schedules[0]!.id })
+                          : resumeActivitySchedule(deps, { scheduleId: schedules[0]!.id }),
+                      )
+                    }
+                  >
+                    {schedules[0].pausedAt === undefined ? 'Pause' : 'Resume'}
+                  </button>
+                ) : null}
+                {activity.archivedAt === undefined ? (
+                  <button
+                    type="button"
+                    className={small}
+                    aria-label={`Archive ${activity.name}`}
+                    onClick={() => run(() => archiveActivity(deps, { activityId: activity.id }))}
+                  >
+                    Archive
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    className={small}
+                    aria-label={`Restore ${activity.name}`}
+                    onClick={() => run(() => unarchiveActivity(deps, { activityId: activity.id }))}
+                  >
+                    Restore
+                  </button>
+                )}
+              </div>
             </li>
           ))}
         </ul>
