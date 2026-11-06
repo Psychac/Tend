@@ -53,7 +53,8 @@ type Strategy<K extends ScheduleStrategy['kind']> = Extract<ScheduleStrategy, { 
  * `consolidateMissed` rather than by creating one occurrence per missed day.
  *
  * `condition` and `event` strategies are triggered by measurements and by
- * completions of other activities rather than dates, so they yield nothing here.
+ * completions of other activities rather than dates, so they yield nothing here
+ * (see `crossedCondition` and `eventDueDate`).
  */
 export function missingDueDates(schedule: Schedule, ctx: GenerationContext): LocalDate[] {
   if (schedule.pausedAt !== undefined) return [];
@@ -166,6 +167,31 @@ function completionIntervalDue(
     ? startsOn
     : addUnits(lastResolvedOn, s.interval.every, s.interval.unit);
 }
+
+/** Whether a reading is on the triggering side of the threshold. */
+export const conditionMet = (s: Strategy<'condition'>, value: number): boolean => {
+  switch (s.comparator) {
+    case 'gt':
+      return value > s.threshold;
+    case 'gte':
+      return value >= s.threshold;
+    case 'lt':
+      return value < s.threshold;
+    case 'lte':
+      return value <= s.threshold;
+  }
+};
+
+/**
+ * True when `current` meets the condition and the reading before it did not
+ * (or there was none). A reading that stays past the threshold is not a new
+ * crossing, which is what makes firing once per crossing and re-arming work.
+ */
+export const crossedCondition = (
+  s: Strategy<'condition'>,
+  previous: number | undefined,
+  current: number,
+): boolean => conditionMet(s, current) && (previous === undefined || !conditionMet(s, previous));
 
 /** When an occurrence triggered by completing another activity on `completedOn` falls due. */
 export const eventDueDate = (s: Strategy<'event'>, completedOn: LocalDate): LocalDate =>

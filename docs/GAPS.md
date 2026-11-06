@@ -80,11 +80,11 @@ that is missing or partial · P3 = polish, hygiene, or spec/repo drift · P4 = P
 - **Work:** `attachments` table and repo; a provider-neutral `AttachmentStorage` with a Phase 1 local implementation (OPFS/IndexedDB blobs); attach to assets, activities and completions; states (stored / missing / failed); size limits and quota interaction with G-01; export as optional archive, restore with integrity check.
 - **Open question:** where blobs live in Phase 1 (separate from the SQLite DB to keep it small).
 
-### G-08 Condition-based scheduling — M
+### G-08 Condition-based scheduling — M — done (numeric readings; on `recordMeasurement` and on readings taken with a completion)
 
 - **Spec:** §6.4 #5.
-- **State:** Strategy type and validation exist; `missingDueDates` returns nothing for it ([generate.ts](../packages/domain/src/scheduling/generate.ts)); no form UI.
-- **Work:** Trigger an occurrence when a recorded measurement crosses the threshold (on `recordMeasurement`), idempotent per crossing, with re-arm rule (must return across the threshold first); form UI; tests.
+- **Semantics:** A new numeric reading fires when it meets the condition and the previous reading for the same key and subject (asset, or activity if none) did not. Staying past the limit never refires; it must come back first (re-arm). Only the newest reading counts, so a backdated one cannot fire. One open occurrence per schedule; due today. Completing with a reading that is still past the limit does not refire.
+- **Not done:** Qualitative readings; unit conversion (the unit is not compared).
 
 ### G-09 Event-based scheduling — M — done (completion of another activity; named user events deferred)
 

@@ -1,5 +1,6 @@
 import type { Repositories } from '@tend/contracts';
 import {
+  crossedCondition,
   eventDueDate,
   localDateOf,
   missingDueDates,
@@ -7,6 +8,7 @@ import {
   type Activity,
   type Instant,
   type LocalDate,
+  type Measurement,
   type Occurrence,
   type Schedule,
   type UsageReading,
@@ -109,6 +111,70 @@ export async function triggerEventSchedules(
       activityId: schedule.activityId,
       scheduleId: schedule.id,
       dueOn,
+      status: 'pending',
+    };
+    await repos.occurrences.save(occurrence);
+    created.push(occurrence);
+  }
+  return created;
+}
+
+/**
+ * Condition-based schedules: a new numeric reading that crosses a schedule's
+ * threshold creates one occurrence, due today. Only the newest reading counts
+ * (a backdated one cannot fire), and it is compared with the reading before it,
+ * so staying past the threshold does not fire again until it has come back.
+ * A schedule keeps at most one open occurrence.
+ */
+export async function triggerConditionSchedules(
+  deps: Deps,
+  repos: Repositories,
+  measurement: Measurement,
+): Promise<Occurrence[]> {
+  if (measurement.value.kind !== 'numeric') return [];
+  const current = measurement.value.quantity.value;
+  const now = deps.clock.now();
+  const created: Occurrence[] = [];
+  let readings: Measurement[] | undefined;
+
+  for (const schedule of await repos.schedules.list()) {
+    const s = schedule.strategy;
+    if (s.kind !== 'condition' || s.measurementKey !== measurement.key) continue;
+    if (schedule.pausedAt !== undefined) continue;
+
+    const activity = await repos.activities.getById(schedule.activityId);
+    if (!activity || activity.archivedAt !== undefined) continue;
+    const watches =
+      (measurement.assetId !== undefined && activity.assetId === measurement.assetId) ||
+      (measurement.activityId !== undefined && activity.id === measurement.activityId);
+    if (!watches) continue;
+
+    const subject = measurement.assetId
+      ? { assetId: measurement.assetId }
+      : { activityId: measurement.activityId };
+    readings ??= await repos.measurements.list({ ...subject, key: measurement.key, limit: 50 });
+    const numeric = readings.filter((m) => m.value.kind === 'numeric');
+    if (numeric[0]?.id !== measurement.id) continue;
+    const before = numeric[1];
+    const previous = before?.value.kind === 'numeric' ? before.value.quantity.value : undefined;
+    if (!crossedCondition(s, previous, current)) continue;
+
+    const today = localDateOf(now, schedule.timeZone);
+    if (today < schedule.startsOn || (schedule.endsOn !== undefined && today > schedule.endsOn)) {
+      continue;
+    }
+    const open = await repos.occurrences.list({
+      activityId: schedule.activityId,
+      status: OUTSTANDING,
+    });
+    if (open.some((o) => o.scheduleId === schedule.id)) continue;
+
+    const occurrence: Occurrence = {
+      id: deps.ids.next<'Occurrence'>(),
+      meta: newMeta(deps.ownerId, now),
+      activityId: schedule.activityId,
+      scheduleId: schedule.id,
+      dueOn: today,
       status: 'pending',
     };
     await repos.occurrences.save(occurrence);

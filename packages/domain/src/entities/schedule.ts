@@ -32,7 +32,8 @@ export interface Interval {
  * - `usage`: due when a meter advances by `every` since the last service.
  * - `event`: due `delayDays` after another activity is completed. Triggered by that
  *   completion (see the application layer), never by the date.
- * - `condition`: defined here but not yet generated (see generate.ts).
+ * - `condition`: due when a numeric reading crosses the threshold (see `crossedCondition`).
+ *   It fires on the crossing, so it must come back across before it can fire again.
  */
 export type ScheduleStrategy =
   | {
@@ -136,6 +137,14 @@ function checkStrategy(issues: Issues, s: ScheduleStrategy): void {
     case 'condition':
       issues.check(isNonBlank(s.measurementKey), 'strategy.measurementKey', 'is required');
       issues.check(Number.isFinite(s.threshold), 'strategy.threshold', 'must be finite');
+      issues.check(
+        s.comparator === 'gt' ||
+          s.comparator === 'gte' ||
+          s.comparator === 'lt' ||
+          s.comparator === 'lte',
+        'strategy.comparator',
+        'must be gt, gte, lt or lte',
+      );
       break;
     case 'event':
       issues.check(isNonBlank(s.afterActivityId), 'strategy.afterActivityId', 'is required');

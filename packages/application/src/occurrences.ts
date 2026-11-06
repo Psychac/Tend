@@ -26,7 +26,7 @@ import {
   type ValidationIssue,
 } from '@tend/domain';
 import { auditEvent, found, transact, type Deps } from './deps';
-import { ensureOccurrences, triggerEventSchedules } from './generation';
+import { ensureOccurrences, triggerConditionSchedules, triggerEventSchedules } from './generation';
 
 export type MeasurementInput =
   | {
@@ -196,6 +196,10 @@ export async function completeOccurrence(
           lastResolvedOn: localDateOf(completion.completedAt, schedule.timeZone),
         })
       : [];
+    // Readings taken with this completion may cross a threshold.
+    for (const m of measurements) {
+      nextOccurrences.push(...(await triggerConditionSchedules(deps, repos, m)));
+    }
     // Other activities set to follow this one.
     nextOccurrences.push(
       ...(await triggerEventSchedules(deps, repos, activity.value, completion.completedAt)),

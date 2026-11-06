@@ -2,6 +2,8 @@ import type { ActivityId, Instant, LocalDate, OccurrenceId, ScheduleId, TimeZone
 import { newMeta, type Occurrence, type Schedule, type ScheduleStrategy } from '../entities';
 import { NOW, OWNER, sequentialIds } from '../testing';
 import {
+  conditionMet,
+  crossedCondition,
   eventDueDate,
   HARD_MAX_OCCURRENCES,
   missingDueDates,
@@ -217,6 +219,22 @@ describe('missingDueDates: other strategies', () => {
         ctx(),
       ),
     ).toEqual([]);
+  });
+
+  it('a condition fires on the crossing only, and re-arms after returning', () => {
+    const s = {
+      kind: 'condition',
+      measurementKey: 'ph',
+      comparator: 'gt',
+      threshold: 7.5,
+    } as const;
+    expect(conditionMet(s, 7.5)).toBe(false);
+    expect(crossedCondition(s, 7.2, 7.6)).toBe(true);
+    expect(crossedCondition(s, undefined, 7.6)).toBe(true);
+    expect(crossedCondition(s, 7.6, 7.9)).toBe(false);
+    expect(crossedCondition(s, 7.9, 7.2)).toBe(false);
+    expect(crossedCondition(s, 7.2, 7.8)).toBe(true);
+    expect(crossedCondition({ ...s, comparator: 'lte' }, 7.6, 7.5)).toBe(true);
   });
 
   it('an event schedule falls due the delay after the triggering completion', () => {

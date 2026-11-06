@@ -56,7 +56,9 @@ const WEEKDAYS: [IsoWeekday, string][] = [
   [7, 'Sun'],
 ];
 
-type Repeat = 'none' | 'calendar' | 'after_completion' | 'usage' | 'after_activity';
+type Repeat =
+  'none' | 'calendar' | 'after_completion' | 'usage' | 'after_activity' | 'when_reading';
+type Comparator = 'gt' | 'gte' | 'lt' | 'lte';
 
 const field = 'field mt-1 block w-full max-w-md';
 
@@ -69,7 +71,8 @@ function scheduleDefaults(schedule: Schedule | undefined) {
       s.kind === 'calendar' ||
       s.kind === 'completion_interval' ||
       s.kind === 'usage' ||
-      s.kind === 'event',
+      s.kind === 'event' ||
+      s.kind === 'condition',
     repeat: (!s
       ? 'none'
       : s.kind === 'calendar'
@@ -80,7 +83,12 @@ function scheduleDefaults(schedule: Schedule | undefined) {
             ? 'usage'
             : s.kind === 'event'
               ? 'after_activity'
-              : 'none') as Repeat,
+              : s.kind === 'condition'
+                ? 'when_reading'
+                : 'none') as Repeat,
+    readingKey: s?.kind === 'condition' ? s.measurementKey : '',
+    comparator: (s?.kind === 'condition' ? s.comparator : 'gt') as Comparator,
+    threshold: s?.kind === 'condition' ? String(s.threshold) : '',
     afterActivityId: s?.kind === 'event' ? s.afterActivityId : '',
     delayDays: s?.kind === 'event' ? String(s.delayDays) : '7',
     every: s && 'interval' in s ? String(s.interval.every) : '1',
@@ -142,6 +150,9 @@ export function ActivityForm({ initial }: { initial?: ActivityFormInitial | unde
   const [atTime, setAtTime] = useState(initial?.reminder?.atTime ?? '09:00');
   const [afterActivityId, setAfterActivityId] = useState<string>(sd.afterActivityId);
   const [delayDays, setDelayDays] = useState(sd.delayDays);
+  const [readingKey, setReadingKey] = useState(sd.readingKey);
+  const [comparator, setComparator] = useState<Comparator>(sd.comparator);
+  const [threshold, setThreshold] = useState(sd.threshold);
   const assets = useLiveQuery(({ repos }) => listAssets(repos));
   const otherActivities = useLiveQuery(async ({ repos }) =>
     (await repos.activities.list({})).filter((a) => a.id !== original?.id),
@@ -159,19 +170,26 @@ export function ActivityForm({ initial }: { initial?: ActivityFormInitial | unde
             meterKey,
             every: { value: Number(usageEvery), unit: meterUnit },
           }
-        : repeat === 'after_activity'
+        : repeat === 'when_reading'
           ? {
-              kind: 'event',
-              afterActivityId: afterActivityId as ActivityId,
-              delayDays: Number(delayDays),
+              kind: 'condition',
+              measurementKey: readingKey.trim(),
+              comparator,
+              threshold: Number(threshold),
             }
-          : repeat === 'calendar'
+          : repeat === 'after_activity'
             ? {
-                kind: 'calendar',
-                interval,
-                byWeekday: unit === 'week' && weekdays.length > 0 ? weekdays : undefined,
+                kind: 'event',
+                afterActivityId: afterActivityId as ActivityId,
+                delayDays: Number(delayDays),
               }
-            : { kind: 'completion_interval', interval };
+            : repeat === 'calendar'
+              ? {
+                  kind: 'calendar',
+                  interval,
+                  byWeekday: unit === 'week' && weekdays.length > 0 ? weekdays : undefined,
+                }
+              : { kind: 'completion_interval', interval };
     return { strategy, timeZone: deviceTimeZone(), startsOn, graceDays: Number(graceDays) };
   }
 
@@ -396,6 +414,7 @@ export function ActivityForm({ initial }: { initial?: ActivityFormInitial | unde
           repeat === 'after_activity' ? (
             <option value="after_activity">After another activity is completed</option>
           ) : null}
+          <option value="when_reading">When a reading crosses a limit (e.g. pH above 7.5)</option>
         </select>
       </label>
 
@@ -442,6 +461,42 @@ export function ActivityForm({ initial }: { initial?: ActivityFormInitial | unde
                   value={meterUnit}
                   onChange={(e) => setMeterUnit(e.target.value)}
                   className="mt-1 block w-20 field"
+                />
+              </label>
+            </div>
+          ) : repeat === 'when_reading' ? (
+            <div className="flex flex-wrap items-end gap-3">
+              <label className="block text-sm">
+                Reading
+                <input
+                  required
+                  value={readingKey}
+                  onChange={(e) => setReadingKey(e.target.value)}
+                  className="mt-1 block w-32 field"
+                />
+              </label>
+              <label className="block text-sm">
+                Becomes
+                <select
+                  value={comparator}
+                  onChange={(e) => setComparator(e.target.value as Comparator)}
+                  className="mt-1 block field"
+                >
+                  <option value="gt">above</option>
+                  <option value="gte">at or above</option>
+                  <option value="lt">below</option>
+                  <option value="lte">at or below</option>
+                </select>
+              </label>
+              <label className="block text-sm">
+                Limit
+                <input
+                  required
+                  type="number"
+                  step="any"
+                  value={threshold}
+                  onChange={(e) => setThreshold(e.target.value)}
+                  className="mt-1 block w-28 field"
                 />
               </label>
             </div>

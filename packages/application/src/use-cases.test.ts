@@ -509,3 +509,67 @@ describe('event-based schedules (after another activity)', () => {
     expect(r.ok).toBe(false);
   });
 });
+
+describe('condition-based schedules (reading crosses a limit)', () => {
+  async function poolWithLime(h: Harness) {
+    const asset = must(
+      createAsset({
+        id: h.deps.ids.next<'Asset'>(),
+        ownerId: OWNER,
+        now: h.clock.now(),
+        name: 'Pool',
+      }),
+    );
+    await h.repos.assets.save(asset);
+    const { activity } = must(
+      await createActivity(h.deps, {
+        name: 'Lower pH',
+        type: 'maintenance',
+        assetId: asset.id,
+        schedule: {
+          strategy: { kind: 'condition', measurementKey: 'ph', comparator: 'gt', threshold: 7.5 },
+          timeZone: 'Asia/Kolkata',
+          startsOn: '2026-11-05',
+        },
+      }),
+    );
+    return { asset, activity };
+  }
+  const ph = (assetId: AssetId, value: number) => ({
+    assetId,
+    measurement: { kind: 'numeric' as const, key: 'ph', value, unit: 'pH' },
+  });
+  const fired = async (h: Harness, assetId: AssetId, value: number) =>
+    must(await recordMeasurement(h.deps, ph(assetId, value))).createdOccurrences.length;
+
+  it('fires once per crossing and re-arms after coming back', async () => {
+    const h = createHarness();
+    const { asset } = await poolWithLime(h);
+    expect(await fired(h, asset.id, 7.2)).toBe(0);
+    expect(await fired(h, asset.id, 7.6)).toBe(1);
+    expect(await fired(h, asset.id, 7.9)).toBe(0);
+
+    const [open] = await h.repos.occurrences.list({ status: ['pending'] });
+    must(await completeOccurrence(h.deps, { occurrenceId: open!.id }));
+    // Still above the limit after the work: not a new crossing.
+    expect(await fired(h, asset.id, 7.8)).toBe(0);
+    // Back below, then above again: fires again.
+    expect(await fired(h, asset.id, 7.3)).toBe(0);
+    expect(await fired(h, asset.id, 7.7)).toBe(1);
+  });
+
+  it('ignores other readings and does not duplicate an open occurrence', async () => {
+    const h = createHarness();
+    const { asset } = await poolWithLime(h);
+    const other = must(
+      await recordMeasurement(h.deps, {
+        assetId: asset.id,
+        measurement: { kind: 'numeric', key: 'chlorine', value: 9, unit: 'ppm' },
+      }),
+    );
+    expect(other.createdOccurrences).toEqual([]);
+    expect(await fired(h, asset.id, 7.6)).toBe(1);
+    expect(await fired(h, asset.id, 7.2)).toBe(0);
+    expect(await fired(h, asset.id, 7.6)).toBe(0); // crossed again, but one is still open
+  });
+});

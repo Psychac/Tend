@@ -13,7 +13,7 @@ import {
   type Result,
 } from '@tend/domain';
 import { found, transact, type Deps } from './deps';
-import { ensureOccurrences } from './generation';
+import { ensureOccurrences, triggerConditionSchedules } from './generation';
 import type { MeasurementInput } from './occurrences';
 
 export interface RecordMeasurementInput {
@@ -85,6 +85,7 @@ export async function recordMeasurement(
         createdOccurrences.push(...(await ensureOccurrences(deps, repos, activity, schedule)));
       }
     }
+    createdOccurrences.push(...(await triggerConditionSchedules(deps, repos, created.value)));
     return ok({ measurement: created.value, createdOccurrences });
   });
 }

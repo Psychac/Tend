@@ -206,6 +206,7 @@ export async function setActivitySchedule(
     if (
       existing &&
       schedule.strategy.kind !== 'event' &&
+      schedule.strategy.kind !== 'condition' &&
       (input.outstanding ?? 'supersede_future') === 'supersede_future'
     ) {
       const today = localDateOf(now, schedule.timeZone);
