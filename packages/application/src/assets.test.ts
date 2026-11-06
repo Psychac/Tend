@@ -1,8 +1,9 @@
-import type { Result } from '@tend/domain';
+import { replacementDueOn, type LocalDate, type Result } from '@tend/domain';
 import {
   createActivity,
   createAsset,
   listAssets,
+  listReplacementPlan,
   recordMeasurement,
   setAssetStatus,
 } from './index';
@@ -102,5 +103,61 @@ describe('listAssets', () => {
     must(await createAsset(h.deps, { name: 'Bicycle' }));
     expect(await listAssets(h.repos, { search: 'bike' })).toHaveLength(0);
     expect(await listAssets(h.repos, { search: 'hond' })).toHaveLength(1);
+  });
+});
+
+describe('replacement planning', () => {
+  const today = '2026-11-05' as LocalDate;
+
+  it('derives the replacement date from purchase date and expected life', async () => {
+    const h = createHarness();
+    const asset = must(
+      await createAsset(h.deps, {
+        name: 'Water heater',
+        purchaseDate: '2016-12-01',
+        expectedLifeYears: 10,
+      }),
+    );
+    expect(replacementDueOn(asset)).toBe('2026-12-01');
+    const noDate = must(await createAsset(h.deps, { name: 'Lamp', expectedLifeYears: 5 }));
+    expect(replacementDueOn(noDate)).toBeUndefined();
+  });
+
+  it('rejects a nonsense expected life', async () => {
+    const h = createHarness();
+    for (const years of [0, -1, 2.5, 101]) {
+      const r = await createAsset(h.deps, { name: 'X', expectedLifeYears: years });
+      expect(!r.ok && r.error.issues[0]?.path).toBe('expectedLifeYears');
+    }
+  });
+
+  it('lists overdue, soon-due and poor-condition assets, soonest first', async () => {
+    const h = createHarness();
+    await createAsset(h.deps, {
+      name: 'Old phone',
+      purchaseDate: '2020-01-01',
+      expectedLifeYears: 5,
+    });
+    await createAsset(h.deps, {
+      name: 'Heater',
+      purchaseDate: '2016-12-01',
+      expectedLifeYears: 10,
+    });
+    await createAsset(h.deps, { name: 'Sofa', condition: 'poor' });
+    await createAsset(h.deps, {
+      name: 'New TV',
+      purchaseDate: '2025-01-01',
+      expectedLifeYears: 10,
+    });
+    await createAsset(h.deps, { name: 'Fine', condition: 'good' });
+    const retired = must(await createAsset(h.deps, { name: 'Gone', condition: 'poor' }));
+    must(await setAssetStatus(h.deps, { assetId: retired.id, status: 'retired' }));
+
+    const plan = await listReplacementPlan(h.repos, { today });
+    expect(plan.map((p) => [p.asset.name, p.reasons])).toEqual([
+      ['Old phone', ['overdue']],
+      ['Heater', ['due_soon']],
+      ['Sofa', ['poor_condition']],
+    ]);
   });
 });

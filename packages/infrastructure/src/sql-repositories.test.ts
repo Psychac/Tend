@@ -110,6 +110,8 @@ describe('SQL repositories: round trips', () => {
           vendor: 'Croma',
         },
         warranty: { expiresOn: '2029-01-10' as LocalDate, notes: 'On-site' },
+        expectedLifeYears: 7,
+        condition: 'fair',
         notes: 'Desk',
       }),
     );

@@ -44,6 +44,8 @@ export const TABLES = {
       vendor: 'text',
       warranty_expires_on: 'text',
       warranty_notes: 'text',
+      expected_life_years: 'integer',
+      condition: 'text',
       notes: 'text',
     },
     indexes: { by_status: ['status'] },

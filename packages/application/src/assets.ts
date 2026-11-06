@@ -5,10 +5,13 @@ import {
   invariantError,
   notFoundError,
   ok,
+  addDays,
   parseLocalDate,
+  replacementDueOn,
   touch,
   validationError,
   type Asset,
+  type AssetCondition,
   type AssetStatus,
   type CategoryId,
   type LocationId,
@@ -31,6 +34,9 @@ export interface CreateAssetInput {
   readonly purchasePrice?: Money | undefined;
   /** YYYY-MM-DD */
   readonly warrantyExpiresOn?: string | undefined;
+  /** Whole years it is expected to last from the purchase date. */
+  readonly expectedLifeYears?: number | undefined;
+  readonly condition?: AssetCondition | undefined;
 }
 
 function optionalDate(path: string, raw: string | undefined): Result<LocalDate | undefined> {
@@ -68,6 +74,8 @@ export async function createAsset(deps: Deps, input: CreateAssetInput): Promise<
         vendor: input.vendor?.trim() || undefined,
       },
       warranty: warrantyExpiresOn.value ? { expiresOn: warrantyExpiresOn.value } : undefined,
+      expectedLifeYears: input.expectedLifeYears,
+      condition: input.condition,
       notes: input.notes,
     });
     if (!created.ok) return created;
@@ -157,5 +165,53 @@ export async function listAssets(
         latestReadings: [...latest.values()],
       };
     }),
+  );
+}
+
+export type ReplacementReason = 'overdue' | 'due_soon' | 'poor_condition';
+
+export interface ReplacementPlanItem {
+  readonly asset: Asset;
+  readonly replaceOn?: LocalDate | undefined;
+  readonly reasons: readonly ReplacementReason[];
+  readonly locationPath?: string | undefined;
+}
+
+/**
+ * Active assets that need replacing soon: past their expected life, reaching it within
+ * `withinDays`, or in poor condition. Soonest first; computed on demand, nothing is stored.
+ */
+export async function listReplacementPlan(
+  repos: Repositories,
+  options: { today: LocalDate; withinDays?: number | undefined },
+): Promise<ReplacementPlanItem[]> {
+  const horizon = addDays(options.today, options.withinDays ?? 365);
+  const [assets, locations] = await Promise.all([repos.assets.list({}), repos.locations.list()]);
+  const paths = locationPaths(locations);
+  const items: ReplacementPlanItem[] = [];
+  for (const asset of assets) {
+    if (asset.status !== 'active' && asset.status !== 'in_storage') continue;
+    const replaceOn = replacementDueOn(asset);
+    const reasons: ReplacementReason[] = [];
+    if (replaceOn && replaceOn < options.today) reasons.push('overdue');
+    else if (replaceOn && replaceOn <= horizon) reasons.push('due_soon');
+    if (asset.condition === 'poor') reasons.push('poor_condition');
+    if (reasons.length === 0) continue;
+    items.push({
+      asset,
+      replaceOn,
+      reasons,
+      locationPath: asset.locationId ? paths.get(asset.locationId) : undefined,
+    });
+  }
+  // Dated items first, soonest first; undated (poor condition only) after, by name.
+  return items.sort((a, b) =>
+    a.replaceOn && b.replaceOn
+      ? a.replaceOn.localeCompare(b.replaceOn)
+      : a.replaceOn
+        ? -1
+        : b.replaceOn
+          ? 1
+          : a.asset.name.localeCompare(b.asset.name),
   );
 }

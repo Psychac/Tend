@@ -1,7 +1,9 @@
 import { useState, type FormEvent } from 'react';
-import { Link, useNavigate, useParams } from 'react-router';
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router';
 import {
   createActivity,
+  ensureCategory,
+  findPreset,
   getActivityReminder,
   listAssets,
   setActivityReminder,
@@ -112,6 +114,16 @@ function scheduleDefaults(schedule: Schedule | undefined) {
   };
 }
 
+/** The next date on or after `today` that falls on this month and day. */
+function nextSeasonStart(today: LocalDate, season: { month: number; day: number }): LocalDate {
+  const pad = (n: number) => String(n).padStart(2, '0');
+  const year = Number(today.slice(0, 4));
+  const thisYear = `${year}-${pad(season.month)}-${pad(season.day)}` as LocalDate;
+  return thisYear >= today
+    ? thisYear
+    : (`${year + 1}-${pad(season.month)}-${pad(season.day)}` as LocalDate);
+}
+
 const nextKey = (() => {
   let n = 0;
   return () => `r${(n += 1)}`;
@@ -127,23 +139,30 @@ export function ActivityForm({ initial }: { initial?: ActivityFormInitial | unde
   const act = useAction();
   const navigate = useNavigate();
   const editing = initial !== undefined;
+  const [searchParams] = useSearchParams();
+  const preset = initial ? undefined : findPreset(searchParams.get('preset'));
   const sd = scheduleDefaults(initial?.schedule);
   const original = initial?.activity;
 
-  const [name, setName] = useState(original?.name ?? '');
-  const [description, setDescription] = useState(original?.description ?? '');
-  const [type, setType] = useState<ActivityType>(original?.type ?? 'routine');
-  const [priority, setPriority] = useState<Priority>(original?.priority ?? 'normal');
-  const [repeat, setRepeat] = useState<Repeat>(sd.repeat);
-  const [every, setEvery] = useState(sd.every);
-  const [unit, setUnit] = useState<RecurrenceUnit>(sd.unit);
-  const [weekdays, setWeekdays] = useState<IsoWeekday[]>(sd.weekdays);
-  const [startsOn, setStartsOn] = useState(
-    () => sd.startsOn ?? localDateOf(deps.clock.now(), deviceTimeZone()),
+  const [name, setName] = useState(original?.name ?? preset?.name ?? '');
+  const [description, setDescription] = useState(
+    original?.description ?? preset?.description ?? '',
   );
-  const [graceDays, setGraceDays] = useState(sd.graceDays);
+  const [type, setType] = useState<ActivityType>(original?.type ?? preset?.type ?? 'routine');
+  const [priority, setPriority] = useState<Priority>(original?.priority ?? 'normal');
+  const [repeat, setRepeat] = useState<Repeat>(preset?.repeat ?? sd.repeat);
+  const [every, setEvery] = useState(preset ? String(preset.every) : sd.every);
+  const [unit, setUnit] = useState<RecurrenceUnit>(preset?.unit ?? sd.unit);
+  const [weekdays, setWeekdays] = useState<IsoWeekday[]>(sd.weekdays);
+  const [startsOn, setStartsOn] = useState(() => {
+    const today = localDateOf(deps.clock.now(), deviceTimeZone());
+    return sd.startsOn ?? (preset?.season ? nextSeasonStart(today, preset.season) : today);
+  });
+  const [graceDays, setGraceDays] = useState(
+    preset?.graceDays === undefined ? sd.graceDays : String(preset.graceDays),
+  );
   const [checklist, setChecklist] = useState(
-    original?.checklist.map((c) => c.label).join('\n') ?? '',
+    original?.checklist.map((c) => c.label).join('\n') ?? preset?.checklist.join('\n') ?? '',
   );
   const [assetId, setAssetId] = useState(original?.assetId ?? '');
   const [categoryId, setCategoryId] = useState<string>(original?.categoryId ?? '');
@@ -155,8 +174,10 @@ export function ActivityForm({ initial }: { initial?: ActivityFormInitial | unde
     (original?.measurementRequirements ?? []).map((r) => ({ ...r, rowKey: nextKey() })),
   );
   const [outstanding, setOutstanding] = useState<OutstandingPolicy>('supersede_future');
-  const [remind, setRemind] = useState(initial?.reminder?.enabled ?? false);
-  const [leadDays, setLeadDays] = useState(String(initial?.reminder?.leadDays ?? 0));
+  const [remind, setRemind] = useState(initial?.reminder?.enabled ?? preset?.remind ?? false);
+  const [leadDays, setLeadDays] = useState(
+    String(initial?.reminder?.leadDays ?? preset?.leadDays ?? 0),
+  );
   const [atTime, setAtTime] = useState(initial?.reminder?.atTime ?? '09:00');
   const [afterActivityId, setAfterActivityId] = useState<string>(sd.afterActivityId);
   const [delayDays, setDelayDays] = useState(sd.delayDays);
@@ -296,6 +317,15 @@ export function ActivityForm({ initial }: { initial?: ActivityFormInitial | unde
       return navigate('/activities');
     }
 
+    let newCategoryId = categoryId ? (categoryId as CategoryId) : undefined;
+    if (preset?.category && !newCategoryId) {
+      const digital = await act(() => ensureCategory(deps, preset.category!));
+      if (!digital.ok) {
+        setBusy(false);
+        return setError(describeError(digital.error));
+      }
+      newCategoryId = digital.value.id;
+    }
     const result = await act(() =>
       createActivity(deps, {
         name,
@@ -305,7 +335,7 @@ export function ActivityForm({ initial }: { initial?: ActivityFormInitial | unde
         checklist: checklistLines(),
         measurementRequirements: requirementList(),
         assetId: assetId ? (assetId as AssetId) : undefined,
-        categoryId: categoryId ? (categoryId as CategoryId) : undefined,
+        categoryId: newCategoryId,
         locationId: locationId ? (locationId as LocationId) : undefined,
         schedule: buildSchedule(),
       }),
@@ -320,7 +350,7 @@ export function ActivityForm({ initial }: { initial?: ActivityFormInitial | unde
       }
     }
     setBusy(false);
-    if (result.ok) navigate('/activities');
+    if (result.ok) navigate(preset ? `/${preset.group}` : '/activities');
     else setError(describeError(result.error));
   }
 
@@ -350,6 +380,18 @@ export function ActivityForm({ initial }: { initial?: ActivityFormInitial | unde
         Name
         <input required value={name} onChange={(e) => setName(e.target.value)} className={field} />
       </label>
+
+      {preset ? (
+        <p className="rounded border border-line bg-canvas p-2 text-sm text-muted">
+          Started from “{preset.label}”.
+          {preset.category
+            ? ` It will be filed under ${preset.category} unless you pick another category.`
+            : ''}
+          {preset.group === 'digital'
+            ? ' Don’t store passwords, authentication secrets or recovery codes here.'
+            : ''}
+        </p>
+      ) : null}
 
       <label className="block text-sm">
         Description

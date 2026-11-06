@@ -103,6 +103,8 @@ export const assetMapper: Mapper<Asset> = {
     vendor: nv(a.purchase.vendor),
     warranty_expires_on: nv(a.warranty?.expiresOn),
     warranty_notes: nv(a.warranty?.notes),
+    expected_life_years: nv(a.expectedLifeYears),
+    condition: nv(a.condition),
     notes: nv(a.notes),
   }),
   fromRow: (r) => {
@@ -126,6 +128,8 @@ export const assetMapper: Mapper<Asset> = {
       warranty: warrantyOn
         ? { expiresOn: warrantyOn, notes: optStr(r, 'warranty_notes') }
         : undefined,
+      expectedLifeYears: optNum(r, 'expected_life_years'),
+      condition: optStr<NonNullable<Asset['condition']>>(r, 'condition'),
       notes: optStr(r, 'notes'),
     };
   },

@@ -16,6 +16,7 @@ import {
   type ActivityId,
   type ActivityType,
   type Asset,
+  type AssetCondition,
   type AssetId,
   type CategoryId,
   type LocalDate,
@@ -248,6 +249,8 @@ export interface UpdateAssetInput {
   readonly purchaseDate?: string | undefined;
   readonly purchasePrice?: Money | undefined;
   readonly warrantyExpiresOn?: string | undefined;
+  readonly expectedLifeYears?: number | undefined;
+  readonly condition?: AssetCondition | undefined;
 }
 
 /** Replaces an asset's descriptive details. Status changes go through `setAssetStatus`. */
@@ -291,6 +294,8 @@ export async function updateAsset(deps: Deps, input: UpdateAssetInput): Promise<
         vendor: input.vendor?.trim() || undefined,
       },
       warranty: warranty.value ? { expiresOn: warranty.value } : undefined,
+      expectedLifeYears: input.expectedLifeYears,
+      condition: input.condition,
       notes: input.notes,
     });
     if (!validated.ok) return validated;

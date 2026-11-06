@@ -1,6 +1,7 @@
 import { Link } from 'react-router';
-import { getDashboard, type OccurrenceItem } from '@tend/application';
+import { getAssetAlerts, getDashboard, type OccurrenceItem } from '@tend/application';
 import { localDateOf, type LocalDate } from '@tend/domain';
+import { useApp } from '../../app/providers/AppProvider';
 import { deviceTimeZone, formatDate, useLiveQuery } from '../../shared/hooks';
 import { SyncIndicator } from '../../shared/SyncIndicator';
 import { RemindersPanel } from '../reminders/RemindersPanel';
@@ -52,6 +53,35 @@ function Stat({
   );
 }
 
+/** Warranty, replacement, usage and servicing alerts for assets. Hidden when there are none. */
+function AssetAlerts() {
+  const { deps } = useApp();
+  const alerts = useLiveQuery(({ repos }) =>
+    getAssetAlerts(repos, {
+      today: localDateOf(deps.clock.now(), deviceTimeZone()),
+      timeZone: deviceTimeZone(),
+    }),
+  );
+  if (alerts.status !== 'ready' || alerts.data.length === 0) return null;
+  return (
+    <section aria-labelledby="h-attention" className="space-y-2">
+      <h3 id="h-attention" className="text-xs font-semibold uppercase tracking-wider text-muted">
+        Needs attention
+      </h3>
+      <ul className="card divide-y divide-line py-1 text-sm">
+        {alerts.data.map((a) => (
+          <li key={`${a.kind}:${a.assetId}:${a.message}`} className="flex flex-wrap gap-x-2 py-2">
+            <Link to="/assets" className="font-medium underline">
+              {a.assetName}
+            </Link>
+            <span className="text-muted">{a.message}</span>
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
 export function DashboardPage() {
   const dashboard = useLiveQuery(
     ({ repos, deps }) => getDashboard(repos, deps.clock, { timeZone: deviceTimeZone() }),
@@ -85,6 +115,8 @@ export function DashboardPage() {
       </div>
 
       <RemindersPanel />
+
+      <AssetAlerts />
 
       {nothingOpen ? (
         <p className="card border-dashed py-8 text-center text-muted">

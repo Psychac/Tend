@@ -20,7 +20,7 @@ that is missing or partial · P3 = polish, hygiene, or spec/repo drift · P4 = P
 | Domain & scheduling | calendar, completion-interval, fixed-interval, usage, grace, snooze, skip, reschedule, pause/resume, TZ/DST | consolidation, statuses    | condition, event                              |
 | Persistence         | local-only PowerSync, schema, repos, UoW                                                                    | storage-failure handling   | persist(), quota, multi-tab, local migrations |
 | UX                  | 7 nav sections, dark mode, responsive, reminders                                                            | Dashboard, Asset lifecycle | sync/saved indicator, attachments             |
-| Modules (§2)        | household/routines via activity types                                                                       | digital upkeep, ownership  | dedicated UIs                                 |
+| Modules (§2)        | digital upkeep, routines, household (presets + views), replacement planning, asset alerts                   | —                          | —                                             |
 | Backup              | export, restore, preview, merge/replace, checksum                                                           | —                          | attachments in export                         |
 | Delivery            | PWA, tests                                                                                                  | Vercel readiness           | CI, README, ADRs                              |
 
@@ -105,35 +105,40 @@ that is missing or partial · P3 = polish, hygiene, or spec/repo drift · P4 = P
 - **Work:** Call it in `reconcileSchedules`; define the resulting status/outcome ("missed" is named in §12.1 but is not an occurrence status); show consolidated items clearly in Dashboard and History.
 - **Decision:** `missed` is a stored occurrence status. `reconcileSchedules` already consolidated, but as `superseded`; it now marks older overdue occurrences `missed` (terminal, no XP or streak effect). History has a Missed entry and filter; the Dashboard shows "+N earlier missed" since the last completion. Older rows already stored as `superseded` are not relabelled.
 
-### G-12 Digital upkeep module — M
+### G-12 Digital upkeep module — M — done (presets plus a Digital view; no cost fields by design)
 
 - **Spec:** §2.4, Epic 7 (subscriptions, domain/hosting renewals, security reviews, backup reminders).
 - **State:** Only reachable as generic `renewal`/`administrative` activities. No notion of a service or subscription: renewal date, amount, billing period, provider, or a list view.
 - **Work:** Either dedicated lightweight entity/fields (provider, renewal date, cost, cycle) with a "Digital" view, or documented templates over activities and assets. Recommend templates plus a filtered view first. Must not store passwords or recovery codes.
+- **Decision:** Templates plus a filtered view, nothing more. Tend is reminder-focused, so there are deliberately no cost, provider or billing-cycle fields; free-text description covers "which provider". Presets in [presets.ts](../packages/application/src/presets.ts) (subscription, domain/hosting, backup, security review, account review) prefill the activity form via `/activities/new?preset=<key>`. Saving files the activity under a "Digital" category, created on first use. `/digital` lists that category by next due date, linked from the Activities page. The form and page warn against storing passwords, secrets or recovery codes. The presets mechanism is reusable for G-15 (Routines).
 
-### G-13 Dashboard: maintenance and warranty alerts — S
+### G-13 Dashboard: maintenance and warranty alerts — S — done (derived "Needs attention" list on the Dashboard)
 
 - **Spec:** §13 Dashboard ("Maintenance alerts"), §2.2 (warranty reminders).
 - **State:** Overdue / Due today / Coming up / Recently done exist. Warranty expiry is stored and displayed on the asset but never raised as an alert or reminder.
 - **Work:** Derived alerts: warranty expiring within N days, usage meters near their threshold, assets with no recent service. Computed on demand like reminders (ADR-019).
+- **Decision:** `getAssetAlerts` derives four kinds on demand and stores nothing: warranty ending within 60 days; replacement due within 90 days, past due, or poor condition (G-16); a usage meter at 90% or more of its interval but not yet due (due ones already have an occurrence); and an asset older than 12 months whose activities have no completion in 12 months (or ever). They show in a "Needs attention" list on the Dashboard, hidden when empty, each linking to Assets. Thresholds are options with these defaults, not user settings. They are not delivered as notifications; extending the reminder channel to them is a possible follow-up.
 
-### G-14 Household module — M
+### G-14 Household module — M — done (Household view by room; room and seasonal presets)
 
 - **Spec:** §2.1, Epic 5 (rooms, cleaning checklists, household dashboard views, seasonal activities).
 - **State:** Locations and categories exist and filter activities. No household-specific dashboard view, checklist templates, or seasonal scheduling (e.g. "every spring", date-window schedules).
 - **Work:** Room-grouped view, reusable checklist templates, seasonal recurrence (calendar yearly with month/day, optionally a window).
+- **Decision:** No new entity or schedule type. `/household` (main nav) groups activities by place: those filed under a Household category, anything with a place, and cleaning tasks (Digital items excluded). Checklist templates are the G-12 presets (kitchen deep clean, bathroom clean, bedroom linens). A seasonal chore is a yearly calendar schedule: a preset may carry a start month and day, so the form starts it on the next such date, and its grace days act as the window (spring clean 20 March, autumn gutter check 1 October, cooling service 1 March). Seasons are fixed dates, not hemisphere-aware; the date is editable in the form.
 
-### G-15 Routines and administrative life tasks — S
+### G-15 Routines and administrative life tasks — S — done (Routines view and presets; no new entity)
 
 - **Spec:** §2.5, Epic 7.
 - **State:** Works via activity types; no routine-specific view, no user-defined activity types (spec: "user-defined activity types"), only the fixed list plus `custom`.
 - **Work:** Decide whether user-defined types are real entities or just `custom` + category; add a Routines view.
+- **Decision:** No new entity. A user-defined type is the `custom` type plus a category of the user's own, which already filters and groups activities. `/routines` (in the main nav) lists activities of type Routine, Administrative or Custom, excluding those filed under Digital, by next due date. It offers five presets (weekly review, declutter, health check-up, ID and documents expiry, insurance review) that reuse the G-12 presets mechanism, plus a blank activity.
 
-### G-16 Ownership management: replacement planning and lifecycle — M
+### G-16 Ownership management: replacement planning and lifecycle — M — done (expected life, condition, planning list)
 
 - **Spec:** §2.3.
 - **State:** Status, purchase, vendor and warranty exist, plus retire/reactivate. No expected lifespan, replacement-due date, condition rating, or replacement planning view; "links to maintenance activities" is done.
 - **Work:** Add expected end-of-life and condition; surface "replace soon" in alerts (G-13); lifecycle states beyond active/retired/disposed if needed.
+- **Decision:** Assets gain `expectedLifeYears` (whole years from the purchase date) and `condition` (good, fair, poor). Both are optional new columns, so no local migration is needed (ADR 0001). The replacement date is derived (`replacementDueOn`), never stored. `listReplacementPlan` returns active assets that are past it, reach it within a year, or are in poor condition, and the Assets page shows them in a "Replacement planning" section. Existing lifecycle states are kept. Still open for G-13: raising these as dashboard alerts or reminders.
 
 ### G-17 Occurrence statuses: `cancelled` unused; 'missed' undefined — S — done
 
@@ -141,11 +146,12 @@ that is missing or partial · P3 = polish, hygiene, or spec/repo drift · P4 = P
 - **State:** `cancelled` exists in the type but no use case or UI sets it. §12.1 lists `missed` as an outcome but §6.3 has no such status.
 - **Resolved:** `missed` is a stored status (G-11) and is now listed in spec §6.3. `cancelOccurrence` plus a confirmed Cancel button on the occurrence card. Cancel is not an outcome: Insights does not count it, the date is not regenerated, History shows it as Cancelled (with a filter). A repeating schedule carries on as after a skip.
 
-### G-18 Measurements: history and trends — M
+### G-18 Measurements: history and trends — M — done (Readings on each asset; rating entry)
 
 - **Spec:** §2.2, Epic 9 ("measurement history"), §13.
 - **State:** Measurements are recorded and shown inline in History entries; Insights has meter data. No per-asset/per-key measurement history view or chart, no condition-style (qualitative) entry UI.
 - **Work:** Measurement history screen on the asset, with a simple trend chart; qualitative measurement entry.
+- **Decision:** Each asset card has a "Readings" button showing everything recorded for it (`getAssetMeasurementHistory`), grouped by what was measured. A numeric series gets a plain SVG line chart, spaced by date, with latest, low and high; dots recorded with a service are filled. It has a screen-reader summary and an accessible list of entries below. A rating series is a dated list. "Record a reading" now has a Number or Rating kind; ratings suggest Good, Fair and Poor but accept any text. No charting library, and no per-activity view yet: only readings attached to an asset are shown.
 
 ### G-19 Local data protection claims — S
 

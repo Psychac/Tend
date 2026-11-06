@@ -1,3 +1,4 @@
+import type { Repositories } from '@tend/contracts';
 import {
   createMeasurement,
   err,
@@ -87,5 +88,59 @@ export async function recordMeasurement(
     }
     createdOccurrences.push(...(await triggerConditionSchedules(deps, repos, created.value)));
     return ok({ measurement: created.value, createdOccurrences });
+  });
+}
+
+export interface MeasurementPoint {
+  readonly id: Measurement['id'];
+  readonly measuredAt: Measurement['measuredAt'];
+  /** The number for a numeric series; the label's position is not meaningful. */
+  readonly value?: number | undefined;
+  /** The rating or label for a qualitative series. */
+  readonly label?: string | undefined;
+  /** True when it was recorded as part of completing an activity. */
+  readonly withService: boolean;
+}
+
+export interface MeasurementSeries {
+  readonly key: string;
+  readonly kind: 'numeric' | 'qualitative';
+  /** Numeric series only. A key recorded in several units uses the newest unit. */
+  readonly unit?: string | undefined;
+  /** Oldest first, ready to plot or list. */
+  readonly points: readonly MeasurementPoint[];
+}
+
+/**
+ * Everything recorded for an asset, grouped by what was measured. A key that was recorded
+ * both as a number and as a rating gives one series of each kind. Series are ordered by
+ * their most recent entry, newest first.
+ */
+export async function getAssetMeasurementHistory(
+  repos: Repositories,
+  assetId: AssetId,
+): Promise<MeasurementSeries[]> {
+  // Newest first from the repository.
+  const all = await repos.measurements.list({ assetId, limit: 2000 });
+  const groups = new Map<string, Measurement[]>();
+  for (const m of all) {
+    const id = `${m.value.kind}:${m.key}`;
+    groups.set(id, [...(groups.get(id) ?? []), m]);
+  }
+  return [...groups.values()].map((newestFirst) => {
+    const first = newestFirst[0]!;
+    const numeric = first.value.kind === 'numeric';
+    return {
+      key: first.key,
+      kind: numeric ? 'numeric' : 'qualitative',
+      unit: first.value.kind === 'numeric' ? first.value.quantity.unit : undefined,
+      points: [...newestFirst].reverse().map((m) => ({
+        id: m.id,
+        measuredAt: m.measuredAt,
+        value: m.value.kind === 'numeric' ? m.value.quantity.value : undefined,
+        label: m.value.kind === 'qualitative' ? m.value.label : undefined,
+        withService: m.completionId !== undefined,
+      })),
+    };
   });
 }

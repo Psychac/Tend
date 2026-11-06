@@ -51,12 +51,17 @@ export function ActivitiesPage() {
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h2 className="text-xl font-semibold">Activities</h2>
-        <Link
-          to="/activities/new"
-          className="rounded bg-brand px-3 py-1 text-sm font-medium text-white hover:bg-brand-hover"
-        >
-          New activity
-        </Link>
+        <div className="flex items-center gap-2">
+          <Link to="/digital" className="btn">
+            Digital upkeep
+          </Link>
+          <Link
+            to="/activities/new"
+            className="rounded bg-brand px-3 py-1 text-sm font-medium text-white hover:bg-brand-hover"
+          >
+            New activity
+          </Link>
+        </div>
       </div>
 
       <label className="block text-sm">

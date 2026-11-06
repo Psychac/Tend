@@ -43,6 +43,39 @@ const NAV = [
     ),
   },
   {
+    to: '/household',
+    label: 'Household',
+    icon: icon(
+      <>
+        <path d="M3 11l9-8 9 8" />
+        <path d="M5 10v10h14V10" />
+        <path d="M10 20v-6h4v6" />
+      </>,
+    ),
+  },
+  {
+    to: '/routines',
+    label: 'Routines',
+    icon: icon(
+      <>
+        <path d="M17 2l4 4-4 4" />
+        <path d="M3 11V9a3 3 0 0 1 3-3h15" />
+        <path d="M7 22l-4-4 4-4" />
+        <path d="M21 13v2a3 3 0 0 1-3 3H3" />
+      </>,
+    ),
+  },
+  {
+    to: '/digital',
+    label: 'Digital',
+    icon: icon(
+      <>
+        <rect x="3" y="4" width="18" height="12" rx="2" />
+        <path d="M8 20h8M12 16v4" />
+      </>,
+    ),
+  },
+  {
     to: '/assets',
     label: 'Assets',
     icon: icon(
@@ -132,7 +165,7 @@ export function AppLayout() {
     <div className="min-h-screen md:pl-60">
       <nav
         aria-label="Primary"
-        className="fixed inset-x-0 bottom-0 z-20 flex border-t border-line bg-surface/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:inset-y-0 md:right-auto md:w-60 md:flex-col md:gap-1 md:border-r md:border-t-0 md:p-3"
+        className="fixed inset-x-0 bottom-0 z-20 flex overflow-x-auto border-t border-line bg-surface/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:inset-y-0 md:right-auto md:w-60 md:flex-col md:gap-1 md:overflow-visible md:border-r md:border-t-0 md:p-3"
       >
         <div className="hidden items-center gap-2.5 px-2 pb-4 pt-2 md:flex">
           <span
@@ -151,7 +184,7 @@ export function AppLayout() {
             to={item.to}
             end={item.to === '/'}
             className={({ isActive }) =>
-              `relative flex flex-1 flex-col items-center justify-center gap-0.5 px-1 py-2 text-[11px] font-medium transition-colors md:flex-none md:flex-row md:justify-start md:gap-3 md:rounded-lg md:px-3 md:py-2 md:text-sm ${
+              `relative flex min-w-[4.25rem] flex-1 flex-col items-center justify-center gap-0.5 px-1 py-2 text-[11px] font-medium transition-colors md:min-w-0 md:flex-none md:flex-row md:justify-start md:gap-3 md:rounded-lg md:px-3 md:py-2 md:text-sm ${
                 isActive
                   ? 'text-brand md:bg-brand-soft'
                   : 'text-muted hover:text-ink md:hover:bg-sunken'

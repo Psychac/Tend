@@ -2,6 +2,9 @@ import { createBrowserRouter } from 'react-router';
 import { AppLayout } from '../layouts/AppLayout';
 import { ActivitiesPage } from '../../features/activities/ActivitiesPage';
 import { ActivityEditPage, ActivityFormPage } from '../../features/activities/ActivityFormPage';
+import { HouseholdPage } from '../../features/activities/HouseholdPage';
+import { RoutinesPage } from '../../features/activities/RoutinesPage';
+import { DigitalPage } from '../../features/activities/DigitalPage';
 import { AssetsPage } from '../../features/assets/AssetsPage';
 import { CalendarPage } from '../../features/calendar/CalendarPage';
 import { DashboardPage } from '../../features/dashboard/DashboardPage';
@@ -18,6 +21,9 @@ export const routes = [
       { path: 'activities', element: <ActivitiesPage /> },
       { path: 'activities/new', element: <ActivityFormPage /> },
       { path: 'activities/:activityId/edit', element: <ActivityEditPage /> },
+      { path: 'household', element: <HouseholdPage /> },
+      { path: 'routines', element: <RoutinesPage /> },
+      { path: 'digital', element: <DigitalPage /> },
       { path: 'assets', element: <AssetsPage /> },
       { path: 'calendar', element: <CalendarPage /> },
       { path: 'history', element: <HistoryPage /> },

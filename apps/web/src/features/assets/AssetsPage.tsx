@@ -2,22 +2,34 @@ import { useState, type FormEvent } from 'react';
 import {
   createAsset,
   listAssets,
+  listReplacementPlan,
   updateAsset,
   recordMeasurement,
   setAssetStatus,
   type AssetListItem,
+  type ReplacementPlanItem,
 } from '@tend/application';
 import {
   currencyExponent,
+  localDateOf,
   parseMoney,
+  replacementDueOn,
   type Asset,
+  type AssetCondition,
   type CategoryId,
   type LocationId,
 } from '@tend/domain';
+import { MeasurementHistory } from './MeasurementHistory';
 import { MoneyField, useMoneyState } from '../../shared/currency';
 import { CategorySelect, LocationSelect } from '../../shared/pickers';
 import { useApp } from '../../app/providers/AppProvider';
-import { describeError, formatDate, useAction, useLiveQuery } from '../../shared/hooks';
+import {
+  describeError,
+  deviceTimeZone,
+  formatDate,
+  useAction,
+  useLiveQuery,
+} from '../../shared/hooks';
 import { AttachmentsSection } from '../attachments/AttachmentsSection';
 
 const field = 'field mt-1 block w-full';
@@ -51,6 +63,8 @@ export function AssetsPage() {
       </div>
 
       {adding ? <AssetForm onDone={() => setAdding(false)} /> : null}
+
+      <ReplacementPlan />
 
       <input
         type="search"
@@ -130,6 +144,10 @@ function AssetForm({ asset, onDone }: { asset?: Asset | undefined; onDone: () =>
       : undefined,
   );
   const [warranty, setWarranty] = useState(asset?.warranty?.expiresOn ?? '');
+  const [lifeYears, setLifeYears] = useState(
+    asset?.expectedLifeYears === undefined ? '' : String(asset.expectedLifeYears),
+  );
+  const [condition, setCondition] = useState<string>(asset?.condition ?? '');
   const [notes, setNotes] = useState(asset?.notes ?? '');
   const [categoryId, setCategoryId] = useState<string>(asset?.categoryId ?? '');
   const [locationId, setLocationId] = useState<string>(asset?.locationId ?? '');
@@ -153,6 +171,8 @@ function AssetForm({ asset, onDone }: { asset?: Asset | undefined; onDone: () =>
       notes,
       purchaseDate,
       warrantyExpiresOn: warranty,
+      expectedLifeYears: lifeYears.trim() ? Number(lifeYears) : undefined,
+      condition: condition ? (condition as AssetCondition) : undefined,
       purchasePrice: parsedPrice?.ok ? parsedPrice.value : undefined,
     };
     const result = await act(() =>
@@ -197,6 +217,31 @@ function AssetForm({ asset, onDone }: { asset?: Asset | undefined; onDone: () =>
             className={field}
           />
         </label>
+        <label className="block text-sm">
+          Expected life (years)
+          <input
+            type="number"
+            min="1"
+            max="100"
+            step="1"
+            value={lifeYears}
+            onChange={(e) => setLifeYears(e.target.value)}
+            className={field}
+          />
+        </label>
+        <label className="block text-sm">
+          Condition
+          <select
+            value={condition}
+            onChange={(e) => setCondition(e.target.value)}
+            className={field}
+          >
+            <option value="">Not rated</option>
+            <option value="good">Good</option>
+            <option value="fair">Fair</option>
+            <option value="poor">Poor</option>
+          </select>
+        </label>
       </div>
       <div className="flex flex-wrap gap-4">
         <CategorySelect label="Category" value={categoryId} onChange={setCategoryId} />
@@ -225,6 +270,9 @@ function AssetCard({ item }: { item: AssetListItem }) {
   const [reading, setReading] = useState(false);
   const [editing, setEditing] = useState(false);
   const [files, setFiles] = useState(false);
+  const [history, setHistory] = useState(false);
+  const [kind, setKind] = useState<'numeric' | 'qualitative'>('numeric');
+  const [rating, setRating] = useState('');
   const [key, setKey] = useState(item.latestReadings[0]?.key ?? 'odometer');
   const [value, setValue] = useState('');
   const [unit, setUnit] = useState(
@@ -242,12 +290,16 @@ function AssetCard({ item }: { item: AssetListItem }) {
     const result = await act(() =>
       recordMeasurement(deps, {
         assetId: asset.id,
-        measurement: { kind: 'numeric', key, value: Number(value), unit },
+        measurement:
+          kind === 'numeric'
+            ? { kind: 'numeric', key, value: Number(value), unit }
+            : { kind: 'qualitative', key, label: rating },
       }),
     );
     setBusy(false);
     if (result.ok) {
       setValue('');
+      setRating('');
       setReading(false);
     } else setError(describeError(result.error));
   }
@@ -273,6 +325,8 @@ function AssetCard({ item }: { item: AssetListItem }) {
             {item.activityCount} {item.activityCount === 1 ? 'activity' : 'activities'}
             {asset.status !== 'active' ? ` · ${asset.status.replace('_', ' ')}` : ''}
             {asset.warranty ? ` · warranty ends ${formatDate(asset.warranty.expiresOn)}` : ''}
+            {asset.condition ? ` · ${asset.condition} condition` : ''}
+            {replacementDueOn(asset) ? ` · replace by ${formatDate(replacementDueOn(asset)!)}` : ''}
             {item.categoryName ? ` · ${item.categoryName}` : ''}
             {item.locationPath ? ` · ${item.locationPath}` : ''}
           </p>
@@ -295,6 +349,15 @@ function AssetCard({ item }: { item: AssetListItem }) {
           </button>
           <button type="button" className={button} onClick={() => setReading(!reading)}>
             Record a reading
+          </button>
+          <button
+            type="button"
+            className={button}
+            aria-expanded={history}
+            aria-label={`Readings history for ${asset.name}`}
+            onClick={() => setHistory(!history)}
+          >
+            Readings
           </button>
           <button
             type="button"
@@ -332,6 +395,8 @@ function AssetCard({ item }: { item: AssetListItem }) {
         <AttachmentsSection subject={{ type: 'asset', id: asset.id }} label={asset.name} />
       ) : null}
 
+      {history ? <MeasurementHistory assetId={asset.id} label={asset.name} /> : null}
+
       {reading ? (
         <form
           onSubmit={submitReading}
@@ -348,30 +413,98 @@ function AssetCard({ item }: { item: AssetListItem }) {
             />
           </label>
           <label className="block text-sm">
-            Value
-            <input
-              required
-              type="number"
-              step="any"
-              value={value}
-              onChange={(e) => setValue(e.target.value)}
+            Kind
+            <select
+              value={kind}
+              onChange={(e) => setKind(e.target.value as 'numeric' | 'qualitative')}
               className={field}
-            />
+            >
+              <option value="numeric">Number</option>
+              <option value="qualitative">Rating</option>
+            </select>
           </label>
-          <label className="block text-sm">
-            Unit
-            <input
-              required
-              value={unit}
-              onChange={(e) => setUnit(e.target.value)}
-              className={field}
-            />
-          </label>
+          {kind === 'numeric' ? (
+            <>
+              <label className="block text-sm">
+                Value
+                <input
+                  required
+                  type="number"
+                  step="any"
+                  value={value}
+                  onChange={(e) => setValue(e.target.value)}
+                  className={field}
+                />
+              </label>
+              <label className="block text-sm">
+                Unit
+                <input
+                  required
+                  value={unit}
+                  onChange={(e) => setUnit(e.target.value)}
+                  className={field}
+                />
+              </label>
+            </>
+          ) : (
+            <label className="block text-sm">
+              Rating
+              <input
+                required
+                list={`ratings-${asset.id}`}
+                value={rating}
+                onChange={(e) => setRating(e.target.value)}
+                className={field}
+              />
+              <datalist id={`ratings-${asset.id}`}>
+                <option value="Good" />
+                <option value="Fair" />
+                <option value="Poor" />
+              </datalist>
+            </label>
+          )}
           <button type="submit" disabled={busy} className={primary}>
             Save reading
           </button>
         </form>
       ) : null}
     </li>
+  );
+}
+
+const REASON_TEXT = {
+  overdue: 'past its expected life',
+  due_soon: 'reaching its expected life',
+  poor_condition: 'in poor condition',
+} as const;
+
+function planLine(item: ReplacementPlanItem): string {
+  const when = item.replaceOn ? `replace by ${formatDate(item.replaceOn)}` : '';
+  const why = item.reasons.map((r) => REASON_TEXT[r]).join(', ');
+  return [when, why, item.locationPath].filter(Boolean).join(' · ');
+}
+
+/** Assets to replace soon: past or near their expected life, or in poor condition. */
+function ReplacementPlan() {
+  const { deps } = useApp();
+  const plan = useLiveQuery(({ repos }) =>
+    listReplacementPlan(repos, {
+      today: localDateOf(deps.clock.now(), deviceTimeZone()),
+      withinDays: 365,
+    }),
+  );
+  if (plan.status !== 'ready' || plan.data.length === 0) return null;
+  return (
+    <section aria-label="Replacement planning" className="space-y-2 card p-3">
+      <h3 className="text-sm font-medium">Replacement planning</h3>
+      <ul className="space-y-1">
+        {plan.data.map((item) => (
+          <li key={item.asset.id} className="text-sm">
+            <span className="font-medium">{item.asset.name}</span>
+            <span className="text-muted"> · {planLine(item)}</span>
+          </li>
+        ))}
+      </ul>
+    </section>
   );
 }
