@@ -1,5 +1,6 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { NavLink, Outlet } from 'react-router';
+import { SyncIndicator } from '../../shared/SyncIndicator';
 import { useReminderCount } from '../../features/reminders/ReminderBadge';
 
 const icon = (d: ReactNode) => (
@@ -19,13 +20,79 @@ const icon = (d: ReactNode) => (
 );
 
 const NAV = [
-  { to: '/', label: 'Dashboard', icon: icon(<><rect x="3" y="3" width="7" height="9" rx="1.5" /><rect x="14" y="3" width="7" height="5" rx="1.5" /><rect x="14" y="12" width="7" height="9" rx="1.5" /><rect x="3" y="16" width="7" height="5" rx="1.5" /></>) },
-  { to: '/activities', label: 'Activities', icon: icon(<><path d="M9 11l3 3 8-8" /><path d="M20 12v6a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h9" /></>) },
-  { to: '/assets', label: 'Assets', icon: icon(<><path d="M21 8l-9-5-9 5 9 5 9-5z" /><path d="M3 8v8l9 5 9-5V8" /><path d="M12 13v8" /></>) },
-  { to: '/calendar', label: 'Calendar', icon: icon(<><rect x="3" y="4" width="18" height="17" rx="2" /><path d="M8 2v4M16 2v4M3 10h18" /></>) },
-  { to: '/history', label: 'History', icon: icon(<><path d="M3 12a9 9 0 1 0 3-6.7" /><path d="M3 4v5h5" /><path d="M12 8v4l3 2" /></>) },
-  { to: '/insights', label: 'Insights', icon: icon(<><path d="M4 20V10M10 20V4M16 20v-8M22 20H2" /></>) },
-  { to: '/settings', label: 'Settings', icon: icon(<><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3h0a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8v0a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z" /></>) },
+  {
+    to: '/',
+    label: 'Dashboard',
+    icon: icon(
+      <>
+        <rect x="3" y="3" width="7" height="9" rx="1.5" />
+        <rect x="14" y="3" width="7" height="5" rx="1.5" />
+        <rect x="14" y="12" width="7" height="9" rx="1.5" />
+        <rect x="3" y="16" width="7" height="5" rx="1.5" />
+      </>,
+    ),
+  },
+  {
+    to: '/activities',
+    label: 'Activities',
+    icon: icon(
+      <>
+        <path d="M9 11l3 3 8-8" />
+        <path d="M20 12v6a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h9" />
+      </>,
+    ),
+  },
+  {
+    to: '/assets',
+    label: 'Assets',
+    icon: icon(
+      <>
+        <path d="M21 8l-9-5-9 5 9 5 9-5z" />
+        <path d="M3 8v8l9 5 9-5V8" />
+        <path d="M12 13v8" />
+      </>,
+    ),
+  },
+  {
+    to: '/calendar',
+    label: 'Calendar',
+    icon: icon(
+      <>
+        <rect x="3" y="4" width="18" height="17" rx="2" />
+        <path d="M8 2v4M16 2v4M3 10h18" />
+      </>,
+    ),
+  },
+  {
+    to: '/history',
+    label: 'History',
+    icon: icon(
+      <>
+        <path d="M3 12a9 9 0 1 0 3-6.7" />
+        <path d="M3 4v5h5" />
+        <path d="M12 8v4l3 2" />
+      </>,
+    ),
+  },
+  {
+    to: '/insights',
+    label: 'Insights',
+    icon: icon(
+      <>
+        <path d="M4 20V10M10 20V4M16 20v-8M22 20H2" />
+      </>,
+    ),
+  },
+  {
+    to: '/settings',
+    label: 'Settings',
+    icon: icon(
+      <>
+        <circle cx="12" cy="12" r="3" />
+        <path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3h0a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8v0a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z" />
+      </>,
+    ),
+  },
 ];
 
 type Theme = 'system' | 'light' | 'dark';
@@ -68,8 +135,13 @@ export function AppLayout() {
         className="fixed inset-x-0 bottom-0 z-20 flex border-t border-line bg-surface/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:inset-y-0 md:right-auto md:w-60 md:flex-col md:gap-1 md:border-r md:border-t-0 md:p-3"
       >
         <div className="hidden items-center gap-2.5 px-2 pb-4 pt-2 md:flex">
-          <span className="grid h-9 w-9 place-items-center rounded-xl bg-brand text-white" aria-hidden="true">
-            {icon(<path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.5 2.5-2.4-.6-.6-2.4z" />)}
+          <span
+            className="grid h-9 w-9 place-items-center rounded-xl bg-brand text-white"
+            aria-hidden="true"
+          >
+            {icon(
+              <path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.5 2.5-2.4-.6-.6-2.4z" />,
+            )}
           </span>
           <span className="text-base font-semibold tracking-tight">Tend</span>
         </div>
@@ -98,23 +170,35 @@ export function AppLayout() {
             ) : null}
           </NavLink>
         ))}
+        <SyncIndicator className="hidden px-3 pb-1 md:mt-auto md:flex" />
         <button
           type="button"
           onClick={cycleTheme}
           aria-label={`Theme: ${theme}. Switch theme`}
-          className="hidden items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-muted hover:bg-sunken hover:text-ink md:mt-auto md:flex"
+          className="hidden items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-muted hover:bg-sunken hover:text-ink md:flex"
         >
           {theme === 'dark'
             ? icon(<path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z" />)
             : theme === 'light'
-              ? icon(<><circle cx="12" cy="12" r="4" /><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" /></>)
-              : icon(<><rect x="3" y="4" width="18" height="12" rx="2" /><path d="M8 20h8M12 16v4" /></>)}
+              ? icon(
+                  <>
+                    <circle cx="12" cy="12" r="4" />
+                    <path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" />
+                  </>,
+                )
+              : icon(
+                  <>
+                    <rect x="3" y="4" width="18" height="12" rx="2" />
+                    <path d="M8 20h8M12 16v4" />
+                  </>,
+                )}
           <span className="capitalize">{theme} theme</span>
         </button>
       </nav>
 
       <header className="sticky top-0 z-10 flex items-center justify-between border-b border-line bg-surface/90 px-4 py-3 backdrop-blur md:hidden">
         <h1 className="text-base font-semibold tracking-tight">Tend</h1>
+        <SyncIndicator />
         <button
           type="button"
           onClick={cycleTheme}

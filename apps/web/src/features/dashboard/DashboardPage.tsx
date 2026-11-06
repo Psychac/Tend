@@ -2,6 +2,7 @@ import { Link } from 'react-router';
 import { getDashboard, type OccurrenceItem } from '@tend/application';
 import { localDateOf, type LocalDate } from '@tend/domain';
 import { deviceTimeZone, formatDate, useLiveQuery } from '../../shared/hooks';
+import { SyncIndicator } from '../../shared/SyncIndicator';
 import { RemindersPanel } from '../reminders/RemindersPanel';
 import { OccurrenceCard } from './OccurrenceCard';
 
@@ -39,7 +40,10 @@ function Stat({
   value: number;
   tone: 'danger' | 'brand' | 'info';
 }) {
-  const color = value === 0 ? 'text-faint' : { danger: 'text-danger', brand: 'text-brand', info: 'text-info' }[tone];
+  const color =
+    value === 0
+      ? 'text-faint'
+      : { danger: 'text-danger', brand: 'text-brand', info: 'text-info' }[tone];
   return (
     <div className="card text-center" aria-hidden="true">
       <p className={`text-2xl font-bold tabular-nums ${color}`}>{value}</p>
@@ -71,6 +75,7 @@ export function DashboardPage() {
       <div>
         <h2 className="text-2xl font-semibold">Dashboard</h2>
         <p className="mt-0.5 text-sm text-muted">{formatDate(d.today)}</p>
+        <SyncIndicator showDetail className="mt-2" />
       </div>
 
       <div className="grid grid-cols-3 gap-3">
@@ -97,10 +102,7 @@ export function DashboardPage() {
 
       {d.recentCompletions.length > 0 ? (
         <section aria-labelledby="h-recent" className="space-y-2">
-          <h3
-            id="h-recent"
-            className="text-xs font-semibold uppercase tracking-wider text-muted"
-          >
+          <h3 id="h-recent" className="text-xs font-semibold uppercase tracking-wider text-muted">
             Recently done
           </h3>
           <ul className="card divide-y divide-line py-1 text-sm">

@@ -11,11 +11,12 @@ import { reconcileSchedules, type Deps } from '@tend/application';
 import { browserNotifier, type Notifier } from '../../shared/notifier';
 import { REMINDER_CHECK_MS, runReminders } from './reminderEngine';
 import { browserStorage, guardDatabase, type StorageControl } from '../../shared/storage';
-import type { Repositories } from '@tend/contracts';
+import type { Repositories, SyncStatusSource } from '@tend/contracts';
 import { instantFromDate, type Clock, type Id, type IdGenerator, type UserId } from '@tend/domain';
 import {
   createSqlRepositories,
   createSqlUnitOfWork,
+  localOnlySyncStatus,
   openLocalDatabase,
   type SqlDatabase,
 } from '@tend/infrastructure';
@@ -35,6 +36,8 @@ export interface AppServices {
   readonly notifier: Notifier;
   /** Persistence and usage of on-device storage; replaceable in tests. */
   readonly storage: StorageControl;
+  /** Whether data is saved and synced; Phase 1 always reports local-only. */
+  readonly syncStatus: SyncStatusSource;
 }
 
 const systemClock: Clock = { now: () => instantFromDate(new Date()) };
@@ -49,6 +52,7 @@ export function createServices(
   db: SqlDatabase,
   notifier: Notifier = browserNotifier,
   storage: StorageControl = browserStorage,
+  syncStatus: SyncStatusSource = localOnlySyncStatus,
 ): AppServices {
   return {
     deps: {
@@ -61,6 +65,7 @@ export function createServices(
     db,
     notifier,
     storage,
+    syncStatus,
   };
 }
 
@@ -112,6 +117,7 @@ interface Props {
   readonly open?: () => Promise<SqlDatabase>;
   readonly notifier?: Notifier;
   readonly storage?: StorageControl;
+  readonly syncStatus?: SyncStatusSource;
 }
 
 /**
@@ -124,6 +130,7 @@ export function AppProvider({
   open = openSharedDatabase,
   notifier = browserNotifier,
   storage = browserStorage,
+  syncStatus = localOnlySyncStatus,
 }: Props) {
   const [state, setState] = useState<State>({ status: 'loading' });
   const [storageFull, setStorageFull] = useState(false);
@@ -149,7 +156,7 @@ export function AppProvider({
           },
           onFull: () => setStorageFull(true),
         });
-        const services = createServices(db, notifier, storage);
+        const services = createServices(db, notifier, storage, syncStatus);
         const remind = () =>
           runReminders(services, notifier).catch((e: unknown) =>
             console.error('Reminder check failed', e),
@@ -185,7 +192,7 @@ export function AppProvider({
       if (onVisible) document.removeEventListener('visibilitychange', onVisible);
       if (timer) clearInterval(timer);
     };
-  }, [open, notifier, storage, notifyChanged]);
+  }, [open, notifier, storage, syncStatus, notifyChanged]);
 
   if (state.status === 'loading') {
     return <p className="p-4 text-muted">Opening your data…</p>;

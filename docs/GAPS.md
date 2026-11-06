@@ -34,7 +34,7 @@ that is missing or partial · P3 = polish, hygiene, or spec/repo drift · P4 = P
 - **Work:** Request persistence after first meaningful write; show result in Settings ("Storage: protected / best-effort") with the §9.3 caveat that it is never guaranteed; catch quota/write errors in the unit of work and surface a clear message that the change was *not* saved; show `navigator.storage.estimate()` usage in Settings; nudge a backup when storage is not persistent.
 - **Done when:** a simulated `QuotaExceededError` shows an error and leaves data consistent; Settings reports persistence status.
 
-### G-02 "Saved on this device" / sync-state indicator — S
+### G-02 "Saved on this device" / sync-state indicator — S ✅ done
 - **Spec:** §7.1, §7.7, §13 (Dashboard sync status), criterion 13, Epic 2 "sync status indicators".
 - **State:** No indicator at all. The sync-state vocabulary (Offline / Syncing / Synced / Attention / Unavailable) is not modelled.
 - **Work:** Introduce a `SyncStatus` contract in `contracts` with a Phase 1 implementation that always reports "Saved on this device · sync not enabled". Render in the app shell and Dashboard. Phase 2 swaps in the PowerSync-backed implementation.
