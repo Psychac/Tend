@@ -11,7 +11,7 @@ test('a backup downloaded on one device restores on another', async ({ browser }
 
   await a.getByRole('link', { name: 'Settings' }).click();
   const downloading = a.waitForEvent('download');
-  await a.getByRole('button', { name: 'Download backup' }).click();
+  await a.getByRole('button', { name: 'Download backup', exact: true }).click();
   const path = await (await downloading).path();
   expect(JSON.parse(readFileSync(path, 'utf8')).counts.activities).toBe(1);
 

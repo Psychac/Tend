@@ -70,3 +70,38 @@ test('a file attached to an asset survives a reload and can be removed', async (
 
   expect(errors).toEqual([]);
 });
+
+test('a backup zip carries attached files to another device', async ({ browser }) => {
+  const a = await (await browser.newContext({ acceptDownloads: true })).newPage();
+  await a.goto('/assets');
+  await a.getByRole('button', { name: 'Add asset' }).click();
+  await a.getByLabel('Name').fill('Water heater');
+  await a.getByRole('button', { name: 'Save asset' }).click();
+  await expect(a.getByText('Water heater')).toBeVisible({ timeout: 30_000 });
+  await a.getByRole('button', { name: 'Files for Water heater' }).click();
+  const files = a.getByRole('region', { name: 'Files for Water heater' });
+  await files.getByLabel('Add a file').setInputFiles({
+    name: 'invoice.pdf',
+    mimeType: 'application/pdf',
+    buffer: Buffer.from('%PDF-1.4 zip invoice'),
+  });
+  await expect(files.getByText('invoice.pdf')).toBeVisible({ timeout: 30_000 });
+
+  await a.getByRole('link', { name: 'Settings' }).click();
+  const downloading = a.waitForEvent('download');
+  await a.getByRole('button', { name: /Download backup with files/ }).click();
+  const path = await (await downloading).path();
+
+  const b = await (await browser.newContext()).newPage();
+  await b.goto('/settings');
+  await b.getByLabel(/restore from a backup file/i).setInputFiles(path);
+  await expect(b.getByText(/nothing has changed yet/i)).toBeVisible({ timeout: 30_000 });
+  await b.getByRole('button', { name: 'Merge into my data' }).click();
+  await expect(b.getByText(/1 attached file restored/)).toBeVisible({ timeout: 30_000 });
+
+  await b.getByRole('link', { name: 'Assets' }).click();
+  await b.getByRole('button', { name: 'Files for Water heater' }).click();
+  const there = b.getByRole('region', { name: 'Files for Water heater' });
+  await expect(there.getByText('invoice.pdf')).toBeVisible({ timeout: 30_000 });
+  await expect(there.getByText('File missing on this device')).toHaveCount(0);
+});

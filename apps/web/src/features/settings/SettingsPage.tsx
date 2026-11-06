@@ -1,9 +1,12 @@
 import { useState, type ChangeEvent } from 'react';
 import {
   exportBackup,
+  exportBackupZip,
   parseBackup,
   previewRestore,
+  readBackupZip,
   restoreBackup,
+  restoreBackupFiles,
   type BackupFile,
   type RestoreMode,
   type RestorePreview,
@@ -18,8 +21,10 @@ const button = 'btn';
 const primary = 'btn btn-primary';
 
 /** Hands the browser a file to save. */
-function download(filename: string, text: string): void {
-  const url = URL.createObjectURL(new Blob([text], { type: 'application/json' }));
+function download(filename: string, content: string | Blob): void {
+  const blob =
+    typeof content === 'string' ? new Blob([content], { type: 'application/json' }) : content;
+  const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
   link.href = url;
   link.download = filename;
@@ -75,6 +80,8 @@ type Restore =
       readonly backup: BackupFile;
       readonly mode: RestoreMode;
       readonly preview: RestorePreview;
+      /** File bytes from a zip backup; absent for a plain JSON backup. */
+      readonly files?: ReadonlyMap<string, Uint8Array>;
     }
   | { readonly step: 'done'; readonly message: string };
 
@@ -98,12 +105,50 @@ function BackupSection() {
     setBusy(false);
   }
 
+  async function doExportZip() {
+    setBusy(true);
+    try {
+      const out = await exportBackupZip(db, deps.files, deps.clock.now());
+      download(`tend-backup-${out.backup.exportedAt.slice(0, 10)}.zip`, out.zip);
+      setExported(
+        `Saved ${out.backup.counts.activities} activities and ${out.included} attached ${
+          out.included === 1 ? 'file' : 'files'
+        }.` +
+          (out.missing > 0
+            ? ` ${out.missing} attached ${out.missing === 1 ? 'file was' : 'files were'} not on this device, so could not be included.`
+            : ''),
+      );
+    } catch (e) {
+      setRestore({
+        step: 'invalid',
+        errors: [`The backup could not be made: ${e instanceof Error ? e.message : String(e)}`],
+      });
+    }
+    setBusy(false);
+  }
+
   async function pickFile(e: ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     e.target.value = '';
     if (!file) return;
     setBusy(true);
-    const parsed = await parseBackup(await file.text());
+    let text: string;
+    let files: ReadonlyMap<string, Uint8Array> | undefined;
+    const head = new Uint8Array(await file.slice(0, 2).arrayBuffer());
+    // Zips begin "PK"; recognised by content so a renamed download still works.
+    if (head[0] === 0x50 && head[1] === 0x4b) {
+      const zip = readBackupZip(new Uint8Array(await file.arrayBuffer()));
+      if (!zip.ok) {
+        setRestore({ step: 'invalid', errors: [zip.error] });
+        setBusy(false);
+        return;
+      }
+      text = zip.backupText;
+      files = zip.files;
+    } else {
+      text = await file.text();
+    }
+    const parsed = await parseBackup(text);
     if (!parsed.ok) {
       setRestore({ step: 'invalid', errors: parsed.errors });
     } else {
@@ -113,6 +158,7 @@ function BackupSection() {
         backup: parsed.backup,
         mode,
         preview: await previewRestore(db, parsed.backup, mode),
+        ...(files ? { files } : {}),
       });
     }
     setBusy(false);
@@ -127,8 +173,21 @@ function BackupSection() {
     try {
       const outcome = await restoreBackup(db, current.backup, current.mode);
       if (outcome.ok) {
+        let message = 'Backup restored.';
+        if (current.files) {
+          try {
+            const s = await restoreBackupFiles(deps.files, current.backup, current.files);
+            message += ` ${s.restored} attached ${s.restored === 1 ? 'file' : 'files'} restored.`;
+            const left = s.notInZip + s.damaged;
+            if (left > 0) {
+              message += ` ${left} could not be restored (${s.damaged} damaged, ${s.notInZip} not in the backup) and show as missing.`;
+            }
+          } catch (e) {
+            message += ` The attached files could not be restored: ${e instanceof Error ? e.message : String(e)}`;
+          }
+        }
         notifyChanged();
-        setRestore({ step: 'done', message: 'Backup restored.' });
+        setRestore({ step: 'done', message });
       } else {
         setRestore({ step: 'invalid', errors: outcome.errors });
       }
@@ -158,7 +217,14 @@ function BackupSection() {
       <div>
         <button type="button" className={primary} disabled={busy} onClick={() => void doExport()}>
           Download backup
+        </button>{' '}
+        <button type="button" className={button} disabled={busy} onClick={() => void doExportZip()}>
+          Download backup with files (.zip)
         </button>
+        <p className="mt-1 text-xs text-muted">
+          The plain backup holds your records only. The zip also holds attached files, so it can be
+          much larger.
+        </p>
         {exported ? (
           <p role="status" className="mt-2 text-sm text-ok">
             {exported}
@@ -171,7 +237,7 @@ function BackupSection() {
           Restore from a backup file
           <input
             type="file"
-            accept="application/json,.json"
+            accept="application/json,.json,application/zip,.zip"
             disabled={busy}
             onChange={(e) => void pickFile(e)}
             className="mt-1 block text-sm"
