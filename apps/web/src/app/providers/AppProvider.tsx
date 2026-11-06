@@ -9,6 +9,7 @@ import {
   type ReactNode,
 } from 'react';
 import { reconcileSchedules, sweepOrphanFiles, type Deps } from '@tend/application';
+import { recordError } from '../../shared/diagnostics';
 import { browserNotifier, type Notifier } from '../../shared/notifier';
 import { REMINDER_CHECK_MS, runReminders } from './reminderEngine';
 import { exclusiveAcrossTabs, openChangeChannel, type ChangeChannel } from '../../shared/crossTab';
@@ -103,6 +104,11 @@ export function useApp(): AppServices {
   return services;
 }
 
+/** The services if the app is open, or null: for error screens that may render before it is. */
+export function useOptionalApp(): AppServices | null {
+  return useContext(AppContext);
+}
+
 export function useChanges(): Changes {
   const changes = useContext(ChangesContext);
   if (!changes) throw new Error('useChanges must be used inside <AppProvider>');
@@ -189,9 +195,10 @@ export function AppProvider({
         });
         const services = createServices(db, notifier, storage, syncStatus, guardedFiles);
         const remind = () =>
-          exclusiveAcrossTabs(() => runReminders(services, notifier)).catch((e: unknown) =>
-            console.error('Reminder check failed', e),
-          );
+          exclusiveAcrossTabs(() => runReminders(services, notifier)).catch((e: unknown) => {
+            recordError('reminders', e);
+            console.error('Reminder check failed', e);
+          });
         const reconcile = () => {
           // A failed reconcile must never stop the app from working.
           exclusiveAcrossTabs(async () => {
@@ -204,7 +211,10 @@ export function AppProvider({
               // Reminders look at what is outstanding, so they run once it is up to date.
               return remind();
             })
-            .catch((e: unknown) => console.error('Schedule reconciliation failed', e));
+            .catch((e: unknown) => {
+              recordError('schedules', e);
+              console.error('Schedule reconciliation failed', e);
+            });
         };
         reconcile();
         onVisible = () => {
@@ -218,6 +228,7 @@ export function AppProvider({
       })
       .catch((e: unknown) => {
         if (cancelled) return;
+        recordError('storage', e);
         console.error('Could not open local storage', e);
         setState({ status: 'error', message: e instanceof Error ? e.message : String(e) });
       });

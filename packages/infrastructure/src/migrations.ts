@@ -55,6 +55,9 @@ async function storeVersion(x: SqlExecutor, version: number): Promise<void> {
   ]);
 }
 
+/** The local schema version recorded on this device; for diagnostics. */
+export const readSchemaVersion = (db: SqlExecutor): Promise<number> => storedVersion(db);
+
 export interface MigrationResult {
   readonly from: number;
   readonly to: number;

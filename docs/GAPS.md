@@ -178,11 +178,12 @@ that is missing or partial · P3 = polish, hygiene, or spec/repo drift · P4 = P
 - **State:** History is paged and key indexes exist, but there is no large-data test. Dashboard/Insights queries unmeasured.
 - **Work:** Seed fixtures (e.g. 5k activities-equivalent: 50k completions) and measure Dashboard, History, Insights, Calendar; add missing indexes; bound Insights queries.
 
-### G-23 Error reporting and diagnostics — S
+### G-23 Error reporting and diagnostics — S — done (Settings diagnostics, error boundary and route error panel; no remote reporting)
 
 - **Spec:** §5.1 (logging and diagnostics), Epic 12 (monitoring and error reporting).
 - **State:** `console.error` only. No in-app diagnostics (app version, DB size, schema version, last error) for supportability.
 - **Work:** Settings "Diagnostics" panel with copy-to-clipboard; a top-level error boundary with a path to export a backup.
+- **Decision:** Errors are recorded on this device only (the last ten, in memory and in browser local storage, so they survive a reload) from uncaught errors, unhandled promise rejections, failed screens, and the reminder, schedule and storage-open failures. Nothing is sent anywhere; remote error reporting is out of scope for Phase 1 and would need its own privacy decision. Settings has a "Diagnostics" section: app version and build date, data format against the newest this app understands, record and attached-file counts, storage, browser and recent errors, with Copy diagnostics (falling back to a text box if the browser blocks copying) and Clear recorded errors. The report holds counts and versions, never record contents, but does include error messages. A failing screen now shows a recovery panel inside the layout (router error element), and a top-level boundary catches failures in the layout itself. The panel offers Download a backup, Copy diagnostics, Try again, Reload and a link to the dashboard, and works even if the database never opened (then without the backup button). The app version comes from `apps/web/package.json`, which is still 0.0.0, so the build date is the useful part until releases are versioned.
 
 ---
 

@@ -15,7 +15,7 @@ describe('privacy statement', () => {
   it('never claims encryption or protection anywhere on the settings page', async () => {
     renderApp('/settings');
     await screen.findByRole('heading', { name: 'Privacy on this device' });
-    await screen.findByText(/Storage:/);
+    await screen.findByText(/^Storage:/, { selector: 'p' });
     const text = document.body.textContent ?? '';
     // "encrypted" is only allowed as part of a denial; "protected" and "secure" not at all.
     expect(text).not.toMatch(/(?<!not |un)encrypted/i);

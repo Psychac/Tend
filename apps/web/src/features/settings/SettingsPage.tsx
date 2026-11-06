@@ -12,6 +12,7 @@ import {
   type RestorePreview,
 } from '@tend/infrastructure';
 import { NotificationsSection } from './NotificationsSection';
+import { DiagnosticsSection } from './DiagnosticsSection';
 import { PrivacySection } from './PrivacySection';
 import { StorageSection } from './StorageSection';
 import { CategoriesSection, LocationsSection } from './OrganiseSections';
@@ -44,6 +45,7 @@ export function SettingsPage() {
       <StorageSection />
       <PrivacySection />
       <BackupSection />
+      <DiagnosticsSection />
     </div>
   );
 }
