@@ -4,12 +4,14 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from 'react';
 import { reconcileSchedules, type Deps } from '@tend/application';
 import { browserNotifier, type Notifier } from '../../shared/notifier';
 import { REMINDER_CHECK_MS, runReminders } from './reminderEngine';
+import { exclusiveAcrossTabs, openChangeChannel, type ChangeChannel } from '../../shared/crossTab';
 import { browserStorage, guardDatabase, type StorageControl } from '../../shared/storage';
 import type { Repositories, SyncStatusSource } from '@tend/contracts';
 import { instantFromDate, type Clock, type Id, type IdGenerator, type UserId } from '@tend/domain';
@@ -135,7 +137,12 @@ export function AppProvider({
   const [state, setState] = useState<State>({ status: 'loading' });
   const [storageFull, setStorageFull] = useState(false);
   const [revision, setRevision] = useState(0);
-  const notifyChanged = useCallback(() => setRevision((r) => r + 1), []);
+  const channel = useRef<ChangeChannel | null>(null);
+  // Re-reads in this tab and tells the others to do the same.
+  const notifyChanged = useCallback(() => {
+    setRevision((r) => r + 1);
+    channel.current?.announce();
+  }, []);
   const changes = useMemo(() => ({ revision, notifyChanged }), [revision, notifyChanged]);
 
   useEffect(() => {
@@ -143,6 +150,8 @@ export function AppProvider({
     let onVisible: (() => void) | undefined;
     let timer: ReturnType<typeof setInterval> | undefined;
 
+    // Another tab changed the shared database: re-read, without announcing again.
+    channel.current = openChangeChannel(() => setRevision((r) => r + 1));
     let persistenceAsked = false;
     open()
       .then((rawDb) => {
@@ -158,12 +167,12 @@ export function AppProvider({
         });
         const services = createServices(db, notifier, storage, syncStatus);
         const remind = () =>
-          runReminders(services, notifier).catch((e: unknown) =>
+          exclusiveAcrossTabs(() => runReminders(services, notifier)).catch((e: unknown) =>
             console.error('Reminder check failed', e),
           );
         const reconcile = () => {
           // A failed reconcile must never stop the app from working.
-          reconcileSchedules(services.deps)
+          exclusiveAcrossTabs(() => reconcileSchedules(services.deps))
             .then(() => {
               if (!cancelled) notifyChanged();
               // Reminders look at what is outstanding, so they run once it is up to date.
@@ -189,6 +198,8 @@ export function AppProvider({
 
     return () => {
       cancelled = true;
+      channel.current?.close();
+      channel.current = null;
       if (onVisible) document.removeEventListener('visibilitychange', onVisible);
       if (timer) clearInterval(timer);
     };

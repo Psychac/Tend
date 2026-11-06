@@ -40,7 +40,7 @@ that is missing or partial · P3 = polish, hygiene, or spec/repo drift · P4 = P
 - **Work:** Introduce a `SyncStatus` contract in `contracts` with a Phase 1 implementation that always reports "Saved on this device · sync not enabled". Render in the app shell and Dashboard. Phase 2 swaps in the PowerSync-backed implementation.
 - **Done when:** indicator visible on every screen; component driven only by the contract.
 
-### G-03 Multi-tab behaviour — M
+### G-03 Multi-tab behaviour — M ✅ done
 - **Spec:** §9.3 (multiple tabs, concurrent reads/writes), §20 browser tests.
 - **State:** Untested and unhandled. [powersync.ts](../packages/infrastructure/src/powersync.ts) says "only open one instance per file"; two tabs open the same DB.
 - **Work:** Verify PowerSync Web multi-tab/shared-worker behaviour for the pinned SDK version; make the reminder engine run in one tab only (avoid duplicate notifications); make reactive queries refresh across tabs; add an E2E with two pages.
