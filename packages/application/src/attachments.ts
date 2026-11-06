@@ -173,3 +173,11 @@ export async function moveAttachments(
     await repos.attachments.save({ ...a, subject: to, meta: touch(a.meta, deps.clock.now()) });
   }
 }
+
+/** How many files are attached and how much room they take, from the records. */
+export async function attachmentUsage(
+  repos: Repositories,
+): Promise<{ count: number; totalBytes: number }> {
+  const all = await repos.attachments.list();
+  return { count: all.length, totalBytes: all.reduce((sum, a) => sum + a.sizeBytes, 0) };
+}

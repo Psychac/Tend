@@ -10,6 +10,7 @@ import {
 import type { CategoryId, LocationId, Result } from '@tend/domain';
 import { useApp } from '../../app/providers/AppProvider';
 import { describeError, formatDate, useAction, useLiveQuery } from '../../shared/hooks';
+import { AttachmentsSection } from '../attachments/AttachmentsSection';
 import { CategorySelect, LocationSelect } from '../../shared/pickers';
 
 const small = 'btn';
@@ -22,6 +23,13 @@ export function ActivitiesPage() {
   const [categoryFilter, setCategoryFilter] = useState('');
   const [locationFilter, setLocationFilter] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [filesOpen, setFilesOpen] = useState<ReadonlySet<string>>(new Set());
+  const toggleFiles = (id: string) =>
+    setFilesOpen((prev) => {
+      const next = new Set(prev);
+      if (!next.delete(id)) next.add(id);
+      return next;
+    });
 
   async function run(work: () => Promise<Result<unknown>>) {
     setError(null);
@@ -133,6 +141,15 @@ export function ActivitiesPage() {
                 </p>
               </div>
               <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  className={small}
+                  aria-expanded={filesOpen.has(activity.id)}
+                  aria-label={`Files for ${activity.name}`}
+                  onClick={() => toggleFiles(activity.id)}
+                >
+                  Files
+                </button>
                 {activity.archivedAt === undefined ? (
                   <Link
                     to={`/activities/${activity.id}/edit`}
@@ -178,6 +195,14 @@ export function ActivitiesPage() {
                   </button>
                 )}
               </div>
+              {filesOpen.has(activity.id) ? (
+                <div className="w-full">
+                  <AttachmentsSection
+                    subject={{ type: 'activity', id: activity.id }}
+                    label={activity.name}
+                  />
+                </div>
+              ) : null}
             </li>
           ))}
         </ul>

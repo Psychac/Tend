@@ -1,5 +1,5 @@
 import { screen, waitFor, within } from '@testing-library/react';
-import { createAsset } from '@tend/application';
+import { addAttachment, createActivity, createAsset } from '@tend/application';
 import { createMemoryAttachmentStorage } from '@tend/infrastructure';
 import { createNodeSqliteDatabase } from '@tend/infrastructure/testing';
 import { MAX_ATTACHMENT_BYTES } from '@tend/domain';
@@ -88,5 +88,44 @@ describe('attachments on an asset', () => {
     expect(alerts.map((a) => a.textContent).join(' ')).toMatch(/not saved|no room/i);
     expect(within(section).queryByText('invoice.pdf')).not.toBeInTheDocument();
     expect(memory.size()).toBe(0);
+  });
+});
+
+describe('attachments on an activity, camera, and usage', () => {
+  it('attaches a file to an activity', async () => {
+    const db = createNodeSqliteDatabase();
+    const files = createMemoryAttachmentStorage();
+    const { deps } = createServices(db, undefined, undefined, undefined, files);
+    await createActivity(deps, { name: 'Service the boiler', type: 'routine' });
+    const { user } = renderApp('/activities', { db, files });
+    await user.click(await screen.findByRole('button', { name: 'Files for Service the boiler' }));
+    const section = await screen.findByRole('region', { name: 'Files for Service the boiler' });
+    await user.upload(within(section).getByLabelText('Add a file'), pdf('manual.pdf'));
+    expect(await within(section).findByText('manual.pdf')).toBeInTheDocument();
+    expect(files.size()).toBe(1);
+  });
+
+  it('offers the camera and stores the photo like any file', async () => {
+    const { user, files, section } = await withAsset();
+    const camera = within(section).getByLabelText('Take a photo');
+    expect(camera).toHaveAttribute('capture', 'environment');
+    expect(camera).toHaveAttribute('accept', 'image/*');
+    await user.upload(camera, new File(['img'], 'photo.jpg', { type: 'image/jpeg' }));
+    expect(await within(section).findByText('photo.jpg')).toBeInTheDocument();
+    expect(files.size()).toBe(1);
+  });
+
+  it('shows how many files are stored and their size in Settings', async () => {
+    const db = createNodeSqliteDatabase();
+    const files = createMemoryAttachmentStorage();
+    const { deps } = createServices(db, undefined, undefined, undefined, files);
+    const asset = await createAsset(deps, { name: 'Water heater' });
+    if (!asset.ok) throw new Error('setup failed');
+    await addAttachment(deps, {
+      subject: { type: 'asset', id: asset.value.id },
+      file: { name: 'a.pdf', type: 'application/pdf', data: new Blob(['hello']) },
+    });
+    renderApp('/settings', { db, files });
+    expect(await screen.findByText(/1 attached file uses 5 B/)).toBeInTheDocument();
   });
 });

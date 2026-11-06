@@ -67,7 +67,7 @@ that is missing or partial · P3 = polish, hygiene, or spec/repo drift · P4 = P
 
 ## P2 — Spec'd Phase 1 features that are missing or partial
 
-### G-07 Attachments — L — phase 1 done (assets, completions, local OPFS); activities, camera, usage display and backup zip remain
+### G-07 Attachments — L — phases 1-2 done (assets, completions, activities, camera, usage in Settings); backup zip remains
 - **Spec:** §10, §13 (activity creation and completion), §15 (export), Epic 3, Epic 11.
 - **State:** Only an `Attachment` entity type in [supporting.ts](../packages/domain/src/entities/supporting.ts). No table in `schema.ts`, no repository, no `AttachmentStorage` abstraction, no UI, not in backup. The spec's `attachments` table is absent.
 - **Work:** `attachments` table and repo; a provider-neutral `AttachmentStorage` with a Phase 1 local implementation (OPFS/IndexedDB blobs); attach to assets, activities and completions; states (stored / missing / failed); size limits and quota interaction with G-01; export as optional archive, restore with integrity check.

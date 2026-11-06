@@ -172,6 +172,17 @@ export function AttachmentsSection({ subject, label }: Props) {
           className="mt-1 block text-sm"
         />
       </label>
+      <label className="block text-sm font-medium">
+        Take a photo
+        <input
+          type="file"
+          accept="image/*"
+          capture="environment"
+          disabled={busy}
+          onChange={(e) => void pick(e)}
+          className="mt-1 block text-sm"
+        />
+      </label>
       <p className="text-xs text-muted">
         Up to {MAX_ATTACHMENT_BYTES / (1024 * 1024)} MB each. Files stay on this device and are not
         in a backup unless you include them.
