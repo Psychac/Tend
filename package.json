@@ -2,6 +2,9 @@
   "name": "tend",
   "private": true,
   "version": "0.0.0",
+  "engines": {
+    "node": ">=22"
+  },
   "packageManager": "pnpm@12.16.1",
   "scripts": {
     "dev": "pnpm --filter @tend/web dev",

@@ -52,7 +52,7 @@ that is missing or partial · P3 = polish, hygiene, or spec/repo drift · P4 = P
 - **Work:** Track a local schema version; define how added/renamed columns and data backfills run on startup; test upgrading a DB seeded from an older fixture. Also decide whether PowerSync's view-based schema needs raw-table migrations once the first breaking change lands.
 - **Done when:** an automated test opens a v(N-1) database and ends on v(N) with data intact.
 
-### G-05 Vercel deployment readiness — S
+### G-05 Vercel deployment readiness — S ✅ config and docs done; a real preview deploy is still to be checked (see deployment/vercel/README.md)
 - **Spec:** §17.3, criterion 14, Epic 12.
 - **State:** No `vercel.json`, no deployment docs, no environment notes. SPA fallback and the headers PowerSync WASM may need (COOP/COEP depending on SDK mode) are unconfirmed.
 - **Work:** Add `deployment/vercel/` config (SPA rewrite, cache headers for hashed assets, no-cache for `sw.js`); verify production build runs offline after install; document the deploy steps.
