@@ -8,6 +8,7 @@ import {
 } from '@tend/application';
 import type { Clock, Id, IdGenerator, Instant, Result, UserId } from '@tend/domain';
 import { createSqlRepositories, createSqlUnitOfWork } from './sql-repositories';
+import { createMemoryAttachmentStorage } from './attachment-files';
 import { createNodeSqliteDatabase } from './testing/node-sqlite';
 
 const OWNER = '11111111-1111-4111-8111-111111111111' as UserId;
@@ -27,7 +28,13 @@ function setup() {
     },
   };
   const clock: Clock = { now: () => '2026-11-05T06:30:00.000Z' as Instant };
-  const deps: Deps = { ownerId: OWNER, clock, ids, uow: createSqlUnitOfWork(db) };
+  const deps: Deps = {
+    ownerId: OWNER,
+    clock,
+    ids,
+    uow: createSqlUnitOfWork(db),
+    files: createMemoryAttachmentStorage(),
+  };
   return { deps, repos: createSqlRepositories(db) };
 }
 

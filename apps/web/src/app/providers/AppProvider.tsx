@@ -8,17 +8,23 @@ import {
   useState,
   type ReactNode,
 } from 'react';
-import { reconcileSchedules, type Deps } from '@tend/application';
+import { reconcileSchedules, sweepOrphanFiles, type Deps } from '@tend/application';
 import { browserNotifier, type Notifier } from '../../shared/notifier';
 import { REMINDER_CHECK_MS, runReminders } from './reminderEngine';
 import { exclusiveAcrossTabs, openChangeChannel, type ChangeChannel } from '../../shared/crossTab';
-import { browserStorage, guardDatabase, type StorageControl } from '../../shared/storage';
-import type { Repositories, SyncStatusSource } from '@tend/contracts';
+import {
+  browserStorage,
+  guardDatabase,
+  guardFiles,
+  type StorageControl,
+} from '../../shared/storage';
+import type { AttachmentStorage, Repositories, SyncStatusSource } from '@tend/contracts';
 import { instantFromDate, type Clock, type Id, type IdGenerator, type UserId } from '@tend/domain';
 import {
   createSqlRepositories,
   createSqlUnitOfWork,
   localOnlySyncStatus,
+  openAttachmentStorage,
   migrateLocalDatabase,
   openLocalDatabase,
   type SqlDatabase,
@@ -43,6 +49,8 @@ export interface AppServices {
   readonly syncStatus: SyncStatusSource;
 }
 
+const browserFiles: AttachmentStorage = openAttachmentStorage();
+
 const systemClock: Clock = { now: () => instantFromDate(new Date()) };
 
 const uuidGenerator: IdGenerator = {
@@ -56,6 +64,7 @@ export function createServices(
   notifier: Notifier = browserNotifier,
   storage: StorageControl = browserStorage,
   syncStatus: SyncStatusSource = localOnlySyncStatus,
+  files: AttachmentStorage = browserFiles,
 ): AppServices {
   return {
     deps: {
@@ -63,6 +72,7 @@ export function createServices(
       clock: systemClock,
       ids: uuidGenerator,
       uow: createSqlUnitOfWork(db),
+      files,
     },
     repos: createSqlRepositories(db),
     db,
@@ -124,6 +134,8 @@ interface Props {
   readonly notifier?: Notifier;
   readonly storage?: StorageControl;
   readonly syncStatus?: SyncStatusSource;
+  /** Where attachment files are kept; replaceable in tests. */
+  readonly files?: AttachmentStorage;
 }
 
 /**
@@ -137,6 +149,7 @@ export function AppProvider({
   notifier = browserNotifier,
   storage = browserStorage,
   syncStatus = localOnlySyncStatus,
+  files = browserFiles,
 }: Props) {
   const [state, setState] = useState<State>({ status: 'loading' });
   const [storageFull, setStorageFull] = useState(false);
@@ -157,26 +170,35 @@ export function AppProvider({
     // Another tab changed the shared database: re-read, without announcing again.
     channel.current = openChangeChannel(() => setRevision((r) => r + 1));
     let persistenceAsked = false;
+    // Ask once, after the first thing worth keeping has been written (spec 9.3).
+    const onFirstWrite = () => {
+      if (persistenceAsked) return;
+      persistenceAsked = true;
+      void storage.requestPersistence();
+    };
     open()
       .then((rawDb) => {
         if (cancelled) return;
         const db = guardDatabase(rawDb, {
-          // Ask once, after the first thing worth keeping has been written (spec 9.3).
-          onWrite: () => {
-            if (persistenceAsked) return;
-            persistenceAsked = true;
-            void storage.requestPersistence();
-          },
+          onWrite: onFirstWrite,
           onFull: () => setStorageFull(true),
         });
-        const services = createServices(db, notifier, storage, syncStatus);
+        const guardedFiles = guardFiles(files, {
+          onWrite: onFirstWrite,
+          onFull: () => setStorageFull(true),
+        });
+        const services = createServices(db, notifier, storage, syncStatus, guardedFiles);
         const remind = () =>
           exclusiveAcrossTabs(() => runReminders(services, notifier)).catch((e: unknown) =>
             console.error('Reminder check failed', e),
           );
         const reconcile = () => {
           // A failed reconcile must never stop the app from working.
-          exclusiveAcrossTabs(() => reconcileSchedules(services.deps))
+          exclusiveAcrossTabs(async () => {
+            await reconcileSchedules(services.deps);
+            // Files left by an interrupted attach; recent ones are spared (see sweepOrphanFiles).
+            await sweepOrphanFiles(services.repos, services.deps.files, Date.now());
+          })
             .then(() => {
               if (!cancelled) notifyChanged();
               // Reminders look at what is outstanding, so they run once it is up to date.
@@ -207,7 +229,7 @@ export function AppProvider({
       if (onVisible) document.removeEventListener('visibilitychange', onVisible);
       if (timer) clearInterval(timer);
     };
-  }, [open, notifier, storage, syncStatus, notifyChanged]);
+  }, [open, notifier, storage, syncStatus, files, notifyChanged]);
 
   if (state.status === 'loading') {
     return <p className="p-4 text-muted">Opening your data…</p>;

@@ -9,7 +9,7 @@ import type { SqlDatabase, SqlExecutor, SqlValue } from './sql';
 
 export const BACKUP_FORMAT = 'tend-backup';
 /** Bump when the shape of an export changes, and add a step to `MIGRATIONS`. */
-export const BACKUP_SCHEMA_VERSION = 3;
+export const BACKUP_SCHEMA_VERSION = 4;
 
 export type BackupRow = Readonly<Record<string, SqlValue>>;
 export type BackupTables = Readonly<Record<TableName, readonly BackupRow[]>>;
@@ -53,6 +53,7 @@ const ADDED_IN: Readonly<Partial<Record<TableName, number>>> = {
   completion_voids: 2,
   reminders: 3,
   reminder_deliveries: 3,
+  attachments: 4,
 };
 
 const tableNamesFor = (version: number): TableName[] =>

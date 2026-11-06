@@ -48,6 +48,20 @@ export const TABLES = {
     },
     indexes: { by_status: ['status'] },
   },
+  attachments: {
+    columns: {
+      ...META,
+      subject_type: 'text',
+      subject_id: 'text',
+      file_name: 'text',
+      mime_type: 'text',
+      size_bytes: 'integer',
+      sha256: 'text',
+      status: 'text',
+      uploaded_at: 'text',
+    },
+    indexes: { by_subject: ['subject_type', 'subject_id'] },
+  },
   activities: {
     columns: {
       ...META,

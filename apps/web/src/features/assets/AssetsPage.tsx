@@ -18,6 +18,7 @@ import { MoneyField, useMoneyState } from '../../shared/currency';
 import { CategorySelect, LocationSelect } from '../../shared/pickers';
 import { useApp } from '../../app/providers/AppProvider';
 import { describeError, formatDate, useAction, useLiveQuery } from '../../shared/hooks';
+import { AttachmentsSection } from '../attachments/AttachmentsSection';
 
 const field = 'field mt-1 block w-full';
 const button = 'btn';
@@ -223,6 +224,7 @@ function AssetCard({ item }: { item: AssetListItem }) {
   const { asset } = item;
   const [reading, setReading] = useState(false);
   const [editing, setEditing] = useState(false);
+  const [files, setFiles] = useState(false);
   const [key, setKey] = useState(item.latestReadings[0]?.key ?? 'odometer');
   const [value, setValue] = useState('');
   const [unit, setUnit] = useState(
@@ -297,6 +299,15 @@ function AssetCard({ item }: { item: AssetListItem }) {
           <button
             type="button"
             className={button}
+            aria-expanded={files}
+            aria-label={`Files for ${asset.name}`}
+            onClick={() => setFiles(!files)}
+          >
+            Files
+          </button>
+          <button
+            type="button"
+            className={button}
             disabled={busy}
             onClick={() => void toggleActive()}
           >
@@ -315,6 +326,10 @@ function AssetCard({ item }: { item: AssetListItem }) {
         <div className="mt-3 border-t border-line pt-3">
           <AssetForm asset={asset} onDone={() => setEditing(false)} />
         </div>
+      ) : null}
+
+      {files ? (
+        <AttachmentsSection subject={{ type: 'asset', id: asset.id }} label={asset.name} />
       ) : null}
 
       {reading ? (

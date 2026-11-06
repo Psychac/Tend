@@ -1,7 +1,7 @@
 import type { Repositories } from '@tend/contracts';
 import type { Clock, Id, IdGenerator, Instant, UserId } from '@tend/domain';
 import type { Deps } from '../deps';
-import { createInMemoryStore } from './in-memory';
+import { createInMemoryStore, createMemoryFiles, type MemoryFiles } from './in-memory';
 
 export const OWNER = '11111111-1111-4111-8111-111111111111' as UserId;
 
@@ -29,6 +29,7 @@ function sequentialIds(): IdGenerator {
 }
 
 export interface Harness {
+  readonly files: MemoryFiles;
   readonly deps: Deps;
   readonly repos: Repositories;
   readonly clock: FakeClock;
@@ -38,5 +39,6 @@ export interface Harness {
 export function createHarness(now = '2026-11-05T06:30:00.000Z'): Harness {
   const { repos, uow } = createInMemoryStore();
   const clock = new FakeClock(now as Instant);
-  return { deps: { ownerId: OWNER, clock, ids: sequentialIds(), uow }, repos, clock };
+  const files = createMemoryFiles(() => Date.parse(clock.now()));
+  return { deps: { ownerId: OWNER, clock, ids: sequentialIds(), uow, files }, files, repos, clock };
 }

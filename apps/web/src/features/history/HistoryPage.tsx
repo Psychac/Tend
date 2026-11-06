@@ -10,6 +10,7 @@ import {
   useLiveQuery,
 } from '../../shared/hooks';
 import { CompletionEditor } from './CompletionEditor';
+import { AttachmentsSection } from '../attachments/AttachmentsSection';
 
 const PAGE = 30;
 
@@ -156,6 +157,7 @@ function DoneRow({ entry }: { entry: Extract<HistoryEntry, { kind: 'completed' }
   const act = useAction();
   const { completion } = entry;
   const [mode, setMode] = useState<'view' | 'edit' | 'confirm-undo'>('view');
+  const [files, setFiles] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -195,6 +197,15 @@ function DoneRow({ entry }: { entry: Extract<HistoryEntry, { kind: 'completed' }
             <button
               type="button"
               className={small}
+              aria-expanded={files}
+              aria-label={`Files for ${entry.activityName}`}
+              onClick={() => setFiles(!files)}
+            >
+              Files
+            </button>
+            <button
+              type="button"
+              className={small}
               aria-label={`Undo ${entry.activityName}`}
               onClick={() => setMode('confirm-undo')}
             >
@@ -229,6 +240,13 @@ function DoneRow({ entry }: { entry: Extract<HistoryEntry, { kind: 'completed' }
         <p role="alert" className="mt-2 text-sm text-danger">
           {error}
         </p>
+      ) : null}
+
+      {files ? (
+        <AttachmentsSection
+          subject={{ type: 'completion', id: completion.id }}
+          label={entry.activityName}
+        />
       ) : null}
 
       {mode === 'edit' ? <CompletionEditor entry={entry} onDone={() => setMode('view')} /> : null}

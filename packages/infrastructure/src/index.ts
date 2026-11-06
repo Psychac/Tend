@@ -5,3 +5,4 @@ export * from './powersync';
 export * from './backup';
 export * from './sync-status';
 export * from './migrations';
+export * from './attachment-files';

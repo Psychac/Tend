@@ -8,6 +8,7 @@ import {
   completionMapper,
   completionVoidMapper,
   locationMapper,
+  attachmentMapper,
   measurementMapper,
   reminderDeliveryMapper,
   reminderMapper,
@@ -132,6 +133,7 @@ function buildRepositories(runner: Runner): Repositories {
   const assets = new SqlTable(runner, 'assets', assetMapper);
   const categories = new SqlTable(runner, 'categories', categoryMapper);
   const locations = new SqlTable(runner, 'locations', locationMapper);
+  const attachments = new SqlTable(runner, 'attachments', attachmentMapper);
   const schedules = new SqlTable(runner, 'schedules', scheduleMapper);
   const occurrences = new SqlTable(runner, 'occurrences', occurrenceMapper);
   const completions = new SqlTable(runner, 'completions', completionMapper);
@@ -183,6 +185,18 @@ function buildRepositories(runner: Runner): Repositories {
       list: () => categories.query({ orderBy: 'name COLLATE NOCASE' }),
       save: (c) => categories.save(c),
       delete: (id) => categories.remove(id),
+    },
+    attachments: {
+      getById: (id) => attachments.getById(id),
+      listBySubject: (s) =>
+        attachments.query({
+          where: ['subject_type = ?', 'subject_id = ?'],
+          params: [s.type, s.id],
+          orderBy: 'created_at ASC, id ASC',
+        }),
+      list: () => attachments.query({ orderBy: 'created_at ASC, id ASC' }),
+      save: (a) => attachments.save(a),
+      delete: (id) => attachments.remove(id),
     },
     locations: {
       getById: (id) => locations.getById(id),

@@ -1,5 +1,6 @@
 import type {
   ActivityRepository,
+  AttachmentRepository,
   AssetRepository,
   AuditEventRepository,
   CategoryRepository,
@@ -16,6 +17,7 @@ import type {
 export interface Repositories {
   readonly activities: ActivityRepository;
   readonly assets: AssetRepository;
+  readonly attachments: AttachmentRepository;
   readonly categories: CategoryRepository;
   readonly locations: LocationRepository;
   readonly schedules: ScheduleRepository;

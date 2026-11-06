@@ -1,4 +1,9 @@
-import { ConflictError, type Repositories, type UnitOfWork } from '@tend/contracts';
+import {
+  ConflictError,
+  type AttachmentStorage,
+  type Repositories,
+  type UnitOfWork,
+} from '@tend/contracts';
 import {
   conflictError,
   err,
@@ -21,6 +26,8 @@ export interface Deps {
   readonly clock: Clock;
   readonly ids: IdGenerator;
   readonly uow: UnitOfWork;
+  /** Where attachment files are kept (outside the database). */
+  readonly files: AttachmentStorage;
 }
 
 class Rollback extends Error {

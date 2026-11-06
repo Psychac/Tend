@@ -13,6 +13,7 @@ import {
   type Result,
 } from '@tend/domain';
 import { auditEvent, found, transact, type Deps } from './deps';
+import { moveAttachments } from './attachments';
 import { ensureOccurrences } from './generation';
 import { buildCompletion, type CompletionDetails } from './occurrences';
 
@@ -155,6 +156,12 @@ export async function correctCompletion(
     await repos.completions.add(completion);
     for (const m of measurements) await repos.measurements.add(m);
     await repos.completionVoids.add(voided.value);
+    await moveAttachments(
+      deps,
+      repos,
+      { type: 'completion', id: original.value.id },
+      { type: 'completion', id: completion.id },
+    );
 
     // After-completion schedules count from the latest completion. If this one moved, the
     // follow-on item that was based on the old date must be recalculated from the new one.

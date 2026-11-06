@@ -35,6 +35,7 @@ import {
   type UserId,
 } from '@tend/domain';
 import { createSqlRepositories, createSqlUnitOfWork } from './sql-repositories';
+import { createMemoryAttachmentStorage } from './attachment-files';
 import { createNodeSqliteDatabase } from './testing/node-sqlite';
 
 const OWNER = '11111111-1111-4111-8111-111111111111' as UserId;
@@ -59,7 +60,13 @@ function setup(now = '2026-11-05T06:30:00.000Z') {
     },
   };
   const clock = new TestClock(now);
-  const deps: Deps = { ownerId: OWNER, clock, ids, uow: createSqlUnitOfWork(db) };
+  const deps: Deps = {
+    ownerId: OWNER,
+    clock,
+    ids,
+    uow: createSqlUnitOfWork(db),
+    files: createMemoryAttachmentStorage(),
+  };
   return { db, repos: createSqlRepositories(db), deps, clock, ids };
 }
 

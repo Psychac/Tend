@@ -1,3 +1,4 @@
+import type { AttachmentStorage } from '@tend/contracts';
 import type { SqlDatabase, SqlExecutor } from '@tend/infrastructure';
 
 /** Thrown instead of the browser's own error when a write could not be stored. */
@@ -44,6 +45,28 @@ export function guardDatabase(db: SqlDatabase, hooks: StorageHooks = {}): SqlDat
         const result = await db.writeTransaction(work);
         hooks.onWrite?.();
         return result;
+      } catch (e) {
+        if (isQuotaError(e)) {
+          hooks.onFull?.();
+          throw new StorageFullError(e);
+        }
+        throw e;
+      }
+    },
+  };
+}
+
+/**
+ * Wraps attachment storage like `guardDatabase`: a file that does not fit is reported as full
+ * storage, with nothing kept, instead of surfacing as a raw browser error.
+ */
+export function guardFiles(files: AttachmentStorage, hooks: StorageHooks = {}): AttachmentStorage {
+  return {
+    ...files,
+    async put(id, data) {
+      try {
+        await files.put(id, data);
+        hooks.onWrite?.();
       } catch (e) {
         if (isQuotaError(e)) {
           hooks.onFull?.();

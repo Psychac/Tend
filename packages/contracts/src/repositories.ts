@@ -3,6 +3,9 @@ import type {
   ActivityId,
   ActivityType,
   Asset,
+  Attachment,
+  AttachmentId,
+  AttachmentSubject,
   AssetId,
   AssetStatus,
   AuditEvent,
@@ -170,4 +173,13 @@ export interface ReminderDeliveryRepository {
   /** The keys (`deliveryKey`) of every delivery on record. */
   keys(): Promise<Set<string>>;
   list(): Promise<ReminderDelivery[]>;
+}
+
+export interface AttachmentRepository {
+  getById(id: AttachmentId): Promise<Attachment | null>;
+  /** The files attached to one activity, asset or completion, oldest first. */
+  listBySubject(subject: AttachmentSubject): Promise<Attachment[]>;
+  list(): Promise<Attachment[]>;
+  save(attachment: Attachment): Promise<void>;
+  delete(id: AttachmentId): Promise<void>;
 }

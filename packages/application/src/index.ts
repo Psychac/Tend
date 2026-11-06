@@ -11,3 +11,4 @@ export * from './editing';
 export * from './corrections';
 export * from './organise';
 export * from './reminders';
+export * from './attachments';

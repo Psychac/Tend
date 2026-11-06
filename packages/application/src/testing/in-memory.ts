@@ -1,5 +1,6 @@
 import {
   ConflictError,
+  type AttachmentStorage,
   type ActivityFilter,
   type AssetFilter,
   type CompletionFilter,
@@ -13,6 +14,8 @@ import { deliveryKey } from '@tend/domain';
 import type {
   Activity,
   Asset,
+  Attachment,
+  AttachmentId,
   AuditEvent,
   Category,
   Completion,
@@ -79,6 +82,7 @@ export function createInMemoryStore(): { repos: Repositories; uow: UnitOfWork } 
   const assets = new Table<Asset>();
   const categories = new Table<Category>();
   const locations = new Table<Location>();
+  const attachments = new Table<Attachment>();
   const schedules = new Table<Schedule>();
   const occurrences = new Table<Occurrence>();
   const completions = new Table<Completion>();
@@ -92,6 +96,7 @@ export function createInMemoryStore(): { repos: Repositories; uow: UnitOfWork } 
     assets,
     categories,
     locations,
+    attachments,
     schedules,
     occurrences,
     completions,
@@ -151,6 +156,17 @@ export function createInMemoryStore(): { repos: Repositories; uow: UnitOfWork } 
       list: async () => categories.all(),
       save: async (c) => categories.save(c),
       delete: async (id) => categories.remove(id),
+    },
+    attachments: {
+      getById: async (id) => attachments.get(id),
+      listBySubject: async (s) =>
+        attachments
+          .all()
+          .filter((a) => a.subject.type === s.type && a.subject.id === s.id)
+          .sort((a, b) => (a.meta.createdAt < b.meta.createdAt ? -1 : 1)),
+      list: async () => attachments.all(),
+      save: async (a) => attachments.save(a),
+      delete: async (id) => attachments.remove(id),
     },
     locations: {
       getById: async (id) => locations.get(id),
@@ -264,4 +280,19 @@ export function createInMemoryStore(): { repos: Repositories; uow: UnitOfWork } 
   };
 
   return { repos, uow };
+}
+
+export type MemoryFiles = AttachmentStorage & { readonly size: () => number };
+
+/** Attachment files held in memory, for tests. */
+export function createMemoryFiles(now: () => number = Date.now): MemoryFiles {
+  const files = new Map<string, { data: Blob; modifiedAt: number }>();
+  return {
+    put: async (id, data) => void files.set(id, { data, modifiedAt: now() }),
+    get: async (id) => files.get(id)?.data ?? null,
+    remove: async (id) => void files.delete(id),
+    list: async () =>
+      [...files.entries()].map(([id, f]) => ({ id: id as AttachmentId, modifiedAt: f.modifiedAt })),
+    size: () => files.size,
+  };
 }

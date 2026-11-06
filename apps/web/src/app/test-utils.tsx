@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import type { SqlDatabase } from '@tend/infrastructure';
+import type { AttachmentStorage } from '@tend/contracts';
+import { createMemoryAttachmentStorage, type SqlDatabase } from '@tend/infrastructure';
 import { createNodeSqliteDatabase } from '@tend/infrastructure/testing';
 import { createMemoryRouter, RouterProvider } from 'react-router';
 import type { Notifier } from '../shared/notifier';
@@ -23,13 +24,17 @@ export function fakeNotifier(permission: ReturnType<Notifier['permission']> = 'd
   return { notifier, shown, state };
 }
 
-export function renderApp(path = '/', options: { db?: SqlDatabase; notifier?: Notifier } = {}) {
+export function renderApp(
+  path = '/',
+  options: { db?: SqlDatabase; notifier?: Notifier; files?: AttachmentStorage } = {},
+) {
   const db = options.db ?? createNodeSqliteDatabase();
   const router = createMemoryRouter(routes, { initialEntries: [path] });
   render(
     <AppProvider
       open={() => Promise.resolve(db)}
       notifier={options.notifier ?? fakeNotifier().notifier}
+      files={options.files ?? createMemoryAttachmentStorage()}
     >
       <RouterProvider router={router} />
     </AppProvider>,

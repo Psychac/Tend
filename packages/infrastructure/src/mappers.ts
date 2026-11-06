@@ -3,6 +3,8 @@ import type {
   ActivityId,
   Asset,
   AssetId,
+  Attachment,
+  AttachmentId,
   AuditEvent,
   Category,
   CategoryId,
@@ -339,5 +341,33 @@ export const auditMapper: Mapper<AuditEvent> = {
     action: str(r, 'action') as AuditEvent['action'],
     occurredAt: str(r, 'occurred_at') as Instant,
     summary: optStr(r, 'summary'),
+  }),
+};
+
+export const attachmentMapper: Mapper<Attachment> = {
+  toRow: (a) => ({
+    ...metaTo(a.meta),
+    subject_type: a.subject.type,
+    subject_id: a.subject.id,
+    file_name: a.fileName,
+    mime_type: a.mimeType,
+    size_bytes: a.sizeBytes,
+    sha256: a.sha256,
+    status: a.status,
+    uploaded_at: nv(a.uploadedAt),
+  }),
+  fromRow: (r) => ({
+    id: str(r, 'id') as AttachmentId,
+    meta: metaFrom(r),
+    subject: {
+      type: str(r, 'subject_type') as Attachment['subject']['type'],
+      id: str(r, 'subject_id'),
+    },
+    fileName: str(r, 'file_name'),
+    mimeType: str(r, 'mime_type'),
+    sizeBytes: num(r, 'size_bytes'),
+    sha256: str(r, 'sha256'),
+    status: str(r, 'status') as Attachment['status'],
+    uploadedAt: optStr<Instant>(r, 'uploaded_at'),
   }),
 };

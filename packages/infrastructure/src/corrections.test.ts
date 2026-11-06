@@ -9,6 +9,7 @@ import {
 import type { Clock, Id, IdGenerator, Instant, Result, TimeZoneId, UserId } from '@tend/domain';
 import { exportBackup, parseBackup, restoreBackup } from './backup';
 import { createSqlRepositories, createSqlUnitOfWork } from './sql-repositories';
+import { createMemoryAttachmentStorage } from './attachment-files';
 import { createNodeSqliteDatabase } from './testing/node-sqlite';
 
 const OWNER = '11111111-1111-4111-8111-111111111111' as UserId;
@@ -29,7 +30,13 @@ function setup() {
     },
   };
   const clock: Clock = { now: () => NOW as Instant };
-  const deps: Deps = { ownerId: OWNER, clock, ids, uow: createSqlUnitOfWork(db) };
+  const deps: Deps = {
+    ownerId: OWNER,
+    clock,
+    ids,
+    uow: createSqlUnitOfWork(db),
+    files: createMemoryAttachmentStorage(),
+  };
   return { db, deps, repos: createSqlRepositories(db) };
 }
 
