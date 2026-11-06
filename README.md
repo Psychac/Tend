@@ -71,7 +71,7 @@ apps/web                  React app: screens, routing, layout, browser adapters
 packages/application      Use cases: create, complete, schedule, back up, alerts, presets
 packages/domain           Entities, scheduling rules and invariants. Pure TypeScript
 packages/contracts        Interfaces the application needs: repositories, unit of work, storage
-packages/infrastructure   The adapters: SQLite through PowerSync, backup files, migrations
+packages/infrastructure   Platform-neutral adapters: SQL repositories, schema, backup, migrations
 tests/e2e                 Playwright tests that drive the built app in a real browser
 ```
 
@@ -82,12 +82,14 @@ tests/e2e                 Playwright tests that drive the built app in a real br
   transaction, so it applies fully or not at all. Screens call these, never the database.
 - **contracts** are the interfaces between them, so the database could be swapped without
   touching a use case.
-- **infrastructure** implements the contracts on the on-device database, and owns the table
-  schema, versioned local migrations and the backup format.
+- **infrastructure** implements the contracts on top of a small SQL interface, and owns the
+  table schema, versioned local migrations and the backup format. It has no browser or PowerSync
+  code, so it runs in Node tests and could serve another client.
 - **apps/web** is the presentation layer. `features/` has one folder per area (activities,
   assets, dashboard, household, digital-upkeep, routines, history, insights, calendar,
-  reminders, diagnostics, settings). `infrastructure/notifications/` holds the browser
-  notification adapter and the reminder engine. `shared/` is split into `ui/`, `hooks/` and
+  reminders, diagnostics, settings). `infrastructure/` holds the adapters that need the browser:
+  `powersync/` (the on-device database), `attachments/` (file storage) and `notifications/`
+  (browser notifications and the reminder engine). `shared/` is split into `ui/`, `hooks/` and
   `utilities/`.
 
 Unit and component tests sit next to the code. Test helpers that build an in-memory database

@@ -196,6 +196,18 @@ importers:
 
   apps/web:
     dependencies:
+      '@journeyapps/wa-sqlite':
+        specifier: ^2.0.10
+        version: 2.0.10
+      '@powersync/common':
+        specifier: ^2.5.0
+        version: 2.5.0
+      '@powersync/shared-internals':
+        specifier: ^1.5.0
+        version: 1.5.0(@powersync/common@2.5.0)
+      '@powersync/web':
+        specifier: ^2.6.0
+        version: 2.6.0(@powersync/common@2.5.0)(@powersync/shared-internals@1.5.0(@powersync/common@2.5.0))
       '@tend/application':
         specifier: workspace:*
         version: link:../../packages/application
@@ -298,18 +310,6 @@ importers:
 
   packages/infrastructure:
     dependencies:
-      '@journeyapps/wa-sqlite':
-        specifier: ^2.0.10
-        version: 2.0.10
-      '@powersync/common':
-        specifier: ^2.5.0
-        version: 2.5.0
-      '@powersync/shared-internals':
-        specifier: ^1.5.0
-        version: 1.5.0(@powersync/common@2.5.0)
-      '@powersync/web':
-        specifier: ^2.6.0
-        version: 2.6.0(@powersync/common@2.5.0)(@powersync/shared-internals@1.5.0(@powersync/common@2.5.0))
       '@tend/contracts':
         specifier: workspace:*
         version: link:../contracts

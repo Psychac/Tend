@@ -1,7 +1,14 @@
 import { PowerSyncDatabase, Schema, Table, column } from '@powersync/web';
-import { LOCAL_ONLY_TABLES, TABLES, type ColumnType, type TableDef } from './schema';
-import { migrateLocalDatabase } from './migrations';
-import type { SqlDatabase, SqlExecutor, SqlValue } from './sql';
+import {
+  LOCAL_ONLY_TABLES,
+  TABLES,
+  migrateLocalDatabase,
+  type ColumnType,
+  type SqlDatabase,
+  type SqlExecutor,
+  type SqlValue,
+  type TableDef,
+} from '@tend/infrastructure';
 
 const COLUMN_TYPES = {
   text: column.text,

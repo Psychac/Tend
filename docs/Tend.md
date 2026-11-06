@@ -908,8 +908,7 @@ tend/
 ├── apps/
 │   └── web/
 │       ├── public/
-│       │   ├── icons/
-│       │   └── manifest.webmanifest
+│       │   └── icons/
 │       ├── src/
 │       │   ├── app/
 │       │   │   ├── router/
@@ -972,6 +971,8 @@ tend/
 ├── tsconfig.base.json
 └── README.md
 ```
+
+The web app manifest is generated at build time from the PWA configuration in `vite.config.ts`, so the theme colour, name and icons are defined once. There is no hand-written `manifest.webmanifest` in `public/`.
 
 Keep Oracle deployment files separate from the application. The PWA must not need to know whether PowerSync is hosted or self-hosted.
 

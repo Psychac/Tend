@@ -29,11 +29,11 @@ import {
   createSqlRepositories,
   createSqlUnitOfWork,
   localOnlySyncStatus,
-  openAttachmentStorage,
   migrateLocalDatabase,
-  openLocalDatabase,
   type SqlDatabase,
 } from '@tend/infrastructure';
+import { openAttachmentStorage } from '../../infrastructure/attachments';
+import { openLocalDatabase } from '../../infrastructure/powersync';
 
 /**
  * Phase 1 has no accounts (spec 3.5), so every record belongs to one fixed
