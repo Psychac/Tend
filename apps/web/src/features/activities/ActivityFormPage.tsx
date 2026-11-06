@@ -14,6 +14,7 @@ import {
   localDateOf,
   type Activity,
   type ActivityId,
+  type LocalDate,
   type AssetId,
   type CategoryId,
   type LocationId,
@@ -57,7 +58,13 @@ const WEEKDAYS: [IsoWeekday, string][] = [
 ];
 
 type Repeat =
-  'none' | 'calendar' | 'after_completion' | 'usage' | 'after_activity' | 'when_reading';
+  | 'none'
+  | 'calendar'
+  | 'fixed_interval'
+  | 'after_completion'
+  | 'usage'
+  | 'after_activity'
+  | 'when_reading';
 type Comparator = 'gt' | 'gte' | 'lt' | 'lte';
 
 const field = 'field mt-1 block w-full max-w-md';
@@ -69,6 +76,7 @@ function scheduleDefaults(schedule: Schedule | undefined) {
     editable:
       !s ||
       s.kind === 'calendar' ||
+      s.kind === 'fixed_interval' ||
       s.kind === 'completion_interval' ||
       s.kind === 'usage' ||
       s.kind === 'event' ||
@@ -77,15 +85,17 @@ function scheduleDefaults(schedule: Schedule | undefined) {
       ? 'none'
       : s.kind === 'calendar'
         ? 'calendar'
-        : s.kind === 'completion_interval'
-          ? 'after_completion'
-          : s.kind === 'usage'
-            ? 'usage'
-            : s.kind === 'event'
-              ? 'after_activity'
-              : s.kind === 'condition'
-                ? 'when_reading'
-                : 'none') as Repeat,
+        : s.kind === 'fixed_interval'
+          ? 'fixed_interval'
+          : s.kind === 'completion_interval'
+            ? 'after_completion'
+            : s.kind === 'usage'
+              ? 'usage'
+              : s.kind === 'event'
+                ? 'after_activity'
+                : s.kind === 'condition'
+                  ? 'when_reading'
+                  : 'none') as Repeat,
     readingKey: s?.kind === 'condition' ? s.measurementKey : '',
     comparator: (s?.kind === 'condition' ? s.comparator : 'gt') as Comparator,
     threshold: s?.kind === 'condition' ? String(s.threshold) : '',
@@ -183,13 +193,15 @@ export function ActivityForm({ initial }: { initial?: ActivityFormInitial | unde
                 afterActivityId: afterActivityId as ActivityId,
                 delayDays: Number(delayDays),
               }
-            : repeat === 'calendar'
-              ? {
-                  kind: 'calendar',
-                  interval,
-                  byWeekday: unit === 'week' && weekdays.length > 0 ? weekdays : undefined,
-                }
-              : { kind: 'completion_interval', interval };
+            : repeat === 'fixed_interval'
+              ? { kind: 'fixed_interval', interval, anchor: startsOn as LocalDate }
+              : repeat === 'calendar'
+                ? {
+                    kind: 'calendar',
+                    interval,
+                    byWeekday: unit === 'week' && weekdays.length > 0 ? weekdays : undefined,
+                  }
+                : { kind: 'completion_interval', interval };
     return { strategy, timeZone: deviceTimeZone(), startsOn, graceDays: Number(graceDays) };
   }
 
@@ -221,6 +233,10 @@ export function ActivityForm({ initial }: { initial?: ActivityFormInitial | unde
         ...base,
         strategy: { kind: 'calendar', interval: st.interval, byWeekday: st.byWeekday },
       };
+    }
+    if (st.kind === 'fixed_interval') {
+      // The form anchors a fixed interval on its start date.
+      return { ...base, strategy: { ...st, anchor: stored.startsOn } };
     }
     return { ...base, strategy: st };
   }
@@ -408,6 +424,9 @@ export function ActivityForm({ initial }: { initial?: ActivityFormInitial | unde
         >
           {initial?.schedule ? null : <option value="none">Does not repeat</option>}
           <option value="calendar">On a fixed calendar (e.g. every week)</option>
+          <option value="fixed_interval">
+            Every N units from a date, regardless of completion
+          </option>
           <option value="after_completion">After I complete it (e.g. 30 days later)</option>
           {assetId ? <option value="usage">By usage (e.g. every 5,000 km)</option> : null}
           {(otherActivities.status === 'ready' && otherActivities.data.length > 0) ||

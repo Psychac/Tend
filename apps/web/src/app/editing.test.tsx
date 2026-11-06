@@ -30,6 +30,21 @@ describe('editing an activity', () => {
     expect(screen.queryByText('Clean AC fliter')).not.toBeInTheDocument();
   });
 
+  it('creates a fixed-interval activity and reopens it as editable', async () => {
+    const { user } = renderApp('/activities/new');
+    await user.type(await screen.findByLabelText('Name'), 'Renew filter');
+    await user.selectOptions(screen.getByLabelText('Repeats'), 'fixed_interval');
+    await user.clear(screen.getByLabelText('Every'));
+    await user.type(screen.getByLabelText('Every'), '3');
+    await user.selectOptions(screen.getByLabelText('Unit'), 'month');
+    await user.click(screen.getByRole('button', { name: /^(Create|Save)/ }));
+
+    await user.click(await screen.findByRole('link', { name: 'Edit Renew filter' }));
+    expect(await screen.findByLabelText('Repeats')).toHaveValue('fixed_interval');
+    expect(screen.getByLabelText('Every')).toHaveValue(3);
+    expect(screen.queryByText(/cannot be changed here/)).not.toBeInTheDocument();
+  });
+
   it('shows validation problems and keeps the old name', async () => {
     const { user } = renderApp('/activities/new');
     await createDaily(user, 'Pay rent');

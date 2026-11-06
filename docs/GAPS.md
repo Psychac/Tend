@@ -92,7 +92,7 @@ that is missing or partial · P3 = polish, hygiene, or spec/repo drift · P4 = P
 - **Decision:** An "event" is the completion of another activity. Strategy is `{ kind: 'event', afterActivityId, delayDays }`. Completing the trigger creates one occurrence of the dependent activity, due `delayDays` later. At most one open occurrence per schedule (re-completing the trigger does not pile up). Triggers fire only from a person's completion, never chained, so A→B→A cannot loop. Undoing the trigger completion supersedes the open follow-up.
 - **Not done:** Manually fired named events; a correction that moves the trigger's date does not re-date an existing follow-up.
 
-### G-10 Fixed-interval strategy missing from the activity form — S
+### G-10 Fixed-interval strategy missing from the activity form — S — done (form option anchors on the start date; existing fixed schedules editable)
 
 - **Spec:** §6.4 #3, Epic 4.
 - **State:** Domain and generation support it; the form's `Repeat` is `none | calendar | after_completion | usage` and marks other strategies non-editable.
