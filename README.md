@@ -49,12 +49,12 @@ Before sending a change, run `pnpm lint`, `pnpm typecheck` and `pnpm test`.
 
 ### End-to-end tests
 
-The Playwright suite in `apps/web/e2e` drives a real browser against a production build
+The Playwright suite in `tests/e2e` drives a real browser against a production build
 (`vite preview` on port 4173).
 
 ```bash
-pnpm --filter @tend/web exec playwright install chromium-headless-shell   # once
-pnpm --filter @tend/web test:e2e
+pnpm --filter @tend/e2e exec playwright install chromium-headless-shell   # once
+pnpm test:e2e
 ```
 
 Set `PW_CHANNEL` (for example `chrome` or `msedge`) to use a browser you already have installed.
@@ -63,8 +63,8 @@ backup and restore, reminders and attachments.
 
 ## How the code is organised
 
-A pnpm workspace with four packages and one app. Dependencies point inward: the domain knows
-nothing about the rest.
+A pnpm workspace with four packages, one app and an end-to-end test package. Dependencies point
+inward: the domain knows nothing about the rest.
 
 ```
 apps/web                  React app: screens, routing, layout, browser adapters
@@ -72,6 +72,7 @@ packages/application      Use cases: create, complete, schedule, back up, alerts
 packages/domain           Entities, scheduling rules and invariants. Pure TypeScript
 packages/contracts        Interfaces the application needs: repositories, unit of work, storage
 packages/infrastructure   The adapters: SQLite through PowerSync, backup files, migrations
+tests/e2e                 Playwright tests that drive the built app in a real browser
 ```
 
 - **domain** has no dependencies. It holds the entities (activity, schedule, occurrence,
@@ -84,11 +85,13 @@ packages/infrastructure   The adapters: SQLite through PowerSync, backup files, 
 - **infrastructure** implements the contracts on the on-device database, and owns the table
   schema, versioned local migrations and the backup format.
 - **apps/web** is the presentation layer. `features/` has one folder per area (activities,
-  assets, dashboard, history, insights, calendar, reminders, settings). `shared/` holds hooks,
-  pickers and browser adapters.
+  assets, dashboard, household, digital-upkeep, routines, history, insights, calendar,
+  reminders, diagnostics, settings). `infrastructure/notifications/` holds the browser
+  notification adapter and the reminder engine. `shared/` is split into `ui/`, `hooks/` and
+  `utilities/`.
 
-Each package has its own tests next to the code. Test helpers that build an in-memory database
-live in each package's `testing/` folder.
+Unit and component tests sit next to the code. Test helpers that build an in-memory database
+live in each package's `testing/` folder. End-to-end tests are in `tests/e2e`.
 
 ## Things worth knowing
 
@@ -109,4 +112,4 @@ live in each package's `testing/` folder.
 ## Deploying
 
 Tend is a static site. [deployment/vercel/README.md](deployment/vercel/README.md) covers the
-Vercel setup. There is no continuous integration yet; see G-06 in the gap list.
+Vercel setup. There is no continuous integration, and none is planned (G-06 in the gap list is deferred), so run `pnpm lint`, `pnpm typecheck` and `pnpm test` before a change goes out.

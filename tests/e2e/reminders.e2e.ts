@@ -49,7 +49,7 @@ test('a due reminder is delivered to the browser once, and shown on the dashboar
   await page.getByRole('link', { name: 'New activity' }).click();
   await page.getByLabel('Name').fill('Water plants');
   await page.getByLabel('Repeats').selectOption('calendar');
-  await page.getByLabel('Unit').selectOption('day');
+  await page.getByLabel(/^Unit/).selectOption('day');
   await page.getByRole('checkbox', { name: 'Remind me' }).click();
   await page.getByLabel('At', { exact: true }).fill('00:00');
   await page.getByRole('button', { name: 'Create activity' }).click();
@@ -83,7 +83,7 @@ test('nothing is delivered while this device has not opted in', async ({ page })
   await page.goto('/activities/new');
   await page.getByLabel('Name').fill('Water plants');
   await page.getByLabel('Repeats').selectOption('calendar');
-  await page.getByLabel('Unit').selectOption('day');
+  await page.getByLabel(/^Unit/).selectOption('day');
   await page.getByRole('checkbox', { name: 'Remind me' }).click();
   await page.getByLabel('At', { exact: true }).fill('00:00');
   await page.getByRole('button', { name: 'Create activity' }).click();

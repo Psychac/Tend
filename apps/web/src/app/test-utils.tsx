@@ -4,7 +4,7 @@ import type { AttachmentStorage } from '@tend/contracts';
 import { createMemoryAttachmentStorage, type SqlDatabase } from '@tend/infrastructure';
 import { createNodeSqliteDatabase } from '@tend/infrastructure/testing';
 import { createMemoryRouter, RouterProvider } from 'react-router';
-import type { Notifier } from '../shared/notifier';
+import type { Notifier } from '../infrastructure/notifications/notifier';
 import { AppProvider } from './providers/AppProvider';
 import { routes } from './router/router';
 

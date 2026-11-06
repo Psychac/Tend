@@ -20,8 +20,8 @@ import {
   type LocationId,
 } from '@tend/domain';
 import { MeasurementHistory } from './MeasurementHistory';
-import { MoneyField, useMoneyState } from '../../shared/currency';
-import { CategorySelect, LocationSelect } from '../../shared/pickers';
+import { MoneyField, useMoneyState } from '../../shared/ui/currency';
+import { CategorySelect, LocationSelect } from '../../shared/ui/pickers';
 import { useApp } from '../../app/providers/AppProvider';
 import {
   describeError,

@@ -6,7 +6,7 @@ import { AppProvider } from './app/providers/AppProvider';
 import { router } from './app/router/router';
 import { AppErrorBoundary } from './app/AppErrorBoundary';
 import { UpdateBanner } from './app/UpdateBanner';
-import { installGlobalErrorHandlers } from './shared/diagnostics';
+import { installGlobalErrorHandlers } from './shared/utilities/diagnostics';
 import './index.css';
 
 installGlobalErrorHandlers();

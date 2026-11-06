@@ -9,7 +9,7 @@ import {
   isQuotaError,
   StorageFullError,
   type StorageControl,
-} from '../shared/storage';
+} from '../shared/utilities/storage';
 
 const quotaError = () => Object.assign(new Error('full'), { name: 'QuotaExceededError' });
 

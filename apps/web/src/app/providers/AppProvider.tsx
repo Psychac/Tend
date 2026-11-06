@@ -9,16 +9,20 @@ import {
   type ReactNode,
 } from 'react';
 import { reconcileSchedules, sweepOrphanFiles, type Deps } from '@tend/application';
-import { recordError } from '../../shared/diagnostics';
-import { browserNotifier, type Notifier } from '../../shared/notifier';
-import { REMINDER_CHECK_MS, runReminders } from './reminderEngine';
-import { exclusiveAcrossTabs, openChangeChannel, type ChangeChannel } from '../../shared/crossTab';
+import { recordError } from '../../shared/utilities/diagnostics';
+import { browserNotifier, type Notifier } from '../../infrastructure/notifications/notifier';
+import { REMINDER_CHECK_MS, runReminders } from '../../infrastructure/notifications/reminderEngine';
+import {
+  exclusiveAcrossTabs,
+  openChangeChannel,
+  type ChangeChannel,
+} from '../../shared/utilities/crossTab';
 import {
   browserStorage,
   guardDatabase,
   guardFiles,
   type StorageControl,
-} from '../../shared/storage';
+} from '../../shared/utilities/storage';
 import type { AttachmentStorage, Repositories, SyncStatusSource } from '@tend/contracts';
 import { instantFromDate, type Clock, type Id, type IdGenerator, type UserId } from '@tend/domain';
 import {

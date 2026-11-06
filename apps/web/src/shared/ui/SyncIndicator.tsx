@@ -1,6 +1,6 @@
 import { useSyncExternalStore } from 'react';
 import type { SyncState } from '@tend/contracts';
-import { useApp } from '../app/providers/AppProvider';
+import { useApp } from '../../app/providers/AppProvider';
 
 const TONE: Record<SyncState, string> = {
   'local-only': 'bg-info',

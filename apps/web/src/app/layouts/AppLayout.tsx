@@ -1,6 +1,6 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { NavLink, Outlet } from 'react-router';
-import { SyncIndicator } from '../../shared/SyncIndicator';
+import { SyncIndicator } from '../../shared/ui/SyncIndicator';
 import { useReminderCount } from '../../features/reminders/ReminderBadge';
 
 const icon = (d: ReactNode) => (

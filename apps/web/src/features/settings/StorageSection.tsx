@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { attachmentUsage } from '@tend/application';
 import { useApp } from '../../app/providers/AppProvider';
 import { useLiveQuery } from '../../shared/hooks';
-import { formatBytes, type StorageStatus } from '../../shared/storage';
+import { formatBytes, type StorageStatus } from '../../shared/utilities/storage';
 
 /** Whether the browser has promised to keep this device's data, and how much room is used.
  * That is about data loss only; it says nothing about who can read the data (G-19). */

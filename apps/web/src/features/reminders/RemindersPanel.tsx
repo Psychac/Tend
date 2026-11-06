@@ -1,4 +1,4 @@
-import { dueText } from '../../shared/notifier';
+import { dueText } from '../../infrastructure/notifications/notifier';
 import { useReminderStatus } from './useReminderStatus';
 
 /** Work whose reminder time has come, shown at the top of the dashboard. */

@@ -9,7 +9,7 @@ import {
   parseMoney,
 } from '@tend/domain';
 import { useApp } from '../../app/providers/AppProvider';
-import { MoneyField, useMoneyState } from '../../shared/currency';
+import { MoneyField, useMoneyState } from '../../shared/ui/currency';
 import { describeError, deviceTimeZone, useAction } from '../../shared/hooks';
 
 type Done = Extract<HistoryEntry, { kind: 'completed' }>;

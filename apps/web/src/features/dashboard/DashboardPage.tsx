@@ -3,7 +3,7 @@ import { getAssetAlerts, getDashboard, type OccurrenceItem } from '@tend/applica
 import { localDateOf, type LocalDate } from '@tend/domain';
 import { useApp } from '../../app/providers/AppProvider';
 import { deviceTimeZone, formatDate, useLiveQuery } from '../../shared/hooks';
-import { SyncIndicator } from '../../shared/SyncIndicator';
+import { SyncIndicator } from '../../shared/ui/SyncIndicator';
 import { RemindersPanel } from '../reminders/RemindersPanel';
 import { OccurrenceCard } from './OccurrenceCard';
 

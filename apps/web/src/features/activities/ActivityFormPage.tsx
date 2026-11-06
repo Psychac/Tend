@@ -31,7 +31,7 @@ import {
 } from '@tend/domain';
 import { useApp } from '../../app/providers/AppProvider';
 import { describeError, deviceTimeZone, useAction, useLiveQuery } from '../../shared/hooks';
-import { CategorySelect, LocationSelect } from '../../shared/pickers';
+import { CategorySelect, LocationSelect } from '../../shared/ui/pickers';
 
 export interface ActivityFormInitial {
   readonly activity: Activity;

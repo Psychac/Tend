@@ -1,7 +1,7 @@
 import { deliverDueReminders } from '@tend/application';
 import { deviceTimeZone } from '../../shared/hooks';
-import { describeReminders, getNotificationsEnabled, type Notifier } from '../../shared/notifier';
-import type { AppServices } from './AppProvider';
+import { describeReminders, getNotificationsEnabled, type Notifier } from './notifier';
+import type { AppServices } from '../../app/providers/AppProvider';
 
 /**
  * Shows any reminders that have come due as a browser notification, if this

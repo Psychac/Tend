@@ -33,5 +33,5 @@ the project root, so it cannot live in this folder).
 4. Open `/calendar` directly in a new tab: it loads (rewrite works).
 5. In DevTools → Network, confirm `sw.js` is revalidated and `/assets/*` comes from cache.
 
-The same checks run locally in `apps/web/e2e` (`pnpm --filter @tend/web test:e2e`), and
+The same checks run locally in `tests/e2e` (`pnpm test:e2e`), and
 `apps/web/src/deployment.test.ts` guards the config.

@@ -11,7 +11,7 @@ import {
   APP_VERSION,
   recentErrors,
   type DiagnosticsData,
-} from '../../shared/diagnostics';
+} from '../../shared/utilities/diagnostics';
 
 /** Gathers versions, record counts, storage and recent errors. Reads only counts, never content. */
 export async function collectDiagnostics(app: AppServices): Promise<DiagnosticsData> {

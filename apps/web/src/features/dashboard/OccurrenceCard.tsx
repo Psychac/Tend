@@ -9,7 +9,7 @@ import {
 } from '@tend/application';
 import { addDays, parseMoney, type ChecklistItemId, type LocalDate } from '@tend/domain';
 import { useApp } from '../../app/providers/AppProvider';
-import { MoneyField, useMoneyState } from '../../shared/currency';
+import { MoneyField, useMoneyState } from '../../shared/ui/currency';
 import { describeError, formatDate, useAction } from '../../shared/hooks';
 
 interface Props {

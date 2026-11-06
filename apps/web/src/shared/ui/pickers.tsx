@@ -1,5 +1,5 @@
 import { listCategories, listLocations } from '@tend/application';
-import { useLiveQuery } from './hooks';
+import { useLiveQuery } from '../hooks';
 
 const select = 'field mt-1 block w-full max-w-md';
 

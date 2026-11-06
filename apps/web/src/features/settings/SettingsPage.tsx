@@ -16,7 +16,7 @@ import { DiagnosticsSection } from './DiagnosticsSection';
 import { PrivacySection } from './PrivacySection';
 import { StorageSection } from './StorageSection';
 import { CategoriesSection, LocationsSection } from './OrganiseSections';
-import { CurrencySelect, getDefaultCurrency, setDefaultCurrency } from '../../shared/currency';
+import { CurrencySelect, getDefaultCurrency, setDefaultCurrency } from '../../shared/ui/currency';
 import { useApp, useChanges } from '../../app/providers/AppProvider';
 
 const button = 'btn';

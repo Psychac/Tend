@@ -11,7 +11,7 @@ import type { CategoryId, LocationId, Result } from '@tend/domain';
 import { useApp } from '../../app/providers/AppProvider';
 import { describeError, formatDate, useAction, useLiveQuery } from '../../shared/hooks';
 import { AttachmentsSection } from '../attachments/AttachmentsSection';
-import { CategorySelect, LocationSelect } from '../../shared/pickers';
+import { CategorySelect, LocationSelect } from '../../shared/ui/pickers';
 
 const small = 'btn';
 

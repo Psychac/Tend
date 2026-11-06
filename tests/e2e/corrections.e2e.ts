@@ -9,7 +9,7 @@ test('a completion can be corrected and then undone, and it survives a reload', 
   await page.goto('/activities/new');
   await page.getByLabel('Name').fill('Service boiler');
   await page.getByLabel('Repeats').selectOption('calendar');
-  await page.getByLabel('Unit').selectOption('day');
+  await page.getByLabel(/^Unit/).selectOption('day');
   await page.getByRole('button', { name: 'Create activity' }).click();
   await expect(page.getByText('Service boiler')).toBeVisible({ timeout: 30_000 });
 

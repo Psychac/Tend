@@ -4,7 +4,7 @@ import {
   clearRecordedErrors,
   formatDiagnostics,
   type DiagnosticsData,
-} from '../../shared/diagnostics';
+} from '../../shared/utilities/diagnostics';
 import { useLiveQuery } from '../../shared/hooks';
 import { copyText } from '../diagnostics/ErrorFallback';
 import { collectDiagnostics } from '../diagnostics/useDiagnostics';

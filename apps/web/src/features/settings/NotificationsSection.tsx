@@ -4,7 +4,7 @@ import {
   getNotificationsEnabled,
   setNotificationsEnabled,
   type NotificationSupport,
-} from '../../shared/notifier';
+} from '../../infrastructure/notifications/notifier';
 
 const button = 'btn';
 const primary = 'btn btn-primary';

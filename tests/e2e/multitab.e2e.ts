@@ -15,7 +15,7 @@ test('a change in one tab appears in the other without a reload', async ({ conte
 
   await a.getByLabel('Name').fill('Water plants');
   await a.getByLabel('Repeats').selectOption('calendar');
-  await a.getByLabel('Unit').selectOption('day');
+  await a.getByLabel(/^Unit/).selectOption('day');
   await a.getByRole('button', { name: 'Create activity' }).click();
   await expect(a.getByText('Water plants')).toBeVisible({ timeout: 30_000 });
 
@@ -63,7 +63,7 @@ test('two tabs deliver a due reminder once', async ({ context }) => {
   await a.getByRole('link', { name: 'New activity' }).click();
   await a.getByLabel('Name').fill('Water plants');
   await a.getByLabel('Repeats').selectOption('calendar');
-  await a.getByLabel('Unit').selectOption('day');
+  await a.getByLabel(/^Unit/).selectOption('day');
   await a.getByRole('checkbox', { name: 'Remind me' }).click();
   await a.getByLabel('At', { exact: true }).fill('00:00');
   await a.getByRole('button', { name: 'Create activity' }).click();

@@ -14,7 +14,7 @@ import {
 import type { CategoryId, Location, LocationId, LocationKind, Result } from '@tend/domain';
 import { useApp } from '../../app/providers/AppProvider';
 import { describeError, useAction, useLiveQuery } from '../../shared/hooks';
-import { LocationSelect } from '../../shared/pickers';
+import { LocationSelect } from '../../shared/ui/pickers';
 
 const input = 'field mt-1 block';
 const button = 'btn';

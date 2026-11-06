@@ -1,6 +1,6 @@
 import { render, screen, within } from '@testing-library/react';
 import type { SyncStatus, SyncStatusSource } from '@tend/contracts';
-import { SyncIndicator } from '../shared/SyncIndicator';
+import { SyncIndicator } from '../shared/ui/SyncIndicator';
 import { AppProvider } from './providers/AppProvider';
 import { createNodeSqliteDatabase } from '@tend/infrastructure/testing';
 import { renderApp } from './test-utils';

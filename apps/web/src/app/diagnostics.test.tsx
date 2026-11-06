@@ -10,7 +10,7 @@ import {
   recordError,
   resetDiagnosticsForTests,
   type DiagnosticsData,
-} from '../shared/diagnostics';
+} from '../shared/utilities/diagnostics';
 import { AppErrorBoundary, RouteErrorPage } from './AppErrorBoundary';
 import { AppProvider } from './providers/AppProvider';
 import { fakeNotifier, renderApp } from './test-utils';

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useApp, useChanges, type AppServices } from '../app/providers/AppProvider';
+import { useApp, useChanges, type AppServices } from '../../app/providers/AppProvider';
 import type { DomainError, Result, TimeZoneId } from '@tend/domain';
 
 export type Loadable<T> =

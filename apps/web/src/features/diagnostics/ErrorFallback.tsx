@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { exportBackup } from '@tend/infrastructure';
 import { useOptionalApp } from '../../app/providers/AppProvider';
-import { formatDiagnostics } from '../../shared/diagnostics';
+import { formatDiagnostics } from '../../shared/utilities/diagnostics';
 import { collectDiagnostics } from './useDiagnostics';
 
 /** Copies text, or reports that the browser would not let it. */

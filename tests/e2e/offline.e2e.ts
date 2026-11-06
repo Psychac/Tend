@@ -7,7 +7,7 @@ test('data created in the app survives a reload and can be completed', async ({ 
   await page.goto('/activities/new');
   await page.getByLabel('Name').fill('Water plants');
   await page.getByLabel('Repeats').selectOption('calendar');
-  await page.getByLabel('Unit').selectOption('day');
+  await page.getByLabel(/^Unit/).selectOption('day');
   await page.getByRole('button', { name: 'Create activity' }).click();
   await expect(page.getByText('Water plants')).toBeVisible({ timeout: 30_000 });
 

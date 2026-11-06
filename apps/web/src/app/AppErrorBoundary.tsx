@@ -1,7 +1,7 @@
 import { Component, useEffect, type ErrorInfo, type ReactNode } from 'react';
 import { useRouteError } from 'react-router';
 import { ErrorFallback } from '../features/diagnostics/ErrorFallback';
-import { recordError } from '../shared/diagnostics';
+import { recordError } from '../shared/utilities/diagnostics';
 
 /** Catches a failure anywhere below it, including the layout, so nobody is left on a blank page. */
 export class AppErrorBoundary extends Component<
