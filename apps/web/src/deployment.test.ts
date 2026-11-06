@@ -41,3 +41,26 @@ describe('vercel.json', () => {
     }
   });
 });
+
+describe('app identity', () => {
+  const web = resolve(__dirname, '..');
+  const read = (path: string) => readFileSync(resolve(web, path), 'utf8');
+  const brand = /--brand:\s*(#[0-9a-f]{6})/i.exec(read('src/index.css'))?.[1]?.toLowerCase();
+
+  it('uses one brand colour for the page, the manifest and the app icon', () => {
+    expect(brand).toBeDefined();
+    expect(read('index.html')).toContain(`name="theme-color" content="${brand}"`);
+    expect(read('vite.config.ts')).toContain(`theme_color: '${brand}'`);
+    expect(read('public/icons/icon.svg').toLowerCase()).toContain(`fill="${brand}"`);
+  });
+
+  it('ships the icon sizes the manifest names', () => {
+    for (const size of [192, 512]) {
+      const png = readFileSync(resolve(web, `public/icons/icon-${size}.png`));
+      // PNG header, then width and height as 32-bit big-endian numbers.
+      expect(png.subarray(1, 4).toString()).toBe('PNG');
+      expect(png.readUInt32BE(16)).toBe(size);
+      expect(png.readUInt32BE(20)).toBe(size);
+    }
+  });
+});

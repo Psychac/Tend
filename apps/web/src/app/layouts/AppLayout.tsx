@@ -172,9 +172,7 @@ export function AppLayout() {
             className="grid h-9 w-9 place-items-center rounded-xl bg-brand text-white"
             aria-hidden="true"
           >
-            {icon(
-              <path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.5 2.5-2.4-.6-.6-2.4z" />,
-            )}
+            {icon(<path d="M5 12.5l4.5 4.5L19 7" strokeWidth="2.6" />)}
           </span>
           <span className="text-base font-semibold tracking-tight">Tend</span>
         </div>
