@@ -1,5 +1,6 @@
 import { PowerSyncDatabase, Schema, Table, column } from '@powersync/web';
-import { TABLES, type ColumnType, type TableDef } from './schema';
+import { LOCAL_ONLY_TABLES, TABLES, type ColumnType, type TableDef } from './schema';
+import { migrateLocalDatabase } from './migrations';
 import type { SqlDatabase, SqlExecutor, SqlValue } from './sql';
 
 const COLUMN_TYPES = {
@@ -19,6 +20,12 @@ export function buildPowerSyncSchema(): Schema {
       ? Object.fromEntries(Object.entries(def.indexes).map(([n, cols]) => [n, [...cols]]))
       : undefined;
     tables[name] = new Table(columns, indexes ? { indexes } : undefined);
+  }
+  for (const [name, def] of Object.entries(LOCAL_ONLY_TABLES as Record<string, TableDef>)) {
+    const columns = Object.fromEntries(
+      Object.entries(def.columns).map(([col, type]) => [col, COLUMN_TYPES[type]]),
+    );
+    tables[name] = new Table(columns, { localOnly: true });
   }
   return new Schema(tables);
 }
@@ -51,6 +58,8 @@ export class PowerSyncSqlDatabase implements SqlDatabase {
 export interface LocalDatabaseOptions {
   /** Database file name inside the browser's storage. Only open one instance per file. */
   readonly dbFilename?: string;
+  /** Runs the local schema migrations. Defaults to `migrateLocalDatabase`; the app can wrap it, for example in a cross-tab lock. */
+  readonly migrate?: (db: SqlDatabase) => Promise<unknown>;
 }
 
 /**
@@ -66,5 +75,8 @@ export async function openLocalDatabase(
     database: { dbFilename: options.dbFilename ?? 'tend.db' },
   });
   await powersync.init();
-  return new PowerSyncSqlDatabase(powersync);
+  const db = new PowerSyncSqlDatabase(powersync);
+  // Bring data written by an older version of the app up to date before anything reads it.
+  await (options.migrate ?? migrateLocalDatabase)(db);
+  return db;
 }

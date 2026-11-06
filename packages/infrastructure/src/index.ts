@@ -4,3 +4,4 @@ export * from './sql-repositories';
 export * from './powersync';
 export * from './backup';
 export * from './sync-status';
+export * from './migrations';

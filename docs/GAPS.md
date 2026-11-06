@@ -46,7 +46,7 @@ that is missing or partial · P3 = polish, hygiene, or spec/repo drift · P4 = P
 - **Work:** Verify PowerSync Web multi-tab/shared-worker behaviour for the pinned SDK version; make the reminder engine run in one tab only (avoid duplicate notifications); make reactive queries refresh across tabs; add an E2E with two pages.
 - **Done when:** a completion in tab A appears in tab B without reload and a reminder notifies once.
 
-### G-04 Local schema migration strategy — M
+### G-04 Local schema migration strategy — M ✅ done
 - **Spec:** §8.4, §9.3 (app upgrades and local schema migrations), §24 ("existing user data remains safe across upgrades"), E2E "upgrade the PWA while local data exists".
 - **State:** The schema is declarative ([schema.ts](../packages/infrastructure/src/schema.ts)); there is no versioned local migration path or upgrade test. Backups have a schema version and migrations, the live DB does not.
 - **Work:** Track a local schema version; define how added/renamed columns and data backfills run on startup; test upgrading a DB seeded from an older fixture. Also decide whether PowerSync's view-based schema needs raw-table migrations once the first breaking change lands.

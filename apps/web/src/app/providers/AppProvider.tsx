@@ -19,6 +19,7 @@ import {
   createSqlRepositories,
   createSqlUnitOfWork,
   localOnlySyncStatus,
+  migrateLocalDatabase,
   openLocalDatabase,
   type SqlDatabase,
 } from '@tend/infrastructure';
@@ -106,7 +107,10 @@ let sharedDatabase: Promise<SqlDatabase> | undefined;
  * not cached, so a reload-free retry is possible.
  */
 const openSharedDatabase = (): Promise<SqlDatabase> => {
-  sharedDatabase ??= openLocalDatabase().catch((e: unknown) => {
+  sharedDatabase ??= openLocalDatabase({
+    // Two tabs starting together must not both migrate.
+    migrate: (db) => exclusiveAcrossTabs(() => migrateLocalDatabase(db)),
+  }).catch((e: unknown) => {
     sharedDatabase = undefined;
     throw e;
   });

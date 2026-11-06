@@ -168,14 +168,24 @@ export const TABLES = {
 
 export type TableName = keyof typeof TABLES;
 
+/**
+ * Tables that exist only on this device: never synced, never in a backup. The one
+ * row-per-setting store the app itself needs, such as the local schema version.
+ */
+export const LOCAL_ONLY_TABLES = {
+  local_meta: { columns: { value: 'text' } },
+} as const satisfies Record<string, TableDef>;
+
 /** SQL to create the schema in a plain SQLite database (tests, tooling). */
 export function schemaDdl(): string[] {
-  return Object.entries(TABLES as Record<string, TableDef>).flatMap(([name, def]) => {
-    const columns = Object.entries(def.columns).map(([c, t]) => `${c} ${t.toUpperCase()}`);
-    const create = `CREATE TABLE ${name} (id TEXT PRIMARY KEY, ${columns.join(', ')})`;
-    const indexes = Object.entries(def.indexes ?? {}).map(
-      ([idx, cols]) => `CREATE INDEX ${name}_${idx} ON ${name} (${cols.join(', ')})`,
-    );
-    return [create, ...indexes];
-  });
+  return Object.entries({ ...TABLES, ...LOCAL_ONLY_TABLES } as Record<string, TableDef>).flatMap(
+    ([name, def]) => {
+      const columns = Object.entries(def.columns).map(([c, t]) => `${c} ${t.toUpperCase()}`);
+      const create = `CREATE TABLE ${name} (id TEXT PRIMARY KEY, ${columns.join(', ')})`;
+      const indexes = Object.entries(def.indexes ?? {}).map(
+        ([idx, cols]) => `CREATE INDEX ${name}_${idx} ON ${name} (${cols.join(', ')})`,
+      );
+      return [create, ...indexes];
+    },
+  );
 }
