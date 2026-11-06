@@ -20,10 +20,8 @@ import { useApp } from '../../app/providers/AppProvider';
 import { describeError, formatDate, useAction, useLiveQuery } from '../../shared/hooks';
 
 const field = 'field mt-1 block w-full';
-const button =
-  'btn';
-const primary =
-  'btn btn-primary';
+const button = 'btn';
+const primary = 'btn btn-primary';
 
 export function AssetsPage() {
   const [search, setSearch] = useState('');

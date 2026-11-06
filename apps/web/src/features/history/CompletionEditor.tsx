@@ -14,10 +14,8 @@ import { describeError, deviceTimeZone, useAction } from '../../shared/hooks';
 
 type Done = Extract<HistoryEntry, { kind: 'completed' }>;
 
-const primary =
-  'btn btn-primary';
-const button =
-  'btn';
+const primary = 'btn btn-primary';
+const button = 'btn';
 
 interface Reading {
   readonly key: string;

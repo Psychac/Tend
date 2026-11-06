@@ -16,10 +16,8 @@ interface Props {
   readonly today: LocalDate;
 }
 
-const button =
-  'btn';
-const primary =
-  'btn btn-primary';
+const button = 'btn';
+const primary = 'btn btn-primary';
 
 function timingLabel(item: OccurrenceItem): string | null {
   if (item.timing === 'overdue')
@@ -61,7 +59,11 @@ export function OccurrenceCard({ item, today }: Props) {
   return (
     <li
       className={`card border-l-4 p-3 ${
-        item.timing === 'overdue' ? 'border-l-danger' : item.timing === 'in_grace' ? 'border-l-warn-solid' : 'border-l-brand'
+        item.timing === 'overdue'
+          ? 'border-l-danger'
+          : item.timing === 'in_grace'
+            ? 'border-l-warn-solid'
+            : 'border-l-brand'
       }`}
     >
       <div className="flex flex-wrap items-center justify-between gap-3">

@@ -149,8 +149,7 @@ function EntryRow({ entry }: { entry: HistoryEntry }) {
   return <DoneRow entry={entry} />;
 }
 
-const small =
-  'btn';
+const small = 'btn';
 
 function DoneRow({ entry }: { entry: Extract<HistoryEntry, { kind: 'completed' }> }) {
   const { deps } = useApp();
@@ -173,8 +172,7 @@ function DoneRow({ entry }: { entry: Extract<HistoryEntry, { kind: 'completed' }
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div>
           <p className="font-medium">
-            {entry.activityName}{' '}
-            <span className="text-sm font-normal text-ok">· Done</span>
+            {entry.activityName} <span className="text-sm font-normal text-ok">· Done</span>
             {entry.edited ? (
               <span className="ml-1 text-xs font-normal text-muted">(edited)</span>
             ) : null}

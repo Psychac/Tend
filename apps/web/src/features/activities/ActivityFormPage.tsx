@@ -644,10 +644,7 @@ export function ActivityForm({ initial }: { initial?: ActivityFormInitial | unde
           {editing ? 'Save changes' : 'Create activity'}
         </button>
         {editing ? (
-          <Link
-            to="/activities"
-            className="btn"
-          >
+          <Link to="/activities" className="btn">
             Cancel
           </Link>
         ) : null}
