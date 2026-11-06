@@ -28,7 +28,7 @@ that is missing or partial · P3 = polish, hygiene, or spec/repo drift · P4 = P
 
 ## P1 — Phase 1 acceptance and data safety
 
-### G-01 Persistent storage request and quota handling — S
+### G-01 Persistent storage request and quota handling — S ✅ done
 - **Spec:** §9.3 (persistent-storage requests, quota exhaustion, eviction), §14.
 - **State:** No `navigator.storage.persist()` call anywhere. Only a startup failure notice exists ([AppProvider.tsx](../apps/web/src/app/providers/AppProvider.tsx)). A write that fails mid-session (quota, eviction) is not distinguished or explained.
 - **Work:** Request persistence after first meaningful write; show result in Settings ("Storage: protected / best-effort") with the §9.3 caveat that it is never guaranteed; catch quota/write errors in the unit of work and surface a clear message that the change was *not* saved; show `navigator.storage.estimate()` usage in Settings; nudge a backup when storage is not persistent.

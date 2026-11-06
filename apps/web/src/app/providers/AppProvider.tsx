@@ -10,14 +10,9 @@ import {
 import { reconcileSchedules, type Deps } from '@tend/application';
 import { browserNotifier, type Notifier } from '../../shared/notifier';
 import { REMINDER_CHECK_MS, runReminders } from './reminderEngine';
+import { browserStorage, guardDatabase, type StorageControl } from '../../shared/storage';
 import type { Repositories } from '@tend/contracts';
-import {
-  instantFromDate,
-  type Clock,
-  type Id,
-  type IdGenerator,
-  type UserId,
-} from '@tend/domain';
+import { instantFromDate, type Clock, type Id, type IdGenerator, type UserId } from '@tend/domain';
 import {
   createSqlRepositories,
   createSqlUnitOfWork,
@@ -38,6 +33,8 @@ export interface AppServices {
   readonly db: SqlDatabase;
   /** How browser notifications are shown; replaceable in tests. */
   readonly notifier: Notifier;
+  /** Persistence and usage of on-device storage; replaceable in tests. */
+  readonly storage: StorageControl;
 }
 
 const systemClock: Clock = { now: () => instantFromDate(new Date()) };
@@ -48,7 +45,11 @@ const uuidGenerator: IdGenerator = {
   },
 };
 
-export function createServices(db: SqlDatabase, notifier: Notifier = browserNotifier): AppServices {
+export function createServices(
+  db: SqlDatabase,
+  notifier: Notifier = browserNotifier,
+  storage: StorageControl = browserStorage,
+): AppServices {
   return {
     deps: {
       ownerId: LOCAL_OWNER_ID,
@@ -59,6 +60,7 @@ export function createServices(db: SqlDatabase, notifier: Notifier = browserNoti
     repos: createSqlRepositories(db),
     db,
     notifier,
+    storage,
   };
 }
 
@@ -109,6 +111,7 @@ interface Props {
   /** Replaceable in tests. */
   readonly open?: () => Promise<SqlDatabase>;
   readonly notifier?: Notifier;
+  readonly storage?: StorageControl;
 }
 
 /**
@@ -120,8 +123,10 @@ export function AppProvider({
   children,
   open = openSharedDatabase,
   notifier = browserNotifier,
+  storage = browserStorage,
 }: Props) {
   const [state, setState] = useState<State>({ status: 'loading' });
+  const [storageFull, setStorageFull] = useState(false);
   const [revision, setRevision] = useState(0);
   const notifyChanged = useCallback(() => setRevision((r) => r + 1), []);
   const changes = useMemo(() => ({ revision, notifyChanged }), [revision, notifyChanged]);
@@ -131,10 +136,20 @@ export function AppProvider({
     let onVisible: (() => void) | undefined;
     let timer: ReturnType<typeof setInterval> | undefined;
 
+    let persistenceAsked = false;
     open()
-      .then((db) => {
+      .then((rawDb) => {
         if (cancelled) return;
-        const services = createServices(db, notifier);
+        const db = guardDatabase(rawDb, {
+          // Ask once, after the first thing worth keeping has been written (spec 9.3).
+          onWrite: () => {
+            if (persistenceAsked) return;
+            persistenceAsked = true;
+            void storage.requestPersistence();
+          },
+          onFull: () => setStorageFull(true),
+        });
+        const services = createServices(db, notifier, storage);
         const remind = () =>
           runReminders(services, notifier).catch((e: unknown) =>
             console.error('Reminder check failed', e),
@@ -170,19 +185,22 @@ export function AppProvider({
       if (onVisible) document.removeEventListener('visibilitychange', onVisible);
       if (timer) clearInterval(timer);
     };
-  }, [open, notifier, notifyChanged]);
+  }, [open, notifier, storage, notifyChanged]);
 
   if (state.status === 'loading') {
     return <p className="p-4 text-muted">Opening your data…</p>;
   }
   if (state.status === 'error') {
     return (
-      <div role="alert" className="m-4 rounded border border-danger-line bg-danger-soft p-4 text-danger">
+      <div
+        role="alert"
+        className="m-4 rounded border border-danger-line bg-danger-soft p-4 text-danger"
+      >
         <h2 className="font-semibold">Your data could not be opened</h2>
         <p className="mt-1 text-sm">
-          Tend stores everything on this device, and this browser would not open its
-          storage. Private browsing, a full disk, or a browser without the required storage support
-          can cause this. Nothing has been lost; try a regular window or another browser.
+          Tend stores everything on this device, and this browser would not open its storage.
+          Private browsing, a full disk, or a browser without the required storage support can cause
+          this. Nothing has been lost; try a regular window or another browser.
         </p>
         <p className="mt-2 text-xs text-danger">Details: {state.message}</p>
       </div>
@@ -190,7 +208,24 @@ export function AppProvider({
   }
   return (
     <AppContext.Provider value={state.services}>
-      <ChangesContext.Provider value={changes}>{children}</ChangesContext.Provider>
+      <ChangesContext.Provider value={changes}>
+        {storageFull ? (
+          <div
+            role="alert"
+            className="m-4 rounded border border-danger-line bg-danger-soft p-3 text-sm text-danger"
+          >
+            <p className="font-medium">Your last change was not saved.</p>
+            <p className="mt-1">
+              This device has no room left for Tend&rsquo;s data. Everything already saved is
+              intact. Free up space on this device, download a backup in Settings, then try again.
+            </p>
+            <button type="button" className="btn mt-2" onClick={() => setStorageFull(false)}>
+              Dismiss
+            </button>
+          </div>
+        ) : null}
+        {children}
+      </ChangesContext.Provider>
     </AppContext.Provider>
   );
 }

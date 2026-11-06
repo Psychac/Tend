@@ -6,10 +6,8 @@ import {
   type NotificationSupport,
 } from '../../shared/notifier';
 
-const button =
-  'btn';
-const primary =
-  'btn btn-primary';
+const button = 'btn';
+const primary = 'btn btn-primary';
 
 /** Turns browser notifications on or off for this device, and explains what they can and cannot do. */
 export function NotificationsSection() {

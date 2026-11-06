@@ -9,14 +9,13 @@ import {
   type RestorePreview,
 } from '@tend/infrastructure';
 import { NotificationsSection } from './NotificationsSection';
+import { StorageSection } from './StorageSection';
 import { CategoriesSection, LocationsSection } from './OrganiseSections';
 import { CurrencySelect, getDefaultCurrency, setDefaultCurrency } from '../../shared/currency';
 import { useApp, useChanges } from '../../app/providers/AppProvider';
 
-const button =
-  'btn';
-const primary =
-  'btn btn-primary';
+const button = 'btn';
+const primary = 'btn btn-primary';
 
 /** Hands the browser a file to save. */
 function download(filename: string, text: string): void {
@@ -36,6 +35,7 @@ export function SettingsPage() {
       <LocationsSection />
       <NotificationsSection />
       <CurrencySection />
+      <StorageSection />
       <BackupSection />
     </div>
   );

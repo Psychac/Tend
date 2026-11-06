@@ -17,10 +17,8 @@ import { describeError, useAction, useLiveQuery } from '../../shared/hooks';
 import { LocationSelect } from '../../shared/pickers';
 
 const input = 'field mt-1 block';
-const button =
-  'btn';
-const primary =
-  'btn btn-primary';
+const button = 'btn';
+const primary = 'btn btn-primary';
 
 const usage = (activities: number, assets: number): string => {
   const parts = [
