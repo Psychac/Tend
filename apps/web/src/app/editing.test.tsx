@@ -1,6 +1,15 @@
 import { screen, within } from '@testing-library/react';
 import { createDaily, renderApp } from './test-utils';
 
+beforeEach(() => {
+  // Pin the date (only Date is faked; timers stay real) so calendar days are predictable.
+  vi.useFakeTimers({ toFake: ['Date'] });
+  vi.setSystemTime(new Date('2026-11-05T06:30:00.000Z'));
+});
+afterEach(() => {
+  vi.useRealTimers();
+});
+
 describe('editing an activity', () => {
   it('fixes a typo in the name and changes the details', async () => {
     const { user } = renderApp('/activities/new');
