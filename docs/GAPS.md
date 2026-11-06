@@ -153,11 +153,12 @@ that is missing or partial · P3 = polish, hygiene, or spec/repo drift · P4 = P
 - **Work:** Measurement history screen on the asset, with a simple trend chart; qualitative measurement entry.
 - **Decision:** Each asset card has a "Readings" button showing everything recorded for it (`getAssetMeasurementHistory`), grouped by what was measured. A numeric series gets a plain SVG line chart, spaced by date, with latest, low and high; dots recorded with a service are filled. It has a screen-reader summary and an accessible list of entries below. A rating series is a dated list. "Record a reading" now has a Number or Rating kind; ratings suggest Good, Fair and Poor but accept any text. No charting library, and no per-activity view yet: only readings attached to an asset are shown.
 
-### G-19 Local data protection claims — S
+### G-19 Local data protection claims — S — done (statement, wording and ADR 0002; no encryption in Phase 1)
 
 - **Spec:** §14 (do not claim encryption at rest unless verified; local DB encryption to be evaluated).
 - **State:** No evaluation recorded; no user-facing statement about what is and is not protected.
 - **Work:** Write the threat-model note, decide on app-lock/encryption (likely out of scope for Phase 1), and ensure no UI text overclaims.
+- **Decision:** [ADR 0002](decisions/0002-local-data-protection.md) records the threat model: the data is not encrypted, Tend has no lock, and backups are plain files. Phase 1 does not encrypt or lock. Settings has a "Privacy on this device" section saying so, the backup section warns that backups are unencrypted, and the storage section's "protected" wording became "kept" (it only means the browser will not evict data). A test fails if the Settings page claims encryption or protection. Encrypted storage, app lock and encrypted backups are deferred to Phase 2, when sync arrives.
 
 ### G-20 Accessibility audit — M
 

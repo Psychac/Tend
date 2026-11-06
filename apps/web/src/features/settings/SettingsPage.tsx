@@ -12,6 +12,7 @@ import {
   type RestorePreview,
 } from '@tend/infrastructure';
 import { NotificationsSection } from './NotificationsSection';
+import { PrivacySection } from './PrivacySection';
 import { StorageSection } from './StorageSection';
 import { CategoriesSection, LocationsSection } from './OrganiseSections';
 import { CurrencySelect, getDefaultCurrency, setDefaultCurrency } from '../../shared/currency';
@@ -41,6 +42,7 @@ export function SettingsPage() {
       <NotificationsSection />
       <CurrencySection />
       <StorageSection />
+      <PrivacySection />
       <BackupSection />
     </div>
   );
@@ -223,7 +225,8 @@ function BackupSection() {
         </button>
         <p className="mt-1 text-xs text-muted">
           The plain backup holds your records only. The zip also holds attached files, so it can be
-          much larger.
+          much larger. Backup files are not encrypted: anyone who has the file can read it, so keep
+          it somewhere private.
         </p>
         {exported ? (
           <p role="status" className="mt-2 text-sm text-ok">

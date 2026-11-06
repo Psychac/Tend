@@ -125,6 +125,6 @@ describe('Settings storage section', () => {
         <StorageSection />
       </AppProvider>,
     );
-    expect(await screen.findByText(/Storage: protected/)).toBeInTheDocument();
+    expect(await screen.findByText(/Storage: kept/)).toBeInTheDocument();
   });
 });
