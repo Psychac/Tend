@@ -2,6 +2,7 @@ import type { ActivityId, Instant, LocalDate, OccurrenceId, ScheduleId, TimeZone
 import { newMeta, type Occurrence, type Schedule, type ScheduleStrategy } from '../entities';
 import { NOW, OWNER, sequentialIds } from '../testing';
 import {
+  eventDueDate,
   HARD_MAX_OCCURRENCES,
   missingDueDates,
   nextUsageThreshold,
@@ -210,9 +211,24 @@ describe('missingDueDates: other strategies', () => {
         ctx(),
       ),
     ).toEqual([]);
-    expect(missingDueDates(schedule({ kind: 'event', eventName: 'moved-house' }), ctx())).toEqual(
-      [],
-    );
+    expect(
+      missingDueDates(
+        schedule({ kind: 'event', afterActivityId: 'a-other' as ActivityId, delayDays: 7 }),
+        ctx(),
+      ),
+    ).toEqual([]);
+  });
+
+  it('an event schedule falls due the delay after the triggering completion', () => {
+    const s: ScheduleStrategy = {
+      kind: 'event',
+      afterActivityId: 'a-other' as ActivityId,
+      delayDays: 7,
+    };
+    if (s.kind === 'event') {
+      expect(eventDueDate(s, d('2026-11-05'))).toBe('2026-11-12');
+      expect(eventDueDate({ ...s, delayDays: 0 }, d('2026-11-05'))).toBe('2026-11-05');
+    }
   });
 });
 

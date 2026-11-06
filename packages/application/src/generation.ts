@@ -1,9 +1,11 @@
 import type { Repositories } from '@tend/contracts';
 import {
+  eventDueDate,
   localDateOf,
   missingDueDates,
   newMeta,
   type Activity,
+  type Instant,
   type LocalDate,
   type Occurrence,
   type Schedule,
@@ -63,6 +65,56 @@ export async function usageReading(
     currentReading: current.value,
     lastServiceReading: (lastService ?? earliest).value,
   };
+}
+
+/**
+ * Event-based schedules: completing `completed` triggers an occurrence of every
+ * activity whose schedule says "after <completed>". The due date is the
+ * completion's date plus the schedule's delay.
+ *
+ * A schedule keeps at most one open occurrence, so completing the trigger again
+ * before the previous follow-up is done does not pile up duplicates. Triggers
+ * fire only from a person's completion, never from each other, so two activities
+ * that follow one another cannot loop.
+ */
+export async function triggerEventSchedules(
+  deps: Deps,
+  repos: Repositories,
+  completed: Activity,
+  completedAt: Instant,
+): Promise<Occurrence[]> {
+  const now = deps.clock.now();
+  const created: Occurrence[] = [];
+  for (const schedule of await repos.schedules.list()) {
+    const s = schedule.strategy;
+    if (s.kind !== 'event' || s.afterActivityId !== completed.id) continue;
+    if (schedule.pausedAt !== undefined) continue;
+
+    const target = await repos.activities.getById(schedule.activityId);
+    if (!target || target.archivedAt !== undefined) continue;
+
+    const dueOn = eventDueDate(s, localDateOf(completedAt, schedule.timeZone));
+    if (dueOn < schedule.startsOn || (schedule.endsOn !== undefined && dueOn > schedule.endsOn)) {
+      continue;
+    }
+    const open = await repos.occurrences.list({
+      activityId: schedule.activityId,
+      status: OUTSTANDING,
+    });
+    if (open.some((o) => o.scheduleId === schedule.id)) continue;
+
+    const occurrence: Occurrence = {
+      id: deps.ids.next<'Occurrence'>(),
+      meta: newMeta(deps.ownerId, now),
+      activityId: schedule.activityId,
+      scheduleId: schedule.id,
+      dueOn,
+      status: 'pending',
+    };
+    await repos.occurrences.save(occurrence);
+    created.push(occurrence);
+  }
+  return created;
 }
 
 /**

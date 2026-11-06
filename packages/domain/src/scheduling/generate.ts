@@ -52,8 +52,8 @@ type Strategy<K extends ScheduleStrategy['kind']> = Extract<ScheduleStrategy, { 
  * the window starts today. Gaps from a long absence are handled separately by
  * `consolidateMissed` rather than by creating one occurrence per missed day.
  *
- * `condition` and `event` strategies are triggered by measurements and events
- * rather than dates, so they yield nothing here.
+ * `condition` and `event` strategies are triggered by measurements and by
+ * completions of other activities rather than dates, so they yield nothing here.
  */
 export function missingDueDates(schedule: Schedule, ctx: GenerationContext): LocalDate[] {
   if (schedule.pausedAt !== undefined) return [];
@@ -166,6 +166,10 @@ function completionIntervalDue(
     ? startsOn
     : addUnits(lastResolvedOn, s.interval.every, s.interval.unit);
 }
+
+/** When an occurrence triggered by completing another activity on `completedOn` falls due. */
+export const eventDueDate = (s: Strategy<'event'>, completedOn: LocalDate): LocalDate =>
+  addDays(completedOn, s.delayDays);
 
 /** The meter reading at which the next usage-based occurrence falls due. */
 export const nextUsageThreshold = (s: Strategy<'usage'>, lastServiceReading: number): number =>

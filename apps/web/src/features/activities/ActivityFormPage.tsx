@@ -56,7 +56,7 @@ const WEEKDAYS: [IsoWeekday, string][] = [
   [7, 'Sun'],
 ];
 
-type Repeat = 'none' | 'calendar' | 'after_completion' | 'usage';
+type Repeat = 'none' | 'calendar' | 'after_completion' | 'usage' | 'after_activity';
 
 const field = 'field mt-1 block w-full max-w-md';
 
@@ -64,7 +64,12 @@ const field = 'field mt-1 block w-full max-w-md';
 function scheduleDefaults(schedule: Schedule | undefined) {
   const s = schedule?.strategy;
   return {
-    editable: !s || s.kind === 'calendar' || s.kind === 'completion_interval' || s.kind === 'usage',
+    editable:
+      !s ||
+      s.kind === 'calendar' ||
+      s.kind === 'completion_interval' ||
+      s.kind === 'usage' ||
+      s.kind === 'event',
     repeat: (!s
       ? 'none'
       : s.kind === 'calendar'
@@ -73,7 +78,11 @@ function scheduleDefaults(schedule: Schedule | undefined) {
           ? 'after_completion'
           : s.kind === 'usage'
             ? 'usage'
-            : 'none') as Repeat,
+            : s.kind === 'event'
+              ? 'after_activity'
+              : 'none') as Repeat,
+    afterActivityId: s?.kind === 'event' ? s.afterActivityId : '',
+    delayDays: s?.kind === 'event' ? String(s.delayDays) : '7',
     every: s && 'interval' in s ? String(s.interval.every) : '1',
     unit: (s && 'interval' in s ? s.interval.unit : 'week') as RecurrenceUnit,
     weekdays: (s?.kind === 'calendar' ? (s.byWeekday ?? []) : []) as IsoWeekday[],
@@ -131,7 +140,12 @@ export function ActivityForm({ initial }: { initial?: ActivityFormInitial | unde
   const [remind, setRemind] = useState(initial?.reminder?.enabled ?? false);
   const [leadDays, setLeadDays] = useState(String(initial?.reminder?.leadDays ?? 0));
   const [atTime, setAtTime] = useState(initial?.reminder?.atTime ?? '09:00');
+  const [afterActivityId, setAfterActivityId] = useState<string>(sd.afterActivityId);
+  const [delayDays, setDelayDays] = useState(sd.delayDays);
   const assets = useLiveQuery(({ repos }) => listAssets(repos));
+  const otherActivities = useLiveQuery(async ({ repos }) =>
+    (await repos.activities.list({})).filter((a) => a.id !== original?.id),
+  );
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -145,13 +159,19 @@ export function ActivityForm({ initial }: { initial?: ActivityFormInitial | unde
             meterKey,
             every: { value: Number(usageEvery), unit: meterUnit },
           }
-        : repeat === 'calendar'
+        : repeat === 'after_activity'
           ? {
-              kind: 'calendar',
-              interval,
-              byWeekday: unit === 'week' && weekdays.length > 0 ? weekdays : undefined,
+              kind: 'event',
+              afterActivityId: afterActivityId as ActivityId,
+              delayDays: Number(delayDays),
             }
-          : { kind: 'completion_interval', interval };
+          : repeat === 'calendar'
+            ? {
+                kind: 'calendar',
+                interval,
+                byWeekday: unit === 'week' && weekdays.length > 0 ? weekdays : undefined,
+              }
+            : { kind: 'completion_interval', interval };
     return { strategy, timeZone: deviceTimeZone(), startsOn, graceDays: Number(graceDays) };
   }
 
@@ -372,6 +392,10 @@ export function ActivityForm({ initial }: { initial?: ActivityFormInitial | unde
           <option value="calendar">On a fixed calendar (e.g. every week)</option>
           <option value="after_completion">After I complete it (e.g. 30 days later)</option>
           {assetId ? <option value="usage">By usage (e.g. every 5,000 km)</option> : null}
+          {(otherActivities.status === 'ready' && otherActivities.data.length > 0) ||
+          repeat === 'after_activity' ? (
+            <option value="after_activity">After another activity is completed</option>
+          ) : null}
         </select>
       </label>
 
@@ -418,6 +442,38 @@ export function ActivityForm({ initial }: { initial?: ActivityFormInitial | unde
                   value={meterUnit}
                   onChange={(e) => setMeterUnit(e.target.value)}
                   className="mt-1 block w-20 field"
+                />
+              </label>
+            </div>
+          ) : repeat === 'after_activity' ? (
+            <div className="flex flex-wrap items-end gap-3">
+              <label className="block text-sm">
+                After completing
+                <select
+                  required
+                  value={afterActivityId}
+                  onChange={(e) => setAfterActivityId(e.target.value)}
+                  className="mt-1 block field"
+                >
+                  <option value="">Choose an activity…</option>
+                  {otherActivities.status === 'ready'
+                    ? otherActivities.data.map((a) => (
+                        <option key={a.id} value={a.id}>
+                          {a.name}
+                        </option>
+                      ))
+                    : null}
+                </select>
+              </label>
+              <label className="block text-sm">
+                Due after (days)
+                <input
+                  type="number"
+                  min="0"
+                  step="1"
+                  value={delayDays}
+                  onChange={(e) => setDelayDays(e.target.value)}
+                  className="mt-1 block w-24 field"
                 />
               </label>
             </div>

@@ -30,7 +30,9 @@ export interface Interval {
  * - `completion_interval`: next due is one interval after the last completion
  *   (the floating strategy).
  * - `usage`: due when a meter advances by `every` since the last service.
- * - `condition` and `event`: defined here but not yet generated (see generate.ts).
+ * - `event`: due `delayDays` after another activity is completed. Triggered by that
+ *   completion (see the application layer), never by the date.
+ * - `condition`: defined here but not yet generated (see generate.ts).
  */
 export type ScheduleStrategy =
   | {
@@ -48,7 +50,13 @@ export type ScheduleStrategy =
       readonly comparator: 'gt' | 'gte' | 'lt' | 'lte';
       readonly threshold: number;
     }
-  | { readonly kind: 'event'; readonly eventName: string };
+  | {
+      readonly kind: 'event';
+      /** Completing this activity triggers an occurrence of the schedule's own activity. */
+      readonly afterActivityId: ActivityId;
+      /** Whole days between that completion and the new occurrence's due date. */
+      readonly delayDays: number;
+    };
 
 /** Policy knobs from spec 6.5 that apply to any strategy. */
 export interface SchedulePolicy {
@@ -130,7 +138,12 @@ function checkStrategy(issues: Issues, s: ScheduleStrategy): void {
       issues.check(Number.isFinite(s.threshold), 'strategy.threshold', 'must be finite');
       break;
     case 'event':
-      issues.check(isNonBlank(s.eventName), 'strategy.eventName', 'is required');
+      issues.check(isNonBlank(s.afterActivityId), 'strategy.afterActivityId', 'is required');
+      issues.check(
+        Number.isInteger(s.delayDays) && s.delayDays >= 0,
+        'strategy.delayDays',
+        'must be a whole number >= 0',
+      );
       break;
   }
 }

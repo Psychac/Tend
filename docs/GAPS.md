@@ -86,11 +86,11 @@ that is missing or partial · P3 = polish, hygiene, or spec/repo drift · P4 = P
 - **State:** Strategy type and validation exist; `missingDueDates` returns nothing for it ([generate.ts](../packages/domain/src/scheduling/generate.ts)); no form UI.
 - **Work:** Trigger an occurrence when a recorded measurement crosses the threshold (on `recordMeasurement`), idempotent per crossing, with re-arm rule (must return across the threshold first); form UI; tests.
 
-### G-09 Event-based scheduling — M
+### G-09 Event-based scheduling — M — done (completion of another activity; named user events deferred)
 
 - **Spec:** §6.4 #6.
-- **State:** Same as G-08. No event model exists.
-- **Work:** Decide the event source (completion of another activity, named user event) and the trigger semantics; implement generation and form UI. Needs a short design note first.
+- **Decision:** An "event" is the completion of another activity. Strategy is `{ kind: 'event', afterActivityId, delayDays }`. Completing the trigger creates one occurrence of the dependent activity, due `delayDays` later. At most one open occurrence per schedule (re-completing the trigger does not pile up). Triggers fire only from a person's completion, never chained, so A→B→A cannot loop. Undoing the trigger completion supersedes the open follow-up.
+- **Not done:** Manually fired named events; a correction that moves the trigger's date does not re-date an existing follow-up.
 
 ### G-10 Fixed-interval strategy missing from the activity form — S
 

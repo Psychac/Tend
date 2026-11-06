@@ -121,6 +121,10 @@ export async function createActivity(
 
     let schedule: Schedule | undefined;
     if (input.schedule) {
+      const st = input.schedule.strategy;
+      if (st.kind === 'event' && !(await repos.activities.getById(st.afterActivityId))) {
+        return err(notFoundError('Activity', st.afterActivityId));
+      }
       const dates = parseScheduleDates(input.schedule);
       if (!dates.ok) return dates;
       const s = createSchedule({

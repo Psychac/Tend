@@ -170,6 +170,15 @@ export async function setActivitySchedule(
     if (activity.value.archivedAt !== undefined) {
       return err(invariantError('Restore the activity before changing its schedule'));
     }
+    const st = input.schedule.strategy;
+    if (st.kind === 'event') {
+      const trigger = found(
+        'Activity',
+        st.afterActivityId,
+        await repos.activities.getById(st.afterActivityId),
+      );
+      if (!trigger.ok) return trigger;
+    }
     const dates = parseScheduleDates(input.schedule);
     if (!dates.ok) return dates;
 
@@ -193,7 +202,12 @@ export async function setActivitySchedule(
     await repos.schedules.save(schedule);
 
     let superseded = 0;
-    if (existing && (input.outstanding ?? 'supersede_future') === 'supersede_future') {
+    // Event schedules have no dates of their own to compare against; their follow-ups are kept.
+    if (
+      existing &&
+      schedule.strategy.kind !== 'event' &&
+      (input.outstanding ?? 'supersede_future') === 'supersede_future'
+    ) {
       const today = localDateOf(now, schedule.timeZone);
       const outstanding = await repos.occurrences.list({
         activityId: input.activityId,

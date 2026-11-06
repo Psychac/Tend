@@ -452,3 +452,60 @@ describe('transactions', () => {
     expect(new ConflictError('x')).toBeInstanceOf(Error);
   });
 });
+
+describe('event-based schedules (after another activity)', () => {
+  async function oilThenTyres(h: Harness, delayDays = 7) {
+    const oil = must(
+      await createActivity(h.deps, {
+        name: 'Oil change',
+        type: 'maintenance',
+        schedule: { strategy: every30Days, timeZone: 'Asia/Kolkata', startsOn: '2026-11-05' },
+      }),
+    );
+    const tyres = must(
+      await createActivity(h.deps, {
+        name: 'Rotate tyres',
+        type: 'maintenance',
+        schedule: {
+          strategy: { kind: 'event', afterActivityId: oil.activity.id, delayDays },
+          timeZone: 'Asia/Kolkata',
+          startsOn: '2026-11-05',
+        },
+      }),
+    );
+    return { oil, tyres };
+  }
+
+  it('creates nothing until the other activity is completed', async () => {
+    const h = createHarness();
+    const { tyres } = await oilThenTyres(h);
+    expect(tyres.occurrences).toEqual([]);
+  });
+
+  it('creates an occurrence the delay after the completion, once', async () => {
+    const h = createHarness();
+    const { oil, tyres } = await oilThenTyres(h);
+    const done = must(await completeOccurrence(h.deps, { occurrenceId: oil.occurrences[0]!.id }));
+    const triggered = done.nextOccurrences.filter((o) => o.activityId === tyres.activity.id);
+    expect(triggered.map((o) => o.dueOn)).toEqual(['2026-11-12']);
+
+    // Completing the trigger again while the follow-up is open does not duplicate it.
+    const next = done.nextOccurrences.find((o) => o.activityId === oil.activity.id)!;
+    const again = must(await completeOccurrence(h.deps, { occurrenceId: next.id }));
+    expect(again.nextOccurrences.filter((o) => o.activityId === tyres.activity.id)).toEqual([]);
+  });
+
+  it('rejects an unknown trigger activity', async () => {
+    const h = createHarness();
+    const r = await createActivity(h.deps, {
+      name: 'Rotate tyres',
+      type: 'maintenance',
+      schedule: {
+        strategy: { kind: 'event', afterActivityId: 'missing' as never, delayDays: 1 },
+        timeZone: 'Asia/Kolkata',
+        startsOn: '2026-11-05',
+      },
+    });
+    expect(r.ok).toBe(false);
+  });
+});

@@ -128,6 +128,7 @@ describe('SQL repositories: round trips', () => {
       },
       { kind: 'completion_interval', interval: { every: 30, unit: 'day' } },
       { kind: 'usage', every: { value: 5000, unit: 'km' }, meterKey: 'odometer' },
+      { kind: 'event', afterActivityId: 'a-other' as ActivityId, delayDays: 7 },
     ];
     for (const strategy of strategies) {
       const schedule: Schedule = {

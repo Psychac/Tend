@@ -82,6 +82,27 @@ export async function undoCompletion(
       }
     }
 
+    // Follow-ups triggered by this completion no longer have a reason to exist.
+    for (const s of await repos.schedules.list()) {
+      if (
+        s.strategy.kind !== 'event' ||
+        s.strategy.afterActivityId !== completion.value.activityId
+      ) {
+        continue;
+      }
+      const open = await repos.occurrences.list({
+        activityId: s.activityId,
+        status: ['pending', 'snoozed'],
+      });
+      for (const other of open.filter((o) => o.scheduleId === s.id)) {
+        const gone = transitionOccurrence(other, 'superseded', now);
+        if (gone.ok) {
+          await repos.occurrences.save(gone.value);
+          superseded += 1;
+        }
+      }
+    }
+
     await repos.completionVoids.add(voided.value);
     const activity = await repos.activities.getById(completion.value.activityId);
     await repos.audit.add(
