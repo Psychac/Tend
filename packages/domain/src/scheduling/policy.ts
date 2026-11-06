@@ -61,32 +61,32 @@ export function resumeSchedule(s: Schedule, now: Instant): Result<Schedule, Doma
 
 /**
  * Missed-occurrence consolidation (spec 6.5). When several occurrences of the
- * same activity are past due, keep only the most recent and supersede the
- * rest, so a long absence yields one overdue item instead of a pile.
- * Superseded occurrences stay in history; nothing is deleted.
+ * same activity are past due, keep only the most recent and mark the rest
+ * `missed`, so a long absence yields one overdue item instead of a pile while
+ * history still records that they were missed. Nothing is deleted.
  */
 export function consolidateMissed(
   occurrences: readonly Occurrence[],
   today: LocalDate,
   now: Instant,
 ): Occurrence[] {
-  const missed = occurrences.filter((o) => isOutstanding(o) && effectiveDueOn(o) < today);
+  const overdue = occurrences.filter((o) => isOutstanding(o) && effectiveDueOn(o) < today);
   const byActivity = new Map<string, Occurrence[]>();
-  for (const o of missed) {
+  for (const o of overdue) {
     const group = byActivity.get(o.activityId) ?? [];
     group.push(o);
     byActivity.set(o.activityId, group);
   }
 
-  const superseded: Occurrence[] = [];
+  const missed: Occurrence[] = [];
   for (const group of byActivity.values()) {
     group.sort((a, b) => (effectiveDueOn(a) < effectiveDueOn(b) ? -1 : 1));
     for (const o of group.slice(0, -1)) {
-      const r = transitionOccurrence(o, 'superseded', now);
-      if (r.ok) superseded.push(r.value);
+      const r = transitionOccurrence(o, 'missed', now);
+      if (r.ok) missed.push(r.value);
     }
   }
-  return superseded;
+  return missed;
 }
 
 export type ScheduleChangePolicy = 'keep_outstanding' | 'supersede_future';

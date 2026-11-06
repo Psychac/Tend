@@ -352,7 +352,7 @@ describe('occurrence policies', () => {
     const done = occ('2026-10-20', 'completed', activity);
     const result = consolidateMissed([...missed, future, done, other], TODAY, NOW);
     expect(result.map((o) => o.dueOn).sort()).toEqual(['2026-10-28', '2026-11-01']);
-    expect(result.every((o) => o.status === 'superseded')).toBe(true);
+    expect(result.every((o) => o.status === 'missed')).toBe(true);
   });
 
   it('applies an explicit policy when a schedule changes', () => {

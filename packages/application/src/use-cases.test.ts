@@ -11,6 +11,8 @@ import {
   archiveActivity,
   completeOccurrence,
   createActivity,
+  getDashboard,
+  getHistory,
   pauseActivitySchedule,
   reconcileSchedules,
   recordMeasurement,
@@ -265,7 +267,7 @@ describe('pause, resume and reconcile', () => {
     must(await pauseActivitySchedule(h.deps, { scheduleId: schedule!.id }));
 
     h.clock.set('2027-02-01T06:30:00.000Z');
-    expect(must(await reconcileSchedules(h.deps))).toEqual({ created: 0, superseded: 0 });
+    expect(must(await reconcileSchedules(h.deps))).toEqual({ created: 0, missed: 0 });
 
     must(await resumeActivitySchedule(h.deps, { scheduleId: schedule!.id }));
     const open = await h.repos.occurrences.list({
@@ -287,13 +289,41 @@ describe('pause, resume and reconcile', () => {
 
     h.clock.set('2026-12-20T06:30:00.000Z'); // every generated occurrence is now past due
     const first = must(await reconcileSchedules(h.deps));
-    expect(first.superseded).toBe(4); // Nov 5, 12, 19, 26 superseded; Dec 3 stays as the overdue one
+    expect(first.missed).toBe(4); // Nov 5, 12, 19, 26 missed; Dec 3 stays as the overdue one
     expect(first.created).toBe(4); // Dec 24, 31, Jan 7, Jan 14
 
     const pending = await h.repos.occurrences.list({ status: ['pending'] });
     expect(pending[0]?.dueOn).toBe('2026-12-03');
 
-    expect(must(await reconcileSchedules(h.deps))).toEqual({ created: 0, superseded: 0 });
+    expect(must(await reconcileSchedules(h.deps))).toEqual({ created: 0, missed: 0 });
+  });
+
+  it('records rolled-up occurrences as missed in history and on the dashboard', async () => {
+    const h = createHarness();
+    must(await createActivity(h.deps, base()));
+    h.clock.set('2026-12-20T06:30:00.000Z');
+    must(await reconcileSchedules(h.deps));
+
+    const missed = await h.repos.occurrences.list({ status: ['missed'] });
+    expect(missed.map((o) => o.dueOn).sort()).toEqual([
+      '2026-11-05',
+      '2026-11-12',
+      '2026-11-19',
+      '2026-11-26',
+    ]);
+
+    const page = await getHistory(h.repos, { timeZone: 'Asia/Kolkata' as never, kind: 'missed' });
+    expect(page.entries).toHaveLength(4);
+    expect(page.entries.every((e) => e.kind === 'missed')).toBe(true);
+
+    const dash = await getDashboard(h.repos, h.clock, { timeZone: 'Asia/Kolkata' as never });
+    expect(dash.overdue[0]?.dueOn).toBe('2026-12-03');
+    expect(dash.overdue[0]?.missedBefore).toBe(4);
+
+    // Doing the work clears the note: earlier misses were before the last completion.
+    must(await completeOccurrence(h.deps, { occurrenceId: dash.overdue[0]!.occurrence.id }));
+    const later = await getDashboard(h.repos, h.clock, { timeZone: 'Asia/Kolkata' as never });
+    expect(later.overdue.every((i) => i.missedBefore === 0)).toBe(true);
   });
 });
 
@@ -403,7 +433,7 @@ describe('archiveActivity', () => {
 
     // Archived activities are not reconciled back to life.
     h.clock.set('2027-03-01T06:30:00.000Z');
-    expect(must(await reconcileSchedules(h.deps))).toEqual({ created: 0, superseded: 0 });
+    expect(must(await reconcileSchedules(h.deps))).toEqual({ created: 0, missed: 0 });
   });
 });
 

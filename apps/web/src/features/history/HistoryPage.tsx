@@ -14,7 +14,7 @@ import { AttachmentsSection } from '../attachments/AttachmentsSection';
 
 const PAGE = 30;
 
-type KindFilter = 'all' | 'completed' | 'skipped';
+type KindFilter = 'all' | 'completed' | 'skipped' | 'missed';
 
 function whenLabel(at: Instant): string {
   return new Date(at).toLocaleString('en-GB', {
@@ -88,9 +88,10 @@ export function HistoryPage() {
             }}
             className="mt-1 block field"
           >
-            <option value="all">Done and skipped</option>
+            <option value="all">Done, skipped and missed</option>
             <option value="completed">Done only</option>
             <option value="skipped">Skipped only</option>
+            <option value="missed">Missed only</option>
           </select>
         </label>
       </div>
@@ -105,7 +106,7 @@ export function HistoryPage() {
         <p className="text-muted">
           {activityId || kind !== 'all'
             ? 'Nothing matches these filters.'
-            : 'Nothing has been done yet. Completed and skipped work will appear here.'}
+            : 'Nothing has been done yet. Completed, skipped and missed work will appear here.'}
         </p>
       ) : null}
       {history.status === 'ready' ? (
@@ -134,14 +135,17 @@ export function HistoryPage() {
 }
 
 function EntryRow({ entry }: { entry: HistoryEntry }) {
-  if (entry.kind === 'skipped') {
+  if (entry.kind !== 'completed') {
+    const missed = entry.kind === 'missed';
     return (
-      <li className="card p-3">
+      <li className={missed ? 'card p-3 opacity-75' : 'card p-3'}>
         <p className="font-medium">
-          {entry.activityName} <span className="text-sm font-normal text-muted">· Skipped</span>
+          {entry.activityName}{' '}
+          <span className="text-sm font-normal text-muted">· {missed ? 'Missed' : 'Skipped'}</span>
         </p>
         <p className="text-sm text-muted">
-          Was due {formatDate(entry.occurrence.dueOn)} · {whenLabel(entry.at)}
+          Was due {formatDate(entry.occurrence.dueOn)} ·{' '}
+          {missed ? `rolled up ${whenLabel(entry.at)}` : whenLabel(entry.at)}
         </p>
       </li>
     );

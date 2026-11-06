@@ -419,8 +419,8 @@ describe('application use cases against SQL', () => {
 
     clock.set('2026-12-20T06:30:00.000Z');
     const first = must(await reconcileSchedules(deps));
-    expect(first).toEqual({ created: 4, superseded: 3 }); // Nov 12, 19, 26 superseded; Dec 3 stays
-    expect(must(await reconcileSchedules(deps))).toEqual({ created: 0, superseded: 0 });
+    expect(first).toEqual({ created: 4, missed: 3 }); // Nov 12, 19, 26 missed; Dec 3 stays
+    expect(must(await reconcileSchedules(deps))).toEqual({ created: 0, missed: 0 });
   });
 
   it('detects usage-based maintenance from odometer readings', async () => {

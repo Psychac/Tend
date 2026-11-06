@@ -98,12 +98,12 @@ that is missing or partial · P3 = polish, hygiene, or spec/repo drift · P4 = P
 - **State:** Domain and generation support it; the form's `Repeat` is `none | calendar | after_completion | usage` and marks other strategies non-editable.
 - **Work:** Add "every N units from a start date, regardless of completion" and make existing fixed schedules editable.
 
-### G-11 Missed-occurrence consolidation not wired — M
+### G-11 Missed-occurrence consolidation not wired — M — done (`missed` status; History and Dashboard show it)
 
 - **Spec:** §6.5, §12.1 (missed outcomes recorded faithfully).
 - **State:** `consolidateMissed` exists in [policy.ts](../packages/domain/src/scheduling/policy.ts) and is tested, but the application layer never calls it. After a long absence, overdue items may pile up.
 - **Work:** Call it in `reconcileSchedules`; define the resulting status/outcome ("missed" is named in §12.1 but is not an occurrence status); show consolidated items clearly in Dashboard and History.
-- **Decide:** whether "missed" becomes a status or stays derived.
+- **Decision:** `missed` is a stored occurrence status. `reconcileSchedules` already consolidated, but as `superseded`; it now marks older overdue occurrences `missed` (terminal, no XP or streak effect). History has a Missed entry and filter; the Dashboard shows "+N earlier missed" since the last completion. Older rows already stored as `superseded` are not relabelled.
 
 ### G-12 Digital upkeep module — M
 

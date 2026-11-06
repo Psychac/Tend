@@ -3,7 +3,7 @@ import type { LocalDate, OccurrenceId, Result, ScheduleId } from '../core';
 import { touch, type EntityMeta } from './meta';
 
 export type OccurrenceStatus =
-  'pending' | 'completed' | 'skipped' | 'snoozed' | 'superseded' | 'cancelled';
+  'pending' | 'completed' | 'skipped' | 'snoozed' | 'superseded' | 'cancelled' | 'missed';
 
 export interface Occurrence {
   readonly id: OccurrenceId;
@@ -18,12 +18,13 @@ export interface Occurrence {
 }
 
 const ALLOWED: Readonly<Record<OccurrenceStatus, readonly OccurrenceStatus[]>> = {
-  pending: ['completed', 'skipped', 'snoozed', 'superseded', 'cancelled'],
-  snoozed: ['pending', 'completed', 'skipped', 'superseded', 'cancelled'],
+  pending: ['completed', 'skipped', 'snoozed', 'superseded', 'cancelled', 'missed'],
+  snoozed: ['pending', 'completed', 'skipped', 'superseded', 'cancelled', 'missed'],
   completed: [],
   skipped: [],
   superseded: [],
   cancelled: [],
+  missed: [],
 };
 
 export const canTransition = (from: OccurrenceStatus, to: OccurrenceStatus): boolean =>

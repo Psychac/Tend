@@ -32,6 +32,8 @@ export interface OccurrenceItem {
   readonly dueOn: LocalDate;
   /** Whole days past `dueOn`; 0 when not yet late. */
   readonly daysLate: number;
+  /** Earlier occurrences of this activity rolled up as missed since it was last completed. */
+  readonly missedBefore: number;
 }
 
 export interface RecentCompletion {
@@ -66,8 +68,9 @@ export async function getDashboard(
   const today = localDateOf(clock.now(), options.timeZone);
   const horizon = addDays(today, options.upcomingDays ?? 14);
 
-  const [outstanding, activities, schedules, completions] = await Promise.all([
+  const [outstanding, missedAll, activities, schedules, completions] = await Promise.all([
     repos.occurrences.list({ status: ['pending', 'snoozed'] }),
+    repos.occurrences.list({ status: ['missed'] }),
     repos.activities.list({ includeArchived: true }),
     repos.schedules.list(),
     repos.completions.list({ limit: options.recentLimit ?? 5 }),
@@ -75,6 +78,7 @@ export async function getDashboard(
   const activityById = new Map(activities.map((a) => [a.id, a]));
   const scheduleById = new Map(schedules.map((s) => [s.id, s]));
 
+  const lastDone = new Map<ActivityId, Instant>();
   const items: OccurrenceItem[] = [];
   for (const occurrence of outstanding) {
     const activity = activityById.get(occurrence.activityId);
@@ -83,6 +87,20 @@ export async function getDashboard(
     const timing = classifyOccurrence(occurrence, schedule?.policy.graceDays ?? 0, today);
     if (!timing) continue;
     const dueOn = effectiveDueOn(occurrence);
+    let missedBefore = 0;
+    if (dueOn < today) {
+      if (!lastDone.has(activity.id)) {
+        const [last] = await repos.completions.list({ activityId: activity.id, limit: 1 });
+        lastDone.set(activity.id, last?.completedAt ?? ('' as Instant));
+      }
+      const since = lastDone.get(activity.id)!;
+      missedBefore = missedAll.filter(
+        (m) =>
+          m.activityId === activity.id &&
+          m.dueOn < dueOn &&
+          (m.resolvedAt ?? m.meta.updatedAt) > since,
+      ).length;
+    }
     items.push({
       occurrence,
       activity,
@@ -90,6 +108,7 @@ export async function getDashboard(
       timing,
       dueOn,
       daysLate: dueOn < today ? daysBetween(dueOn, today) : 0,
+      missedBefore,
     });
   }
 
@@ -179,7 +198,7 @@ export type HistoryEntry =
       readonly measurements: readonly Measurement[];
     }
   | {
-      readonly kind: 'skipped';
+      readonly kind: 'skipped' | 'missed';
       readonly at: Instant;
       readonly activityId: ActivityId;
       readonly activityName: string;
@@ -188,7 +207,7 @@ export type HistoryEntry =
 
 export interface HistoryOptions {
   readonly activityId?: ActivityId | undefined;
-  readonly kind?: 'completed' | 'skipped' | undefined;
+  readonly kind?: 'completed' | 'skipped' | 'missed' | undefined;
   readonly limit?: number | undefined;
   readonly offset?: number | undefined;
   /** Needed to read dates in the user's own zone. */
@@ -202,7 +221,8 @@ export interface HistoryPage {
 
 /**
  * What happened, newest first: completions (with planned-versus-actual timing,
- * cost, checklist progress and measurements) and skipped occurrences. Archived
+ * cost, checklist progress and measurements), skipped occurrences and
+ * occurrences that were missed. Archived
  * and deleted activities still appear, because history is never rewritten.
  */
 export async function getHistory(
@@ -212,10 +232,11 @@ export async function getHistory(
   const limit = options.limit ?? 30;
   const offset = options.offset ?? 0;
   const need = offset + limit + 1;
-  const wantCompleted = options.kind !== 'skipped';
-  const wantSkipped = options.kind !== 'completed';
+  const wantCompleted = options.kind === undefined || options.kind === 'completed';
+  const wantSkipped = options.kind !== 'completed' && options.kind !== 'missed';
+  const wantMissed = options.kind !== 'completed' && options.kind !== 'skipped';
 
-  const [activities, completions, skipped, voids] = await Promise.all([
+  const [activities, completions, skipped, missed, voids] = await Promise.all([
     repos.activities.list({ includeArchived: true }),
     wantCompleted
       ? repos.completions.list({ activityId: options.activityId, limit: need })
@@ -224,6 +245,14 @@ export async function getHistory(
       ? repos.occurrences.list({
           activityId: options.activityId,
           status: ['skipped'],
+          order: 'due_desc',
+          limit: need,
+        })
+      : Promise.resolve([]),
+    wantMissed
+      ? repos.occurrences.list({
+          activityId: options.activityId,
+          status: ['missed'],
           order: 'due_desc',
           limit: need,
         })
@@ -262,6 +291,13 @@ export async function getHistory(
     }),
     ...skipped.map((occurrence): HistoryEntry => ({
       kind: 'skipped',
+      at: occurrence.resolvedAt ?? occurrence.meta.updatedAt,
+      activityId: occurrence.activityId,
+      activityName: nameOf.get(occurrence.activityId) ?? 'Deleted activity',
+      occurrence,
+    })),
+    ...missed.map((occurrence): HistoryEntry => ({
+      kind: 'missed',
       at: occurrence.resolvedAt ?? occurrence.meta.updatedAt,
       activityId: occurrence.activityId,
       activityName: nameOf.get(occurrence.activityId) ?? 'Deleted activity',

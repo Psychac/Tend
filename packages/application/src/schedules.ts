@@ -60,19 +60,19 @@ export async function resumeActivitySchedule(
 
 export interface ReconcileSummary {
   readonly created: number;
-  readonly superseded: number;
+  readonly missed: number;
 }
 
 /**
- * Run on startup and when the app resumes (spec 11). Supersedes piles of
- * missed occurrences and fills in whatever each active schedule is missing.
+ * Run on startup and when the app resumes (spec 11). Marks piles of
+ * overdue occurrences as missed and fills in whatever each active schedule is missing.
  * Safe to run repeatedly.
  */
 export async function reconcileSchedules(deps: Deps): Promise<Result<ReconcileSummary>> {
   return transact(deps, async (repos) => {
     const now = deps.clock.now();
     let created = 0;
-    let superseded = 0;
+    let missed = 0;
 
     for (const schedule of await repos.schedules.list()) {
       if (schedule.pausedAt !== undefined) continue;
@@ -86,10 +86,10 @@ export async function reconcileSchedules(deps: Deps): Promise<Result<ReconcileSu
       });
       for (const o of consolidateMissed(outstanding, today, now)) {
         await repos.occurrences.save(o);
-        superseded += 1;
+        missed += 1;
       }
       created += (await ensureOccurrences(deps, repos, activity, schedule)).length;
     }
-    return ok({ created, superseded });
+    return ok({ created, missed });
   });
 }
