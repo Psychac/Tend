@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from 'react';
 import {
+  cancelOccurrence,
   completeOccurrence,
   skipOccurrence,
   snoozeOccurrence,
@@ -34,6 +35,7 @@ export function OccurrenceCard({ item, today }: Props) {
   const { activity, occurrence } = item;
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [confirmCancel, setConfirmCancel] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const requiredMeasurements = activity.measurementRequirements.filter((r) => r.required);
@@ -107,8 +109,45 @@ export function OccurrenceCard({ item, today }: Props) {
           >
             Skip
           </button>
+          <button
+            type="button"
+            className={button}
+            disabled={busy}
+            onClick={() => setConfirmCancel(true)}
+          >
+            Cancel
+          </button>
         </div>
       </div>
+
+      {confirmCancel ? (
+        <div role="group" aria-label="Confirm cancel" className="mt-2 space-y-2 text-sm">
+          <p>
+            Remove this from your list? It isn't counted as skipped, and stays in History as
+            cancelled.
+          </p>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              className={primary}
+              disabled={busy}
+              onClick={() =>
+                void run(() => cancelOccurrence(deps, { occurrenceId: occurrence.id }))
+              }
+            >
+              Yes, cancel it
+            </button>
+            <button
+              type="button"
+              className={button}
+              disabled={busy}
+              onClick={() => setConfirmCancel(false)}
+            >
+              Keep it
+            </button>
+          </div>
+        </div>
+      ) : null}
 
       {error ? (
         <p role="alert" className="mt-2 text-sm text-danger">

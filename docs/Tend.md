@@ -383,6 +383,7 @@ The four entities marked deferred are not part of the first-release schema (see 
 - Snoozed
 - Superseded
 - Cancelled
+- Missed (an overdue occurrence rolled up after a long absence)
 
 ### 6.4 Scheduling strategies
 

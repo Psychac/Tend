@@ -135,11 +135,11 @@ that is missing or partial · P3 = polish, hygiene, or spec/repo drift · P4 = P
 - **State:** Status, purchase, vendor and warranty exist, plus retire/reactivate. No expected lifespan, replacement-due date, condition rating, or replacement planning view; "links to maintenance activities" is done.
 - **Work:** Add expected end-of-life and condition; surface "replace soon" in alerts (G-13); lifecycle states beyond active/retired/disposed if needed.
 
-### G-17 Occurrence statuses: `cancelled` unused; 'missed' undefined — S
+### G-17 Occurrence statuses: `cancelled` unused; 'missed' undefined — S — done
 
 - **Spec:** §6.3, §12.1.
 - **State:** `cancelled` exists in the type but no use case or UI sets it. §12.1 lists `missed` as an outcome but §6.3 has no such status.
-- **Work:** Add a cancel action (or drop the status and update the spec); resolve the missed-status question with G-11.
+- **Resolved:** `missed` is a stored status (G-11) and is now listed in spec §6.3. `cancelOccurrence` plus a confirmed Cancel button on the occurrence card. Cancel is not an outcome: Insights does not count it, the date is not regenerated, History shows it as Cancelled (with a filter). A repeating schedule carries on as after a skip.
 
 ### G-18 Measurements: history and trends — M
 

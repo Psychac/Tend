@@ -198,7 +198,7 @@ export type HistoryEntry =
       readonly measurements: readonly Measurement[];
     }
   | {
-      readonly kind: 'skipped' | 'missed';
+      readonly kind: 'skipped' | 'missed' | 'cancelled';
       readonly at: Instant;
       readonly activityId: ActivityId;
       readonly activityName: string;
@@ -207,7 +207,7 @@ export type HistoryEntry =
 
 export interface HistoryOptions {
   readonly activityId?: ActivityId | undefined;
-  readonly kind?: 'completed' | 'skipped' | 'missed' | undefined;
+  readonly kind?: 'completed' | 'skipped' | 'missed' | 'cancelled' | undefined;
   readonly limit?: number | undefined;
   readonly offset?: number | undefined;
   /** Needed to read dates in the user's own zone. */
@@ -221,8 +221,8 @@ export interface HistoryPage {
 
 /**
  * What happened, newest first: completions (with planned-versus-actual timing,
- * cost, checklist progress and measurements), skipped occurrences and
- * occurrences that were missed. Archived
+ * cost, checklist progress and measurements), skipped, missed and
+ * cancelled occurrences. Archived
  * and deleted activities still appear, because history is never rewritten.
  */
 export async function getHistory(
@@ -233,10 +233,11 @@ export async function getHistory(
   const offset = options.offset ?? 0;
   const need = offset + limit + 1;
   const wantCompleted = options.kind === undefined || options.kind === 'completed';
-  const wantSkipped = options.kind !== 'completed' && options.kind !== 'missed';
-  const wantMissed = options.kind !== 'completed' && options.kind !== 'skipped';
+  const wantSkipped = options.kind === undefined || options.kind === 'skipped';
+  const wantMissed = options.kind === undefined || options.kind === 'missed';
+  const wantCancelled = options.kind === undefined || options.kind === 'cancelled';
 
-  const [activities, completions, skipped, missed, voids] = await Promise.all([
+  const [activities, completions, skipped, missed, cancelled, voids] = await Promise.all([
     repos.activities.list({ includeArchived: true }),
     wantCompleted
       ? repos.completions.list({ activityId: options.activityId, limit: need })
@@ -253,6 +254,14 @@ export async function getHistory(
       ? repos.occurrences.list({
           activityId: options.activityId,
           status: ['missed'],
+          order: 'due_desc',
+          limit: need,
+        })
+      : Promise.resolve([]),
+    wantCancelled
+      ? repos.occurrences.list({
+          activityId: options.activityId,
+          status: ['cancelled'],
           order: 'due_desc',
           limit: need,
         })
@@ -291,6 +300,13 @@ export async function getHistory(
     }),
     ...skipped.map((occurrence): HistoryEntry => ({
       kind: 'skipped',
+      at: occurrence.resolvedAt ?? occurrence.meta.updatedAt,
+      activityId: occurrence.activityId,
+      activityName: nameOf.get(occurrence.activityId) ?? 'Deleted activity',
+      occurrence,
+    })),
+    ...cancelled.map((occurrence): HistoryEntry => ({
+      kind: 'cancelled',
       at: occurrence.resolvedAt ?? occurrence.meta.updatedAt,
       activityId: occurrence.activityId,
       activityName: nameOf.get(occurrence.activityId) ?? 'Deleted activity',

@@ -236,6 +236,22 @@ describe('history and multi-currency cost', () => {
     expect(await screen.findByText(/nothing matches these filters/i)).toBeInTheDocument();
   });
 
+  it('cancels an occurrence after confirming, and keeps it in history', async () => {
+    const { user } = renderApp('/activities/new');
+    await createDaily(user, 'Water plants');
+    await user.click(await screen.findByRole('link', { name: 'Dashboard' }));
+    const dueToday = await screen.findByRole('region', { name: 'Due today' });
+    await user.click(within(dueToday).getByRole('button', { name: 'Cancel' }));
+    await user.click(within(dueToday).getByRole('button', { name: 'Keep it' }));
+    expect(within(dueToday).getByText('Water plants')).toBeInTheDocument();
+
+    await user.click(within(dueToday).getByRole('button', { name: 'Cancel' }));
+    await user.click(within(dueToday).getByRole('button', { name: 'Yes, cancel it' }));
+
+    await user.click(await screen.findByRole('link', { name: 'History' }));
+    expect(await screen.findByText(/Cancelled/, { selector: 'span' })).toBeInTheDocument();
+  });
+
   it('starts with an empty history message', async () => {
     renderApp('/history');
     expect(await screen.findByText(/nothing has been done yet/i)).toBeInTheDocument();

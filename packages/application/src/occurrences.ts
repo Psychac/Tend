@@ -253,6 +253,50 @@ export async function skipOccurrence(
   });
 }
 
+/**
+ * Removes an occurrence that should not be on the list (it no longer applies, or
+ * should never have been there). Unlike a skip it is not an outcome: Insights does
+ * not count it, and that date is not generated again. History still records it.
+ */
+export async function cancelOccurrence(
+  deps: Deps,
+  input: { occurrenceId: OccurrenceId; reason?: string | undefined },
+): Promise<Result<{ occurrence: Occurrence; nextOccurrences: readonly Occurrence[] }>> {
+  return transact(deps, async (repos) => {
+    const now = deps.clock.now();
+    const loaded = found(
+      'Occurrence',
+      input.occurrenceId,
+      await repos.occurrences.getById(input.occurrenceId),
+    );
+    if (!loaded.ok) return loaded;
+    const activity = found(
+      'Activity',
+      loaded.value.activityId,
+      await repos.activities.getById(loaded.value.activityId),
+    );
+    if (!activity.ok) return activity;
+
+    const cancelled = transitionOccurrence(loaded.value, 'cancelled', now);
+    if (!cancelled.ok) return cancelled;
+    await repos.occurrences.save(cancelled.value);
+    await repos.audit.add(
+      auditEvent(deps, 'occurrence', cancelled.value.id, 'updated', input.reason ?? 'cancelled'),
+    );
+
+    // A repeating schedule carries on: the next one is worked out from today, as for a skip.
+    const schedule = loaded.value.scheduleId
+      ? await repos.schedules.getById(loaded.value.scheduleId)
+      : null;
+    const nextOccurrences = schedule
+      ? await ensureOccurrences(deps, repos, activity.value, schedule, {
+          lastResolvedOn: localDateOf(now, schedule.timeZone),
+        })
+      : [];
+    return ok({ occurrence: cancelled.value, nextOccurrences });
+  });
+}
+
 export async function snoozeOccurrence(
   deps: Deps,
   input: { occurrenceId: OccurrenceId; until: string },

@@ -9,6 +9,7 @@ import {
 } from '@tend/domain';
 import {
   archiveActivity,
+  cancelOccurrence,
   completeOccurrence,
   createActivity,
   getDashboard,
@@ -601,5 +602,31 @@ describe('condition-based schedules (reading crosses a limit)', () => {
     expect(await fired(h, asset.id, 7.6)).toBe(1);
     expect(await fired(h, asset.id, 7.2)).toBe(0);
     expect(await fired(h, asset.id, 7.6)).toBe(0); // crossed again, but one is still open
+  });
+});
+
+describe('cancelOccurrence', () => {
+  it('removes it from the list, keeps it in history, and does not bring the date back', async () => {
+    const h = createHarness();
+    const { occurrences } = must(await createActivity(h.deps, base()));
+    const target = occurrences[0]!;
+    must(await cancelOccurrence(h.deps, { occurrenceId: target.id, reason: 'sold the AC' }));
+
+    const open = await h.repos.occurrences.list({ status: ['pending'] });
+    expect(open.map((o) => o.dueOn)).not.toContain(target.dueOn);
+
+    // Reconciling does not regenerate the cancelled date.
+    must(await reconcileSchedules(h.deps));
+    const again = await h.repos.occurrences.list({ status: ['pending'] });
+    expect(again.map((o) => o.dueOn)).not.toContain(target.dueOn);
+
+    const page = await getHistory(h.repos, {
+      timeZone: 'Asia/Kolkata' as never,
+      kind: 'cancelled',
+    });
+    expect(page.entries.map((e) => e.kind)).toEqual(['cancelled']);
+
+    // It is final: an already-cancelled occurrence cannot be acted on again.
+    expect((await cancelOccurrence(h.deps, { occurrenceId: target.id })).ok).toBe(false);
   });
 });

@@ -222,9 +222,10 @@ export async function ensureOccurrences(
       schedule.strategy.kind === 'usage'
         ? []
         : [...outstanding, ...upcoming]
-            // Superseded and cancelled work no longer counts: its date may legitimately return
-            // (for example when an archived activity is restored).
-            .filter((o) => o.status !== 'superseded' && o.status !== 'cancelled')
+            // Superseded work no longer counts: its date may legitimately return (for example
+            // when an archived activity is restored). Cancelled work still does, so a date the
+            // person removed is not generated again.
+            .filter((o) => o.status !== 'superseded')
             .map((o) => o.dueOn),
     lastResolvedOn:
       schedule.strategy.kind === 'completion_interval'
