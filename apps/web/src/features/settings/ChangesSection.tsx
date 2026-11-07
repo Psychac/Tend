@@ -22,7 +22,7 @@ export function ChangesSection() {
         </p>
       ) : null}
       {changes.status === 'ready' && changes.data.length === 0 ? (
-        <p className="text-sm text-muted">Nothing has changed yet.</p>
+        <p className="text-sm text-muted">No changes recorded yet.</p>
       ) : null}
       {changes.status === 'ready' && changes.data.length > 0 ? (
         <ul className="card divide-y divide-line py-1 text-sm">
