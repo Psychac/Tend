@@ -342,3 +342,30 @@ describe('dashboard summary', () => {
     expect(overdue.nextElementSibling).toHaveTextContent('0');
   });
 });
+
+describe('phone navigation', () => {
+  it('keeps every page reachable, with the less-used ones behind More', async () => {
+    const { user } = renderApp('/');
+    const more = await screen.findByRole('button', { name: 'More' });
+    expect(more).toHaveAttribute('aria-expanded', 'false');
+
+    await user.click(more);
+    expect(more).toHaveAttribute('aria-expanded', 'true');
+    for (const name of ['Household', 'Routines', 'Digital', 'Assets', 'Insights', 'Settings']) {
+      expect(screen.getByRole('link', { name })).toBeInTheDocument();
+    }
+
+    // Choosing a page closes the menu.
+    await user.click(screen.getByRole('link', { name: 'Settings' }));
+    expect(await screen.findByRole('heading', { name: 'Settings' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'More' })).toHaveAttribute('aria-expanded', 'false');
+  });
+
+  it('closes with Escape', async () => {
+    const { user } = renderApp('/');
+    const more = await screen.findByRole('button', { name: 'More' });
+    await user.click(more);
+    await user.keyboard('{Escape}');
+    expect(more).toHaveAttribute('aria-expanded', 'false');
+  });
+});

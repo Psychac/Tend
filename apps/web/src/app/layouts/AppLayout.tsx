@@ -1,5 +1,5 @@
 import { useEffect, useState, type ReactNode } from 'react';
-import { NavLink, Outlet } from 'react-router';
+import { NavLink, Outlet, useLocation } from 'react-router';
 import { SyncIndicator } from '../../shared/ui/SyncIndicator';
 import { useReminderCount } from '../../features/reminders/ReminderBadge';
 
@@ -18,6 +18,9 @@ const icon = (d: ReactNode) => (
     {d}
   </svg>
 );
+
+/** Shown in the phone's bottom bar. Everything else sits behind "More" on small screens. */
+const PRIMARY = new Set(['/', '/activities', '/calendar', '/history']);
 
 const NAV = [
   {
@@ -157,15 +160,56 @@ function useTheme(): [Theme, () => void] {
   return [theme, () => setTheme(NEXT[theme])];
 }
 
+const linkClass = (isActive: boolean, secondary: boolean) =>
+  `relative flex min-w-[4.25rem] flex-1 flex-col items-center justify-center gap-0.5 px-1 py-2 text-[11px] font-medium transition-colors md:min-w-0 md:flex-none md:flex-row md:justify-start md:gap-3 md:rounded-lg md:px-3 md:py-2 md:text-sm ${
+    secondary
+      ? 'max-md:flex-row max-md:justify-start max-md:gap-3 max-md:px-4 max-md:py-3 max-md:text-sm max-md:flex-none'
+      : ''
+  } ${isActive ? 'text-brand md:bg-brand-soft' : 'text-muted hover:text-ink md:hover:bg-sunken'}`;
+
 export function AppLayout() {
   const reminders = useReminderCount();
   const [theme, cycleTheme] = useTheme();
+  const { pathname } = useLocation();
+  // Remember where the menu was opened, so moving to another page closes it.
+  const [openAt, setOpenAt] = useState<string | null>(null);
+  const moreOpen = openAt === pathname;
+  const setMoreOpen = (open: boolean) => setOpenAt(open ? pathname : null);
+
+  useEffect(() => {
+    if (!moreOpen) return;
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setOpenAt(null);
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [moreOpen]);
+
+  const secondary = NAV.filter((i) => !PRIMARY.has(i.to));
+  const inSecondary = secondary.some((i) => pathname.startsWith(i.to));
+  const renderItem = (item: (typeof NAV)[number], isSecondary: boolean) => (
+    <NavLink
+      key={item.to}
+      to={item.to}
+      end={item.to === '/'}
+      className={({ isActive }) => linkClass(isActive, isSecondary)}
+    >
+      {item.icon}
+      <span>{item.label}</span>
+      {item.to === '/' && reminders > 0 ? (
+        <span
+          aria-label={`${reminders} reminder${reminders === 1 ? '' : 's'}`}
+          className="badge absolute right-1/4 top-1 bg-warn-solid text-white md:static md:ml-auto"
+        >
+          {reminders}
+        </span>
+      ) : null}
+    </NavLink>
+  );
 
   return (
     <div className="min-h-screen md:pl-60">
       <nav
         aria-label="Primary"
-        className="fixed inset-x-0 bottom-0 z-20 flex overflow-x-auto border-t border-line bg-surface/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:inset-y-0 md:right-auto md:w-60 md:flex-col md:gap-1 md:overflow-visible md:border-r md:border-t-0 md:p-3"
+        className="fixed inset-x-0 bottom-0 z-20 flex border-t border-line bg-surface/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:inset-y-0 md:right-auto md:w-60 md:flex-col md:gap-1 md:border-r md:border-t-0 md:p-3"
       >
         <div className="hidden items-center gap-2.5 px-2 pb-4 pt-2 md:flex">
           <span
@@ -176,31 +220,32 @@ export function AppLayout() {
           </span>
           <span className="text-base font-semibold tracking-tight">Tend</span>
         </div>
-        {NAV.map((item) => (
-          <NavLink
-            key={item.to}
-            to={item.to}
-            end={item.to === '/'}
-            className={({ isActive }) =>
-              `relative flex min-w-[4.25rem] flex-1 flex-col items-center justify-center gap-0.5 px-1 py-2 text-[11px] font-medium transition-colors md:min-w-0 md:flex-none md:flex-row md:justify-start md:gap-3 md:rounded-lg md:px-3 md:py-2 md:text-sm ${
-                isActive
-                  ? 'text-brand md:bg-brand-soft'
-                  : 'text-muted hover:text-ink md:hover:bg-sunken'
-              }`
-            }
-          >
-            {item.icon}
-            <span>{item.label}</span>
-            {item.to === '/' && reminders > 0 ? (
-              <span
-                aria-label={`${reminders} reminder${reminders === 1 ? '' : 's'}`}
-                className="badge absolute right-1/4 top-1 bg-warn-solid text-white md:static md:ml-auto"
-              >
-                {reminders}
-              </span>
-            ) : null}
-          </NavLink>
-        ))}
+        {NAV.filter((i) => PRIMARY.has(i.to)).map((item) => renderItem(item, false))}
+        <button
+          type="button"
+          aria-expanded={moreOpen}
+          aria-controls="more-nav"
+          onClick={() => setMoreOpen(!moreOpen)}
+          className={`flex min-w-[4.25rem] flex-1 flex-col items-center justify-center gap-0.5 px-1 py-2 text-[11px] font-medium md:hidden ${
+            moreOpen || inSecondary ? 'text-brand' : 'text-muted'
+          }`}
+        >
+          {icon(
+            <>
+              <circle cx="5" cy="12" r="1.2" />
+              <circle cx="12" cy="12" r="1.2" />
+              <circle cx="19" cy="12" r="1.2" />
+            </>,
+          )}
+          <span>More</span>
+        </button>
+        {/* On a phone these form a panel above the bar; on larger screens they are plain sidebar links. */}
+        <div
+          id="more-nav"
+          className={`${moreOpen ? 'flex' : 'hidden'} absolute inset-x-0 bottom-full flex-col border-t border-line bg-surface shadow-lg md:contents`}
+        >
+          {secondary.map((item) => renderItem(item, true))}
+        </div>
         <SyncIndicator className="hidden px-3 pb-1 md:mt-auto md:flex" />
         <button
           type="button"
