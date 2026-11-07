@@ -151,6 +151,7 @@ export function ActivityForm({ initial }: { initial?: ActivityFormInitial | unde
   const [type, setType] = useState<ActivityType>(original?.type ?? preset?.type ?? 'routine');
   const [priority, setPriority] = useState<Priority>(original?.priority ?? 'normal');
   const [repeat, setRepeat] = useState<Repeat>(preset?.repeat ?? sd.repeat);
+  const [dueOn, setDueOn] = useState('');
   const [every, setEvery] = useState(preset ? String(preset.every) : sd.every);
   const [unit, setUnit] = useState<RecurrenceUnit>(preset?.unit ?? sd.unit);
   const [weekdays, setWeekdays] = useState<IsoWeekday[]>(sd.weekdays);
@@ -338,6 +339,7 @@ export function ActivityForm({ initial }: { initial?: ActivityFormInitial | unde
         categoryId: newCategoryId,
         locationId: locationId ? (locationId as LocationId) : undefined,
         schedule: buildSchedule(),
+        dueOn: repeat === 'none' && dueOn ? dueOn : undefined,
       }),
     );
     if (result.ok && remind && repeat !== 'none') {
@@ -478,6 +480,22 @@ export function ActivityForm({ initial }: { initial?: ActivityFormInitial | unde
           <option value="when_reading">When a reading crosses a limit (e.g. pH above 7.5)</option>
         </select>
       </label>
+
+      {repeat === 'none' && !editing ? (
+        <label className="block text-sm">
+          Due on (optional)
+          <input
+            type="date"
+            value={dueOn}
+            onChange={(e) => setDueOn(e.target.value)}
+            className="mt-1 block field"
+          />
+          <span className="mt-1 block text-muted">
+            Leave it empty to keep it as planned; you can give it a date later from the Activities
+            list.
+          </span>
+        </label>
+      ) : null}
 
       {editing && !sd.editable ? (
         <p className="rounded border border-line bg-canvas p-2 text-sm text-muted">

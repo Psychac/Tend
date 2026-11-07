@@ -68,3 +68,32 @@ describe('logging an activity as done', () => {
     expect(screen.getByRole('heading', { name: 'Due today' })).toBeInTheDocument();
   });
 });
+
+describe('planned and dated one-offs', () => {
+  it('a one-off with a due date shows on the Dashboard', async () => {
+    const { user } = renderApp('/activities/new');
+    await user.type(await screen.findByLabelText('Name'), 'Renew licence');
+    await user.type(screen.getByLabelText(/Due on/), '2026-11-05');
+    await user.click(screen.getByRole('button', { name: 'Create activity' }));
+
+    await user.click(await screen.findByRole('link', { name: 'Dashboard' }));
+    expect(await screen.findByRole('heading', { name: 'Due today' })).toBeInTheDocument();
+    expect(screen.getByText('Renew licence')).toBeInTheDocument();
+  });
+
+  it('an undated one-off is planned, and gets a date from the list', async () => {
+    const { user } = renderApp('/activities/new');
+    await user.type(await screen.findByLabelText('Name'), 'Paint fence');
+    await user.click(screen.getByRole('button', { name: 'Create activity' }));
+
+    expect(await screen.findByText(/Planned, no date/)).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Set date for Paint fence' }));
+    await user.type(screen.getByLabelText('Due on'), '2026-11-05');
+    await user.click(screen.getByRole('button', { name: 'Save date' }));
+
+    expect(await screen.findByText(/One-off · next/)).toBeInTheDocument();
+    expect(screen.queryByText(/Planned, no date/)).not.toBeInTheDocument();
+    await user.click(screen.getByRole('link', { name: 'Dashboard' }));
+    expect(await screen.findByText('Paint fence')).toBeInTheDocument();
+  });
+});

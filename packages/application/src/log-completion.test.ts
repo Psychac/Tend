@@ -5,7 +5,9 @@ import {
   createActivity,
   getHistory,
   getInsights,
+  listActivities,
   logCompletion,
+  setActivityDueDate,
 } from './index';
 import { createHarness } from './testing/harness';
 
@@ -158,5 +160,65 @@ describe('logCompletion', () => {
     expect(second.occurrences).toHaveLength(0);
     const r = must(await logCompletion(h.deps, { activityId: first.activity.id }));
     expect(r.nextOccurrences.map((o) => o.dueOn)).toEqual(['2026-11-12']);
+  });
+});
+
+describe('dated and planned one-offs', () => {
+  it('creates an occurrence for a one-off given a due date', async () => {
+    const h = createHarness();
+    const a = must(
+      await createActivity(h.deps, { name: 'Renew licence', type: 'routine', dueOn: '2026-12-12' }),
+    );
+    expect(a.occurrences.map((o) => [o.dueOn, o.scheduleId])).toEqual([['2026-12-12', undefined]]);
+  });
+
+  it('keeps an undated one-off as planned until it is given a date', async () => {
+    const h = createHarness();
+    const a = must(await createActivity(h.deps, { name: 'Paint fence', type: 'routine' }));
+    const planned = async () =>
+      (await listActivities(h.repos)).find((i) => i.activity.id === a.activity.id)!.planned;
+    expect(await planned()).toBe(true);
+
+    const o = must(
+      await setActivityDueDate(h.deps, { activityId: a.activity.id, dueOn: '2027-03-01' }),
+    );
+    expect(o.dueOn).toBe('2027-03-01');
+    expect(await planned()).toBe(false);
+
+    // Setting it again moves the same occurrence rather than adding another.
+    must(await setActivityDueDate(h.deps, { activityId: a.activity.id, dueOn: '2027-04-01' }));
+    const open = await h.repos.occurrences.list({ activityId: a.activity.id });
+    expect(open.map((x) => x.dueOn)).toEqual(['2027-04-01']);
+  });
+
+  it('is no longer planned once it has been done', async () => {
+    const h = createHarness();
+    const a = must(await createActivity(h.deps, { name: 'Paint fence', type: 'routine' }));
+    must(await logCompletion(h.deps, { activityId: a.activity.id }));
+    expect((await listActivities(h.repos))[0]!.planned).toBe(false);
+  });
+
+  it('refuses a date for a repeating activity, and a bad date', async () => {
+    const h = createHarness();
+    const r = must(
+      await createActivity(h.deps, { name: 'Chore', type: 'routine', schedule: weekly }),
+    );
+    expect(
+      (await setActivityDueDate(h.deps, { activityId: r.activity.id, dueOn: '2026-12-01' })).ok,
+    ).toBe(false);
+    expect(
+      (
+        await createActivity(h.deps, {
+          name: 'X',
+          type: 'routine',
+          schedule: weekly,
+          dueOn: '2026-12-01',
+        })
+      ).ok,
+    ).toBe(false);
+    const p = must(await createActivity(h.deps, { name: 'Y', type: 'routine' }));
+    expect(
+      (await setActivityDueDate(h.deps, { activityId: p.activity.id, dueOn: 'soon' })).ok,
+    ).toBe(false);
   });
 });

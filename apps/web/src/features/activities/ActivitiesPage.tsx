@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router';
 import {
   archiveActivity,
+  setActivityDueDate,
   listActivities,
   pauseActivitySchedule,
   resumeActivitySchedule,
@@ -33,6 +34,8 @@ export function ActivitiesPage() {
     });
 
   const [logOpen, setLogOpen] = useState<string | null>(null);
+  const [dateOpen, setDateOpen] = useState<string | null>(null);
+  const [newDate, setNewDate] = useState('');
 
   async function run(work: () => Promise<Result<unknown>>) {
     setError(null);
@@ -126,109 +129,162 @@ export function ActivitiesPage() {
 
       {activities.status === 'ready' ? (
         <ul className="space-y-2">
-          {activities.data.map(({ activity, schedules, nextDueOn, categoryName, locationPath }) => (
-            <li
-              key={activity.id}
-              className="flex flex-wrap items-center justify-between gap-2 card p-3"
-            >
-              <div>
-                <p className="font-medium">{activity.name}</p>
-                <p className="text-sm text-muted">
-                  <span className="capitalize">{activity.type}</span>
-                  {' · '}
-                  {activity.archivedAt !== undefined
-                    ? 'Archived'
-                    : schedules.length === 0
-                      ? 'One-off'
-                      : schedules[0]?.pausedAt !== undefined
-                        ? 'Recurring (paused)'
-                        : 'Recurring'}
-                  {nextDueOn ? ` · next ${formatDate(nextDueOn)}` : ''}
-                  {categoryName ? ` · ${categoryName}` : ''}
-                  {locationPath ? ` · ${locationPath}` : ''}
-                </p>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {activity.archivedAt === undefined ? (
-                  <button
-                    type="button"
-                    className="btn btn-primary"
-                    aria-expanded={logOpen === activity.id}
-                    aria-label={`Log ${activity.name} as done`}
-                    onClick={() => setLogOpen(logOpen === activity.id ? null : activity.id)}
-                  >
-                    Log done
-                  </button>
-                ) : null}
-                <button
-                  type="button"
-                  className={small}
-                  aria-expanded={filesOpen.has(activity.id)}
-                  aria-label={`Files for ${activity.name}`}
-                  onClick={() => toggleFiles(activity.id)}
-                >
-                  Files
-                </button>
-                {activity.archivedAt === undefined ? (
-                  <Link
-                    to={`/activities/${activity.id}/edit`}
-                    className={small}
-                    aria-label={`Edit ${activity.name}`}
-                  >
-                    Edit
-                  </Link>
-                ) : null}
-                {activity.archivedAt === undefined && schedules[0] ? (
-                  <button
-                    type="button"
-                    className={small}
-                    aria-label={`${schedules[0].pausedAt === undefined ? 'Pause' : 'Resume'} ${activity.name}`}
-                    onClick={() =>
-                      run(() =>
-                        schedules[0]!.pausedAt === undefined
-                          ? pauseActivitySchedule(deps, { scheduleId: schedules[0]!.id })
-                          : resumeActivitySchedule(deps, { scheduleId: schedules[0]!.id }),
-                      )
-                    }
-                  >
-                    {schedules[0].pausedAt === undefined ? 'Pause' : 'Resume'}
-                  </button>
-                ) : null}
-                {activity.archivedAt === undefined ? (
-                  <button
-                    type="button"
-                    className={small}
-                    aria-label={`Archive ${activity.name}`}
-                    onClick={() => run(() => archiveActivity(deps, { activityId: activity.id }))}
-                  >
-                    Archive
-                  </button>
-                ) : (
-                  <button
-                    type="button"
-                    className={small}
-                    aria-label={`Restore ${activity.name}`}
-                    onClick={() => run(() => unarchiveActivity(deps, { activityId: activity.id }))}
-                  >
-                    Restore
-                  </button>
-                )}
-              </div>
-              {logOpen === activity.id ? (
-                <div className="w-full">
-                  <LogDoneForm activity={activity} onDone={() => setLogOpen(null)} />
+          {activities.data.map(
+            ({ activity, schedules, nextDueOn, planned, categoryName, locationPath }) => (
+              <li
+                key={activity.id}
+                className="flex flex-wrap items-center justify-between gap-2 card p-3"
+              >
+                <div>
+                  <p className="font-medium">{activity.name}</p>
+                  <p className="text-sm text-muted">
+                    <span className="capitalize">{activity.type}</span>
+                    {' · '}
+                    {activity.archivedAt !== undefined
+                      ? 'Archived'
+                      : schedules.length === 0
+                        ? planned
+                          ? 'Planned, no date'
+                          : 'One-off'
+                        : schedules[0]?.pausedAt !== undefined
+                          ? 'Recurring (paused)'
+                          : 'Recurring'}
+                    {nextDueOn ? ` · next ${formatDate(nextDueOn)}` : ''}
+                    {categoryName ? ` · ${categoryName}` : ''}
+                    {locationPath ? ` · ${locationPath}` : ''}
+                  </p>
                 </div>
-              ) : null}
-              {filesOpen.has(activity.id) ? (
-                <div className="w-full">
-                  <AttachmentsSection
-                    subject={{ type: 'activity', id: activity.id }}
-                    label={activity.name}
-                  />
+                <div className="flex flex-wrap gap-2">
+                  {activity.archivedAt === undefined ? (
+                    <button
+                      type="button"
+                      className="btn btn-primary"
+                      aria-expanded={logOpen === activity.id}
+                      aria-label={`Log ${activity.name} as done`}
+                      onClick={() => setLogOpen(logOpen === activity.id ? null : activity.id)}
+                    >
+                      Log done
+                    </button>
+                  ) : null}
+                  {activity.archivedAt === undefined &&
+                  schedules.length === 0 &&
+                  (planned || nextDueOn) ? (
+                    <button
+                      type="button"
+                      className={small}
+                      aria-expanded={dateOpen === activity.id}
+                      aria-label={`${nextDueOn ? 'Change date for' : 'Set date for'} ${activity.name}`}
+                      onClick={() => {
+                        setNewDate(nextDueOn ?? '');
+                        setDateOpen(dateOpen === activity.id ? null : activity.id);
+                      }}
+                    >
+                      {nextDueOn ? 'Change date' : 'Set date'}
+                    </button>
+                  ) : null}
+                  <button
+                    type="button"
+                    className={small}
+                    aria-expanded={filesOpen.has(activity.id)}
+                    aria-label={`Files for ${activity.name}`}
+                    onClick={() => toggleFiles(activity.id)}
+                  >
+                    Files
+                  </button>
+                  {activity.archivedAt === undefined ? (
+                    <Link
+                      to={`/activities/${activity.id}/edit`}
+                      className={small}
+                      aria-label={`Edit ${activity.name}`}
+                    >
+                      Edit
+                    </Link>
+                  ) : null}
+                  {activity.archivedAt === undefined && schedules[0] ? (
+                    <button
+                      type="button"
+                      className={small}
+                      aria-label={`${schedules[0].pausedAt === undefined ? 'Pause' : 'Resume'} ${activity.name}`}
+                      onClick={() =>
+                        run(() =>
+                          schedules[0]!.pausedAt === undefined
+                            ? pauseActivitySchedule(deps, { scheduleId: schedules[0]!.id })
+                            : resumeActivitySchedule(deps, { scheduleId: schedules[0]!.id }),
+                        )
+                      }
+                    >
+                      {schedules[0].pausedAt === undefined ? 'Pause' : 'Resume'}
+                    </button>
+                  ) : null}
+                  {activity.archivedAt === undefined ? (
+                    <button
+                      type="button"
+                      className={small}
+                      aria-label={`Archive ${activity.name}`}
+                      onClick={() => run(() => archiveActivity(deps, { activityId: activity.id }))}
+                    >
+                      Archive
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      className={small}
+                      aria-label={`Restore ${activity.name}`}
+                      onClick={() =>
+                        run(() => unarchiveActivity(deps, { activityId: activity.id }))
+                      }
+                    >
+                      Restore
+                    </button>
+                  )}
                 </div>
-              ) : null}
-            </li>
-          ))}
+                {dateOpen === activity.id ? (
+                  <form
+                    className="flex w-full flex-wrap items-end gap-2"
+                    aria-label={`Date for ${activity.name}`}
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      void run(async () => {
+                        const r = await setActivityDueDate(deps, {
+                          activityId: activity.id,
+                          dueOn: newDate,
+                        });
+                        if (r.ok) setDateOpen(null);
+                        return r;
+                      });
+                    }}
+                  >
+                    <label className="block text-sm">
+                      Due on
+                      <input
+                        type="date"
+                        required
+                        value={newDate}
+                        onChange={(e) => setNewDate(e.target.value)}
+                        className="mt-1 block field"
+                      />
+                    </label>
+                    <button type="submit" className="btn btn-primary">
+                      Save date
+                    </button>
+                  </form>
+                ) : null}
+                {logOpen === activity.id ? (
+                  <div className="w-full">
+                    <LogDoneForm activity={activity} onDone={() => setLogOpen(null)} />
+                  </div>
+                ) : null}
+                {filesOpen.has(activity.id) ? (
+                  <div className="w-full">
+                    <AttachmentsSection
+                      subject={{ type: 'activity', id: activity.id }}
+                      label={activity.name}
+                    />
+                  </div>
+                ) : null}
+              </li>
+            ),
+          )}
         </ul>
       ) : null}
     </div>

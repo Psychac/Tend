@@ -5,7 +5,9 @@ import {
   notFoundError,
   err,
   ok,
+  newMeta,
   parseLocalDate,
+  rescheduleOccurrence as rescheduleOccurrenceEntity,
   parseTimeZone,
   touch,
   transitionOccurrence,
@@ -26,6 +28,7 @@ import {
   type ScheduleStrategy,
   type TimeZoneId,
 } from '@tend/domain';
+import type { Repositories } from '@tend/contracts';
 import { auditEvent, found, transact, type Deps } from './deps';
 import { ensureOccurrences } from './generation';
 
@@ -50,6 +53,8 @@ export interface CreateActivityInput {
   readonly checklist?: readonly string[] | undefined;
   readonly measurementRequirements?: readonly MeasurementRequirement[] | undefined;
   readonly schedule?: ScheduleInput | undefined;
+  /** For an activity that does not repeat: the day it is due. Left out, it is only planned. */
+  readonly dueOn?: string | undefined;
 }
 
 export interface CreateActivityResult {
@@ -119,6 +124,18 @@ export async function createActivity(
     if (!created.ok) return created;
     const activity = created.value;
 
+    if (input.dueOn !== undefined && input.schedule) {
+      return err(
+        validationError([
+          { path: 'dueOn', message: 'is only for an activity that does not repeat' },
+        ]),
+      );
+    }
+    const dueOn = input.dueOn === undefined ? undefined : parseLocalDate(input.dueOn);
+    if (dueOn && !dueOn.ok) {
+      return err(validationError([{ path: 'dueOn', message: 'must be a YYYY-MM-DD date' }]));
+    }
+
     let schedule: Schedule | undefined;
     if (input.schedule) {
       const st = input.schedule.strategy;
@@ -148,8 +165,71 @@ export async function createActivity(
     if (schedule) {
       await repos.schedules.save(schedule);
       occurrences = await ensureOccurrences(deps, repos, activity, schedule);
+    } else if (dueOn?.ok) {
+      occurrences = [await saveOneOffOccurrence(deps, repos, activity.id, dueOn.value)];
     }
     return ok({ activity, schedule, occurrences });
+  });
+}
+
+async function saveOneOffOccurrence(
+  deps: Deps,
+  repos: Repositories,
+  activityId: ActivityId,
+  dueOn: LocalDate,
+): Promise<Occurrence> {
+  const occurrence: Occurrence = {
+    id: deps.ids.next<'Occurrence'>(),
+    meta: newMeta(deps.ownerId, deps.clock.now()),
+    activityId,
+    dueOn,
+    status: 'pending',
+  };
+  await repos.occurrences.save(occurrence);
+  return occurrence;
+}
+
+/**
+ * Gives a planned activity (one that does not repeat) a due date, or moves the date it has.
+ * It becomes a normal item on the Dashboard and Calendar from then on.
+ */
+export async function setActivityDueDate(
+  deps: Deps,
+  input: { activityId: ActivityId; dueOn: string },
+): Promise<Result<Occurrence>> {
+  return transact(deps, async (repos) => {
+    const dueOn = parseLocalDate(input.dueOn);
+    if (!dueOn.ok) {
+      return err(validationError([{ path: 'dueOn', message: 'must be a YYYY-MM-DD date' }]));
+    }
+    const activity = found(
+      'Activity',
+      input.activityId,
+      await repos.activities.getById(input.activityId),
+    );
+    if (!activity.ok) return activity;
+    if (activity.value.archivedAt !== undefined) {
+      return err(invariantError('Restore this activity before giving it a date'));
+    }
+    if ((await repos.schedules.listForActivity(input.activityId)).length > 0) {
+      return err(invariantError('This activity repeats; change its schedule instead'));
+    }
+    const [open] = await repos.occurrences.list({
+      activityId: input.activityId,
+      status: ['pending', 'snoozed'],
+      limit: 1,
+    });
+    if (open) {
+      const moved = rescheduleOccurrenceEntity(open, dueOn.value, deps.clock.now());
+      if (!moved.ok) return moved;
+      await repos.occurrences.save(moved.value);
+      return ok(moved.value);
+    }
+    const occurrence = await saveOneOffOccurrence(deps, repos, input.activityId, dueOn.value);
+    await repos.audit.add(
+      auditEvent(deps, 'activity', input.activityId, 'updated', `${activity.value.name}: dated`),
+    );
+    return ok(occurrence);
   });
 }
 

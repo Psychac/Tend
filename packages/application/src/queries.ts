@@ -138,6 +138,8 @@ export interface ActivityListItem {
   readonly schedules: readonly Schedule[];
   /** Due date of the nearest outstanding occurrence, if any. */
   readonly nextDueOn?: LocalDate | undefined;
+  /** Does not repeat, has no date, and has never been done: waiting for a date. */
+  readonly planned: boolean;
 }
 
 export interface ActivityListOptions {
@@ -171,13 +173,27 @@ export async function listActivities(
     const current = nextByActivity.get(o.activityId);
     if (!current || due < current) nextByActivity.set(o.activityId, due);
   }
-  return activities.map((activity) => ({
-    activity,
-    schedules: schedules.filter((s) => s.activityId === activity.id),
-    nextDueOn: nextByActivity.get(activity.id),
-    categoryName: activity.categoryId ? categoryName.get(activity.categoryId) : undefined,
-    locationPath: activity.locationId ? paths.get(activity.locationId) : undefined,
-  }));
+  const items: ActivityListItem[] = [];
+  for (const activity of activities) {
+    const own = schedules.filter((s) => s.activityId === activity.id);
+    const nextDueOn = nextByActivity.get(activity.id);
+    // Only unscheduled, undated activities need the extra look at their history.
+    const planned =
+      own.length === 0 &&
+      nextDueOn === undefined &&
+      activity.archivedAt === undefined &&
+      (await repos.occurrences.list({ activityId: activity.id, limit: 1 })).length === 0 &&
+      (await repos.completions.list({ activityId: activity.id, limit: 1 })).length === 0;
+    items.push({
+      activity,
+      schedules: own,
+      nextDueOn,
+      planned,
+      categoryName: activity.categoryId ? categoryName.get(activity.categoryId) : undefined,
+      locationPath: activity.locationId ? paths.get(activity.locationId) : undefined,
+    });
+  }
+  return items;
 }
 
 export type HistoryEntry =
