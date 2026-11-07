@@ -31,7 +31,7 @@ export function SyncIndicator({
       <span aria-hidden="true" className={`h-2 w-2 shrink-0 rounded-full ${TONE[status.state]}`} />
       <span>
         {status.label}
-        {showDetail ? <span className="text-faint"> � {status.detail}</span> : null}
+        {showDetail ? <span className="text-faint"> &middot; {status.detail}</span> : null}
       </span>
     </p>
   );

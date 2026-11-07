@@ -14,3 +14,4 @@ export * from './reminders';
 export * from './attachments';
 export * from './presets';
 export * from './alerts';
+export * from './log-completion';

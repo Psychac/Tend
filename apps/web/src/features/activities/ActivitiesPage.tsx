@@ -12,6 +12,7 @@ import { useApp } from '../../app/providers/AppProvider';
 import { describeError, formatDate, useAction, useLiveQuery } from '../../shared/hooks';
 import { AttachmentsSection } from '../attachments/AttachmentsSection';
 import { CategorySelect, LocationSelect } from '../../shared/ui/pickers';
+import { LogDoneForm } from './LogDoneForm';
 
 const small = 'btn';
 
@@ -30,6 +31,8 @@ export function ActivitiesPage() {
       if (!next.delete(id)) next.add(id);
       return next;
     });
+
+  const [logOpen, setLogOpen] = useState<string | null>(null);
 
   async function run(work: () => Promise<Result<unknown>>) {
     setError(null);
@@ -146,6 +149,17 @@ export function ActivitiesPage() {
                 </p>
               </div>
               <div className="flex flex-wrap gap-2">
+                {activity.archivedAt === undefined ? (
+                  <button
+                    type="button"
+                    className="btn btn-primary"
+                    aria-expanded={logOpen === activity.id}
+                    aria-label={`Log ${activity.name} as done`}
+                    onClick={() => setLogOpen(logOpen === activity.id ? null : activity.id)}
+                  >
+                    Log done
+                  </button>
+                ) : null}
                 <button
                   type="button"
                   className={small}
@@ -200,6 +214,11 @@ export function ActivitiesPage() {
                   </button>
                 )}
               </div>
+              {logOpen === activity.id ? (
+                <div className="w-full">
+                  <LogDoneForm activity={activity} onDone={() => setLogOpen(null)} />
+                </div>
+              ) : null}
               {filesOpen.has(activity.id) ? (
                 <div className="w-full">
                   <AttachmentsSection
