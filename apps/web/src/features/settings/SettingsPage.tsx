@@ -12,12 +12,15 @@ import {
   type RestoreMode,
   type RestorePreview,
 } from '@tend/infrastructure';
+import { exportHistoryCsv } from '@tend/application';
+import { deviceTimeZone } from '../../shared/hooks';
 import { NotificationsSection } from './NotificationsSection';
 import { DiagnosticsSection } from './DiagnosticsSection';
 import { PrivacySection } from './PrivacySection';
 import { StorageSection } from './StorageSection';
 import { CategoriesSection, LocationsSection } from './OrganiseSections';
 import { CurrencySelect, getDefaultCurrency, setDefaultCurrency } from '../../shared/ui/currency';
+import { markBackedUp } from '../../shared/utilities/backupStatus';
 import { useApp, useChanges } from '../../app/providers/AppProvider';
 
 const button = 'btn';
@@ -94,7 +97,7 @@ type Restore =
 const label = (table: string): string => table.replace('_', ' ');
 
 function BackupSection() {
-  const { db, deps } = useApp();
+  const { db, deps, repos } = useApp();
   const { notifyChanged } = useChanges();
   const [restore, setRestore] = useState<Restore>({ step: 'idle' });
   const [busy, setBusy] = useState(false);
@@ -105,9 +108,22 @@ function BackupSection() {
     const backup = await exportBackup(db, deps.clock.now());
     const day = backup.exportedAt.slice(0, 10);
     download(`tend-backup-${day}.json`, JSON.stringify(backup, null, 2));
+    markBackedUp(deps.clock.now());
     setExported(
       `Saved ${backup.counts.activities} activities and ${backup.counts.completions} completions.`,
     );
+    setBusy(false);
+  }
+
+  /** A spreadsheet-friendly copy of History. It is not a backup: it cannot be restored. */
+  async function doExportCsv() {
+    setBusy(true);
+    const csv = await exportHistoryCsv(repos, deviceTimeZone());
+    download(
+      `tend-history-${deps.clock.now().slice(0, 10)}.csv`,
+      new Blob([csv], { type: 'text/csv' }),
+    );
+    setExported('Saved your history as a spreadsheet file. It cannot be used to restore.');
     setBusy(false);
   }
 
@@ -116,6 +132,7 @@ function BackupSection() {
     try {
       const out = await exportBackupZip(db, deps.files, deps.clock.now());
       download(`tend-backup-${out.backup.exportedAt.slice(0, 10)}.zip`, out.zip);
+      markBackedUp(deps.clock.now());
       setExported(
         `Saved ${out.backup.counts.activities} activities and ${out.included} attached ${
           out.included === 1 ? 'file' : 'files'
@@ -226,6 +243,9 @@ function BackupSection() {
         </button>{' '}
         <button type="button" className={button} disabled={busy} onClick={() => void doExportZip()}>
           Download backup with files (.zip)
+        </button>{' '}
+        <button type="button" className={button} disabled={busy} onClick={() => void doExportCsv()}>
+          Export history (.csv)
         </button>
         <p className="mt-1 text-xs text-muted">
           The plain backup holds your records only. The zip also holds attached files, so it can be

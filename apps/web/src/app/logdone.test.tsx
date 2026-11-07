@@ -157,3 +157,47 @@ describe('search', () => {
     expect(link).toHaveAttribute('href', '/activities?q=Service%20the%20boiler');
   });
 });
+
+describe('backup reminder', () => {
+  beforeEach(() => localStorage.clear());
+
+  it('is not shown to someone with no data yet', async () => {
+    renderApp('/');
+    await screen.findByRole('heading', { name: 'What do you want to keep up?' });
+    expect(screen.queryByRole('region', { name: 'Backup reminder' })).not.toBeInTheDocument();
+  });
+
+  it('asks for a first backup once there is data, and can be put off', async () => {
+    const { user } = renderApp('/activities/new');
+    await createDaily(user, 'Wipe counters');
+    await user.click(await screen.findByRole('link', { name: 'Dashboard' }));
+
+    const nudge = await screen.findByRole('region', { name: 'Backup reminder' });
+    expect(nudge).toHaveTextContent(/not saved a backup yet/);
+    await user.click(screen.getByRole('button', { name: 'Remind me later' }));
+    expect(screen.queryByRole('region', { name: 'Backup reminder' })).not.toBeInTheDocument();
+  });
+
+  it('is quiet after a recent backup and returns when it is old', async () => {
+    const { markBackedUp } = await import('../shared/utilities/backupStatus');
+    markBackedUp('2026-11-01T00:00:00.000Z');
+    const { user } = renderApp('/activities/new');
+    await createDaily(user, 'Wipe counters');
+    await user.click(await screen.findByRole('link', { name: 'Dashboard' }));
+    await screen.findByRole('heading', { name: 'Due today' });
+    expect(screen.queryByRole('region', { name: 'Backup reminder' })).not.toBeInTheDocument();
+  });
+});
+
+describe('history export', () => {
+  it('offers the history as a CSV file', async () => {
+    const save = vi.fn<(blob: Blob) => string>(() => 'blob:x');
+    vi.stubGlobal('URL', { createObjectURL: save, revokeObjectURL: vi.fn() });
+    const { user } = renderApp('/settings');
+    await user.click(await screen.findByRole('button', { name: 'Export history (.csv)' }));
+    expect(await screen.findByText(/Saved your history as a spreadsheet file/)).toBeInTheDocument();
+    const blob = save.mock.calls[0]![0];
+    expect(blob.type).toBe('text/csv');
+    vi.unstubAllGlobals();
+  });
+});

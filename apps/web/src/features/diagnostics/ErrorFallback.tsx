@@ -1,3 +1,4 @@
+import { markBackedUp } from '../../shared/utilities/backupStatus';
 import { useState } from 'react';
 import { exportBackup } from '@tend/infrastructure';
 import { useOptionalApp } from '../../app/providers/AppProvider';
@@ -44,6 +45,7 @@ export function ErrorFallback({
       link.download = `tend-backup-${file.exportedAt.slice(0, 10)}.json`;
       link.click();
       URL.revokeObjectURL(url);
+      markBackedUp(app.deps.clock.now());
       setNote(
         `Backup saved: ${file.counts.activities} activities and ${file.counts.completions} completions.`,
       );

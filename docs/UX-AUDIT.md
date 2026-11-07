@@ -24,7 +24,7 @@ Creating activities, completing one and visiting every screen. This is separate 
 - ~~**Nothing can be deleted.**~~ **Fixed.** A never-done activity, or an unused asset, can be deleted after a confirmation. Anything with history can only be archived (assets: retired), with the reason shown.
 - ~~**No visible change log.**~~ **Fixed.** Settings has a read-only "Recent changes" list (last 30). Snoozing, moving an item and recording a reading are now recorded too. The automatic reconcile is not, because a person did not do it (GAPS G-28 can be closed).
 - **Notifications only fire while the app is open.** Web Push is Phase 2 (GAPS G-33).
-- **No app-wide search,** only per-list filters.
+- ~~**No app-wide search.**~~ **Fixed.** A Search page finds activities (including archived), assets and the notes written when work was done.
 - **Dates:** ~~no year~~ the year now shows when it is not this year. Still open: the date field's own format follows the browser, and the Calendar week always starts on Monday.
 - ~~**Insights with little data**~~ **Fixed.** "No costs recorded in this period" replaces "Total: none". (The page already had an empty state when nothing is done.)
 - ~~**Inconsistent page headings.**~~ **Fixed.** Every page title is the same size.
@@ -37,9 +37,17 @@ Creating activities, completing one and visiting every screen. This is separate 
 2. A first-run picker ("What do you want to keep up? Home, car, subscriptions…") feeding the presets.
 3. A "Today" view that lists each activity once.
 4. Snooze choices: tomorrow, next week, pick a date.
-5. A recurring "Back up your data" reminder, using the existing preset machinery.
-6. CSV export of history and spending.
+5. ~~A "Back up your data" reminder.~~ **Done.** The Dashboard asks for a first backup once there is data, and again after 30 days; "Remind me later" puts it off for a week. A hint kept on this device only.
+6. ~~CSV export of history and spending.~~ **Done.** Settings → "Export history (.csv)": date, activity, what happened, planned date, cost, currency and notes. Not a backup; cells that look like formulas are defused.
 7. An install prompt and an offline-ready indicator.
+
+## Still open
+
+- An install prompt and an "ready offline" indicator (idea 7).
+- The Calendar week always starts on Monday, and the date field's format follows the browser. Both want a setting.
+- Notifications only fire while the app is open (Phase 2, GAPS G-33).
+- Reminders cannot be set on a one-off with a due date.
+- Logging a usage-schedule service does not reset the open usage item.
 
 ## Not checked
 

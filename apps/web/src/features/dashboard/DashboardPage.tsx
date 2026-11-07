@@ -1,8 +1,10 @@
+import { useState } from 'react';
 import { Link } from 'react-router';
 import { getAssetAlerts, getDashboard, type OccurrenceItem } from '@tend/application';
 import { localDateOf, type LocalDate } from '@tend/domain';
 import { useApp } from '../../app/providers/AppProvider';
 import { deviceTimeZone, formatDate, useLiveQuery } from '../../shared/hooks';
+import { backupReminder, putOffBackupReminder } from '../../shared/utilities/backupStatus';
 import { SyncIndicator } from '../../shared/ui/SyncIndicator';
 import { RemindersPanel } from '../reminders/RemindersPanel';
 import { OccurrenceCard } from './OccurrenceCard';
@@ -70,6 +72,39 @@ function StarterPicker() {
         </Link>
         .
       </p>
+    </section>
+  );
+}
+
+/** A gentle nudge to save a backup file, since data lives only on this device. */
+function BackupNudge() {
+  const { deps } = useApp();
+  const [hidden, setHidden] = useState(false);
+  const { due, lastDays } = backupReminder(deps.clock.now());
+  if (!due || hidden) return null;
+  return (
+    <section
+      aria-label="Backup reminder"
+      className="card flex flex-wrap items-center gap-3 p-3 text-sm"
+    >
+      <p className="flex-1">
+        {lastDays === null
+          ? 'You have not saved a backup yet. Your data lives only on this device.'
+          : `Your last backup was ${lastDays} days ago. Your data lives only on this device.`}
+      </p>
+      <Link to="/settings" className="btn btn-primary">
+        Back up now
+      </Link>
+      <button
+        type="button"
+        className="btn"
+        onClick={() => {
+          putOffBackupReminder(deps.clock.now());
+          setHidden(true);
+        }}
+      >
+        Remind me later
+      </button>
     </section>
   );
 }
@@ -155,6 +190,8 @@ export function DashboardPage() {
         <Stat label="Due today" value={d.dueToday.length} tone="brand" />
         <Stat label="Coming up" value={d.upcoming.length} tone="info" />
       </dl>
+
+      {nothingOpen && d.recentCompletions.length === 0 ? null : <BackupNudge />}
 
       <RemindersPanel />
 

@@ -18,3 +18,4 @@ export * from './log-completion';
 export * from './delete';
 export * from './changes';
 export * from './search';
+export * from './export-csv';

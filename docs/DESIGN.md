@@ -29,30 +29,30 @@ Where this spec gives concrete values (font sizes, colors, radii, spring numbers
 5. Motion and haptics pass: add transitions and feedback across the whole app at once so they feel like one system.
 6. Polish pass: run the Section 13 checklist on every screen. Fix, re-run, repeat.
 
-Platform *behavior* is not negotiable: back gestures, safe areas, scrolling physics, text input, accessibility and system settings must work the way users expect on their device. Platform *appearance* is optional: the visuals are yours to design, as long as they meet every quality rule here. Familiar behavior plus a distinctive look is the goal.
+Platform _behavior_ is not negotiable: back gestures, safe areas, scrolling physics, text input, accessibility and system settings must work the way users expect on their device. Platform _appearance_ is optional: the visuals are yours to design, as long as they meet every quality rule here. Familiar behavior plus a distinctive look is the goal.
 
 ## 1. Diagnosis: why apps look AI-generated
 
 AI-generated UI looks the same because it takes the median default at every decision. Each row below is a tell to hunt down and its replacement.
 
-| Tell | Why it reads as cheap | Replace with |
-| --- | --- | --- |
-| Purple-to-blue gradients, glowing blobs, gradient text | The default "modern" look of 2023 templates | One confident brand color on neutral surfaces; gradients only if they mean something (e.g. a sky, a progress fill) |
-| Every element in a rounded card with a drop shadow | No hierarchy; everything shouts equally | Grouped lists and whitespace; cards only for things that are genuinely objects (a ticket, a photo, a workout) |
-| Inter / system font at 3 sizes, all medium weight | No typographic voice or rhythm | A defined type scale with clear weight contrast (Section 3.1), tight tracking on large titles |
-| Emoji or generic Lucide icons as decoration | Filler, not meaning | A single icon family, one stroke weight, used only where an icon is faster than a word |
-| Centered hero text + 3 feature cards + CTA | Landing-page template inside an app | Content-first screens: the user's data is the hero |
-| Fade-in on everything, 300 ms ease-in-out | Animation as decoration; feels sluggish | Spring physics, interruptible, tied to user input (Section 5) |
-| Buttons that only change on release | Feels dead and laggy | Instant press state on touch-down: scale, dim, haptic |
-| Spinners for every load | Exposes the machine | Skeletons shaped like the real content, optimistic updates, cached first paint |
-| "Oops! Something went wrong 😢" | Cute instead of useful | Plain cause + one action: "Couldn't sync. Check your connection. \[Retry\]" |
-| Inconsistent padding (12 here, 15 there, 20 elsewhere) | The eye notices misalignment even when the brain doesn't | 4-pt grid, spacing tokens only, one horizontal margin per screen class |
-| Borders AND shadows AND backgrounds on the same element | Three ways of saying "this is separate" | Pick one separation method per surface |
-| Pure black #000 text on pure white, or pure gray dark mode | Harsh contrast, flat dark mode | Tinted neutrals; layered dark-mode elevations |
-| Modal dialogs for everything | Interrupts flow | Inline edits, sheets with detents, undo instead of "Are you sure?" |
-| Placeholder copy ("Welcome to your dashboard!") | No one wrote it | Specific, useful text written for this product (Section 9) |
-| Tab bar with 5 tabs, half rarely used | No editorial decision | 3–4 tabs max; the rest lives one level down |
-| Looks like a stock iOS app: system blue, gray grouped lists everywhere, default SF Symbols, large-title bars on every screen | Copying the platform's look is another kind of default; it has no point of view | Keep the platform's behavior, design your own look (Section 2, Identity) |
+| Tell                                                                                                                         | Why it reads as cheap                                                           | Replace with                                                                                                       |
+| ---------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| Purple-to-blue gradients, glowing blobs, gradient text                                                                       | The default "modern" look of 2023 templates                                     | One confident brand color on neutral surfaces; gradients only if they mean something (e.g. a sky, a progress fill) |
+| Every element in a rounded card with a drop shadow                                                                           | No hierarchy; everything shouts equally                                         | Grouped lists and whitespace; cards only for things that are genuinely objects (a ticket, a photo, a workout)      |
+| Inter / system font at 3 sizes, all medium weight                                                                            | No typographic voice or rhythm                                                  | A defined type scale with clear weight contrast (Section 3.1), tight tracking on large titles                      |
+| Emoji or generic Lucide icons as decoration                                                                                  | Filler, not meaning                                                             | A single icon family, one stroke weight, used only where an icon is faster than a word                             |
+| Centered hero text + 3 feature cards + CTA                                                                                   | Landing-page template inside an app                                             | Content-first screens: the user's data is the hero                                                                 |
+| Fade-in on everything, 300 ms ease-in-out                                                                                    | Animation as decoration; feels sluggish                                         | Spring physics, interruptible, tied to user input (Section 5)                                                      |
+| Buttons that only change on release                                                                                          | Feels dead and laggy                                                            | Instant press state on touch-down: scale, dim, haptic                                                              |
+| Spinners for every load                                                                                                      | Exposes the machine                                                             | Skeletons shaped like the real content, optimistic updates, cached first paint                                     |
+| "Oops! Something went wrong 😢"                                                                                              | Cute instead of useful                                                          | Plain cause + one action: "Couldn't sync. Check your connection. \[Retry\]"                                        |
+| Inconsistent padding (12 here, 15 there, 20 elsewhere)                                                                       | The eye notices misalignment even when the brain doesn't                        | 4-pt grid, spacing tokens only, one horizontal margin per screen class                                             |
+| Borders AND shadows AND backgrounds on the same element                                                                      | Three ways of saying "this is separate"                                         | Pick one separation method per surface                                                                             |
+| Pure black #000 text on pure white, or pure gray dark mode                                                                   | Harsh contrast, flat dark mode                                                  | Tinted neutrals; layered dark-mode elevations                                                                      |
+| Modal dialogs for everything                                                                                                 | Interrupts flow                                                                 | Inline edits, sheets with detents, undo instead of "Are you sure?"                                                 |
+| Placeholder copy ("Welcome to your dashboard!")                                                                              | No one wrote it                                                                 | Specific, useful text written for this product (Section 9)                                                         |
+| Tab bar with 5 tabs, half rarely used                                                                                        | No editorial decision                                                           | 3–4 tabs max; the rest lives one level down                                                                        |
+| Looks like a stock iOS app: system blue, gray grouped lists everywhere, default SF Symbols, large-title bars on every screen | Copying the platform's look is another kind of default; it has no point of view | Keep the platform's behavior, design your own look (Section 2, Identity)                                           |
 
 ## 2. Design principles and identity
 
@@ -71,14 +71,14 @@ When this spec doesn't cover a case, decide with these, in this order.
 
 The best apps feel premium because of how they behave and how carefully they are made, not because they look like Apple. Things 3, Flighty, Linear, Arc and Airbnb all reach first-party quality with looks that are unmistakably their own.
 
-| Take from first-party apps | Do not copy |
-| --- | --- |
-| Instant touch response, spring physics, interruptible gestures | System blue as the accent |
-| Spatial continuity between screens | Gray inset grouped lists as the default for every screen |
-| Typographic rigor: a clear scale, tight hierarchy | SF Pro at system sizes with no thought behind it |
-| Restraint: one accent, one primary action | Unstyled SF Symbols dropped in everywhere |
-| Designed empty, loading and error states | Large-title nav bars and Settings-style rows on every screen |
-| Haptics, accessibility, performance discipline | Apple's specific screens, layouts or illustrations |
+| Take from first-party apps                                     | Do not copy                                                  |
+| -------------------------------------------------------------- | ------------------------------------------------------------ |
+| Instant touch response, spring physics, interruptible gestures | System blue as the accent                                    |
+| Spatial continuity between screens                             | Gray inset grouped lists as the default for every screen     |
+| Typographic rigor: a clear scale, tight hierarchy              | SF Pro at system sizes with no thought behind it             |
+| Restraint: one accent, one primary action                      | Unstyled SF Symbols dropped in everywhere                    |
+| Designed empty, loading and error states                       | Large-title nav bars and Settings-style rows on every screen |
+| Haptics, accessibility, performance discipline                 | Apple's specific screens, layouts or illustrations           |
 
 **Before building any screen, write a one-page art direction brief and get it approved:**
 
@@ -103,19 +103,19 @@ All values live in one token file and are the only values components may use. Th
 
 Typography is the single biggest lever for identity. Choose typefaces deliberately: a display face with character for large titles, hero numbers and key moments, paired with a highly legible text face for everything else (they can be the same family). Good starting points include quality commercial or open faces (e.g. from Klim, Grilli Type, Commercial Type, or Google Fonts' better families). The system font is allowed only as a conscious choice that fits the brief, never as a default. Never more than two families. The sizes below are a proven scale; adjust them to the chosen faces' x-height and personality, but keep the number of steps and the contrast between them.
 
-| Token | Size / line height | Weight | Tracking | Use |
-| --- | --- | --- | --- | --- |
-| largeTitle | 34 / 41 | Bold (700) | +0.4 (iOS) or −0.5% | Top of root screens, collapses on scroll |
-| title1 | 28 / 34 | Bold | −0.4% | Screen hero numbers, detail titles |
-| title2 | 22 / 28 | Bold | −0.3% | Section heroes |
-| title3 | 20 / 25 | Semibold (600) | −0.2% | Card titles |
-| headline | 17 / 22 | Semibold | −0.4% | List row titles, emphasized body |
-| body | 17 / 22 | Regular (400) | −0.4% | Default text |
-| callout | 16 / 21 | Regular | −0.3% | Secondary body |
-| subhead | 15 / 20 | Regular | −0.2% | Row subtitles |
-| footnote | 13 / 18 | Regular | −0.1% | Metadata, section footers |
-| caption | 12 / 16 | Medium (500) | 0 | Labels, timestamps |
-| caption2 | 11 / 13 | Medium | +0.1% | Badges only |
+| Token      | Size / line height | Weight         | Tracking            | Use                                      |
+| ---------- | ------------------ | -------------- | ------------------- | ---------------------------------------- |
+| largeTitle | 34 / 41            | Bold (700)     | +0.4 (iOS) or −0.5% | Top of root screens, collapses on scroll |
+| title1     | 28 / 34            | Bold           | −0.4%               | Screen hero numbers, detail titles       |
+| title2     | 22 / 28            | Bold           | −0.3%               | Section heroes                           |
+| title3     | 20 / 25            | Semibold (600) | −0.2%               | Card titles                              |
+| headline   | 17 / 22            | Semibold       | −0.4%               | List row titles, emphasized body         |
+| body       | 17 / 22            | Regular (400)  | −0.4%               | Default text                             |
+| callout    | 16 / 21            | Regular        | −0.3%               | Secondary body                           |
+| subhead    | 15 / 20            | Regular        | −0.2%               | Row subtitles                            |
+| footnote   | 13 / 18            | Regular        | −0.1%               | Metadata, section footers                |
+| caption    | 12 / 16            | Medium (500)   | 0                   | Labels, timestamps                       |
+| caption2   | 11 / 13            | Medium         | +0.1%               | Badges only                              |
 
 Rules:
 
@@ -130,18 +130,18 @@ Rules:
 
 Define colors as semantic roles, never as hex in components. Every role has a light and dark value. Neutrals are slightly tinted toward the brand hue (2–4% saturation) so grays feel warm or cool on purpose, not dead. The hex values in the table are a neutral reference showing the required roles and contrast relationships; build the app's own palette (its accent, tinted neutrals and signature tones from the brief) to the same roles and contrast ratios instead of shipping these values.
 
-| Role | Light | Dark | Use |
-| --- | --- | --- | --- |
-| bg.primary | #FFFFFF | #000000 or #0A0A0B | Plain screens |
-| bg.grouped | #F2F2F7 | #000000 | Behind grouped lists |
-| bg.elevated | #FFFFFF | #1C1C1E | Cards, sheets, rows on grouped bg |
-| bg.elevated2 | #F2F2F7 | #2C2C2E | Inputs and controls inside elevated surfaces |
-| label.primary | #000000 at 92% | #FFFFFF at 96% | Titles, body |
-| label.secondary | #3C3C43 at 60% | #EBEBF5 at 60% | Subtitles |
-| label.tertiary | #3C3C43 at 30% | #EBEBF5 at 30% | Placeholders, disabled |
-| separator | #3C3C43 at 29%, hairline | #545458 at 60%, hairline | Row dividers |
-| accent | brand color, AA on bg | brand color lifted 8–12% lightness | Primary actions, selection, links |
-| success / warning / destructive | #34C759 / #FF9F0A / #FF3B30 (or tuned to brand) | dark-tuned variants | Status only, never decoration |
+| Role                            | Light                                           | Dark                               | Use                                          |
+| ------------------------------- | ----------------------------------------------- | ---------------------------------- | -------------------------------------------- |
+| bg.primary                      | #FFFFFF                                         | #000000 or #0A0A0B                 | Plain screens                                |
+| bg.grouped                      | #F2F2F7                                         | #000000                            | Behind grouped lists                         |
+| bg.elevated                     | #FFFFFF                                         | #1C1C1E                            | Cards, sheets, rows on grouped bg            |
+| bg.elevated2                    | #F2F2F7                                         | #2C2C2E                            | Inputs and controls inside elevated surfaces |
+| label.primary                   | #000000 at 92%                                  | #FFFFFF at 96%                     | Titles, body                                 |
+| label.secondary                 | #3C3C43 at 60%                                  | #EBEBF5 at 60%                     | Subtitles                                    |
+| label.tertiary                  | #3C3C43 at 30%                                  | #EBEBF5 at 30%                     | Placeholders, disabled                       |
+| separator                       | #3C3C43 at 29%, hairline                        | #545458 at 60%, hairline           | Row dividers                                 |
+| accent                          | brand color, AA on bg                           | brand color lifted 8–12% lightness | Primary actions, selection, links            |
+| success / warning / destructive | #34C759 / #FF9F0A / #FF3B30 (or tuned to brand) | dark-tuned variants                | Status only, never decoration                |
 
 Rules:
 
@@ -190,12 +190,12 @@ Prefer three levels only: base, raised (cards), overlay (sheets, menus, toasts).
 
 Layouts adapt by size class, not by stretching. A phone layout scaled up to a tablet is a fail.
 
-| Size class | Width | Layout |
-| --- | --- | --- |
-| Compact phone | < 390 | Single column, 16 margins, bottom tab bar, sheets for secondary flows |
-| Regular phone | 390–430 | Single column, 20 margins |
-| Tablet portrait / small window | 600–900 | Readable column max 672 wide, or sidebar + content |
-| Tablet landscape / desktop | > 900 | Sidebar (260–320) + content + optional inspector; sheets become centered popovers or side panels |
+| Size class                     | Width   | Layout                                                                                           |
+| ------------------------------ | ------- | ------------------------------------------------------------------------------------------------ |
+| Compact phone                  | < 390   | Single column, 16 margins, bottom tab bar, sheets for secondary flows                            |
+| Regular phone                  | 390–430 | Single column, 20 margins                                                                        |
+| Tablet portrait / small window | 600–900 | Readable column max 672 wide, or sidebar + content                                               |
+| Tablet landscape / desktop     | > 900   | Sidebar (260–320) + content + optional inspector; sheets become centered popovers or side panels |
 
 Rules:
 
@@ -217,13 +217,13 @@ Motion is physics, not timing. Default to springs for anything that moves, scale
 
 The same five springs are used everywhere. Values given as Apple-style (response, damping fraction) and as mass-1 stiffness/damping for Reanimated, Framer Motion, React Spring, Compose.
 
-| Token | Response / damping fraction | Stiffness / damping | Use |
-| --- | --- | --- | --- |
-| spring.press | 0.20 s / 1.0 | 987 / 63 | Press-down and release on buttons, rows, cards |
-| spring.snappy | 0.30 s / 0.90 | 439 / 38 | Toggles, segmented controls, small UI changes, menus |
-| spring.smooth | 0.40 s / 0.85 (iOS `.smooth`-like) | 247 / 27 | Default: navigation, layout changes, sheets |
-| spring.gentle | 0.55 s / 0.85 | 131 / 19 | Large surfaces, hero expansions, full-screen zoom |
-| spring.bouncy | 0.50 s / 0.65 | 158 / 16 | Rare moments of delight only: success, a completed goal, a dropped item settling |
+| Token         | Response / damping fraction        | Stiffness / damping | Use                                                                              |
+| ------------- | ---------------------------------- | ------------------- | -------------------------------------------------------------------------------- |
+| spring.press  | 0.20 s / 1.0                       | 987 / 63            | Press-down and release on buttons, rows, cards                                   |
+| spring.snappy | 0.30 s / 0.90                      | 439 / 38            | Toggles, segmented controls, small UI changes, menus                             |
+| spring.smooth | 0.40 s / 0.85 (iOS `.smooth`-like) | 247 / 27            | Default: navigation, layout changes, sheets                                      |
+| spring.gentle | 0.55 s / 0.85                      | 131 / 19            | Large surfaces, hero expansions, full-screen zoom                                |
+| spring.bouncy | 0.50 s / 0.65                      | 158 / 16            | Rare moments of delight only: success, a completed goal, a dropped item settling |
 
 Rules: no bounce on things that carry information (text, numbers, layout). Bounce only on objects the user threw or a celebration. Overshoot never exceeds \~5% of the distance.
 
@@ -231,18 +231,18 @@ Tune these to the motion personality in the brief. A calm, precise app can run e
 
 ### 5.2 Timed tokens (opacity, color, blur)
 
-| Token | Duration | Curve | Use |
-| --- | --- | --- | --- |
-| fade.fast | 120 ms | ease-out `cubic-bezier(0.2, 0, 0, 1)` | Press highlight off, tooltip, hover |
-| fade.standard | 200 ms | ease-out | Content swap, image load, crossfades |
-| fade.exit | 150 ms | ease-in `cubic-bezier(0.4, 0, 1, 1)` | Things leaving; exits are faster than entrances |
-| color.state | 180 ms | ease-in-out | Background/tint change on selection |
+| Token         | Duration | Curve                                 | Use                                             |
+| ------------- | -------- | ------------------------------------- | ----------------------------------------------- |
+| fade.fast     | 120 ms   | ease-out `cubic-bezier(0.2, 0, 0, 1)` | Press highlight off, tooltip, hover             |
+| fade.standard | 200 ms   | ease-out                              | Content swap, image load, crossfades            |
+| fade.exit     | 150 ms   | ease-in `cubic-bezier(0.4, 0, 1, 1)`  | Things leaving; exits are faster than entrances |
+| color.state   | 180 ms   | ease-in-out                           | Background/tint change on selection             |
 
 Never use linear easing except for indeterminate progress or scrubbing tied 1:1 to a gesture. Never exceed 500 ms for anything the user waits on.
 
 ### 5.3 Choreography
 
-- **Spatial continuity.** Elements travel from where they were to where they go. Tapping a card expands *that card* into the detail view (matched geometry / shared element transition); dismissing shrinks it back into its slot. Nothing appears from nowhere.
+- **Spatial continuity.** Elements travel from where they were to where they go. Tapping a card expands _that card_ into the detail view (matched geometry / shared element transition); dismissing shrinks it back into its slot. Nothing appears from nowhere.
 - **Gesture-driven and velocity-aware.** Swipe-to-go-back, sheet drags and card swipes track the finger 1:1, then hand the release velocity to the spring. A fast flick completes; a slow drag past 50% completes; anything else springs back.
 - **Hierarchy in time.** The thing the user touched moves first; context follows. Stagger list items by 20–30 ms, maximum 6 items staggered, the rest appear together. Total stagger under 200 ms.
 - **Exits are quick and quiet.** Leaving elements fade + scale to 0.96 over 150 ms; entering elements take the longer spring.
@@ -252,17 +252,17 @@ Never use linear easing except for indeterminate progress or scrubbing tied 1:1 
 
 ### 5.4 Transition catalogue
 
-| Moment | Transition |
-| --- | --- |
-| Push to detail | Platform push (iOS: slide + parallax, edge swipe back). If the source is a card or image, zoom from it instead |
-| Open card / photo / item | Shared-element zoom with spring.gentle; background dims to 40% and scales to 0.94 |
-| Sheet | Slides up with spring.smooth; supports detents (medium, large); drag down to dismiss with rubber-banding at the top |
-| Tab switch | Instant content swap, or a 150 ms crossfade; never a slide. Tab icon does a small bounce or symbol effect on select |
-| Menus / popovers | Scale from the source point (0.9 → 1) + fade, spring.snappy, anchored at the trigger |
-| Toast / banner | Slides in from the edge nearest its cause, auto-dismisses after 3–4 s, swipe to dismiss |
-| Delete from list | Row collapses height + fades with spring.smooth; siblings close the gap; undo toast appears |
-| Pull to refresh | Indicator stretches with the pull, haptic tick at the threshold, content settles back with spring.smooth when done |
-| Completion / success | One restrained moment: checkmark draws (stroke animation 300 ms), spring.bouncy scale on the item, success haptic. No confetti unless it's a genuine milestone |
+| Moment                   | Transition                                                                                                                                                     |
+| ------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Push to detail           | Platform push (iOS: slide + parallax, edge swipe back). If the source is a card or image, zoom from it instead                                                 |
+| Open card / photo / item | Shared-element zoom with spring.gentle; background dims to 40% and scales to 0.94                                                                              |
+| Sheet                    | Slides up with spring.smooth; supports detents (medium, large); drag down to dismiss with rubber-banding at the top                                            |
+| Tab switch               | Instant content swap, or a 150 ms crossfade; never a slide. Tab icon does a small bounce or symbol effect on select                                            |
+| Menus / popovers         | Scale from the source point (0.9 → 1) + fade, spring.snappy, anchored at the trigger                                                                           |
+| Toast / banner           | Slides in from the edge nearest its cause, auto-dismisses after 3–4 s, swipe to dismiss                                                                        |
+| Delete from list         | Row collapses height + fades with spring.smooth; siblings close the gap; undo toast appears                                                                    |
+| Pull to refresh          | Indicator stretches with the pull, haptic tick at the threshold, content settles back with spring.smooth when done                                             |
+| Completion / success     | One restrained moment: checkmark draws (stroke animation 300 ms), spring.bouncy scale on the item, success haptic. No confetti unless it's a genuine milestone |
 
 ### 5.5 When not to animate
 
@@ -280,13 +280,13 @@ The app must acknowledge every touch on touch-down, before the user lifts their 
 
 ### 6.1 Touch response
 
-| Element | On press (touch-down) | On release |
-| --- | --- | --- |
-| Primary / secondary button | Scale to 0.97, brightness −8% (spring.press) | Spring back; action fires; haptic if meaningful |
-| List row | Background fills to a highlight (label color at 6–8%) instantly | Highlight fades out over fade.fast after navigation starts |
-| Card | Scale to 0.98, shadow tightens | Spring back or zoom into detail |
-| Icon button | Icon scales to 0.88 and dims to 60% | Spring back |
-| Toggle / checkbox | Thumb stretches slightly in the drag direction | Snaps to state with spring.snappy + selection haptic |
+| Element                    | On press (touch-down)                                           | On release                                                 |
+| -------------------------- | --------------------------------------------------------------- | ---------------------------------------------------------- |
+| Primary / secondary button | Scale to 0.97, brightness −8% (spring.press)                    | Spring back; action fires; haptic if meaningful            |
+| List row                   | Background fills to a highlight (label color at 6–8%) instantly | Highlight fades out over fade.fast after navigation starts |
+| Card                       | Scale to 0.98, shadow tightens                                  | Spring back or zoom into detail                            |
+| Icon button                | Icon scales to 0.88 and dims to 60%                             | Spring back                                                |
+| Toggle / checkbox          | Thumb stretches slightly in the drag direction                  | Snaps to state with spring.snappy + selection haptic       |
 
 - If the finger drags off the element, the press state releases and the action cancels (standard iOS behavior). Scrolling a list must never trigger a row's action.
 - Hit targets are at least 44 × 44 even when the visible element is smaller; extend with invisible padding.
@@ -305,15 +305,15 @@ The app must acknowledge every touch on touch-down, before the user lifts their 
 
 Haptics confirm; they don't decorate. Use the platform's semantic generators, never raw vibration.
 
-| Event | Haptic (iOS / Android equivalent) |
-| --- | --- |
-| Selection change (picker, segmented control, toggle, drag over a snap point) | selection / `CLOCK_TICK` |
-| Button that commits something (save, send, add) | impact light / `CONFIRM` |
-| Crossing a gesture threshold (swipe action, pull-to-refresh) | impact medium, once per crossing |
-| Drop / snap of a dragged object | impact soft or rigid depending on surface |
-| Success of a meaningful task | notification success |
-| Error or validation failure | notification error, paired with a field shake (3 cycles, 6 pt, 300 ms) |
-| Destructive confirm | notification warning |
+| Event                                                                        | Haptic (iOS / Android equivalent)                                      |
+| ---------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| Selection change (picker, segmented control, toggle, drag over a snap point) | selection / `CLOCK_TICK`                                               |
+| Button that commits something (save, send, add)                              | impact light / `CONFIRM`                                               |
+| Crossing a gesture threshold (swipe action, pull-to-refresh)                 | impact medium, once per crossing                                       |
+| Drop / snap of a dragged object                                              | impact soft or rigid depending on surface                              |
+| Success of a meaningful task                                                 | notification success                                                   |
+| Error or validation failure                                                  | notification error, paired with a field shake (3 cycles, 6 pt, 300 ms) |
+| Destructive confirm                                                          | notification warning                                                   |
 
 Rules: never fire a haptic for scrolling, navigation pushes or plain taps on links. Never two haptics within 100 ms. Prepare generators ahead of time so feedback lands on the same frame as the visual.
 
@@ -383,17 +383,17 @@ Each component is built once, with every state from 6.4, and reused everywhere. 
 
 These states are where hand-crafted apps and generated apps differ most, because generated apps forget them. Design all four for every screen and every async component.
 
-| State | Standard |
-| --- | --- |
-| First launch / empty | Says what will appear here and offers the one action that fills it. Small custom illustration or large SF Symbol (48–64, tertiary), title3 headline, one line of subhead, one button. Vertically centered slightly above middle (optical center). Optionally a ghosted preview of what filled content looks like |
-| Empty after filtering / search | "No results for “query”" + suggestion ("Check spelling or try a broader term") + clear-filter action. No illustration |
-| Loading, first time | Skeletons that match real content shape and size, with a subtle shimmer (1.2 s loop, low contrast) or a slow pulse. Never a centered spinner on a blank screen |
-| Loading under 300 ms | Show nothing new. Flashing a skeleton for 100 ms looks broken; delay loading UI by \~300 ms |
-| Loading, refresh | Keep showing cached content; indicate refresh in place (pull indicator or small inline progress) |
-| Long task | Determinate progress with honest estimates; let the user leave and get notified on completion |
-| Error, recoverable | Inline, near the cause, plain language, one action (Retry / Edit). Keep whatever content can still be shown |
-| Error, offline | Persistent but quiet banner; queue user actions and sync later; show which items are pending |
-| Success | Usually silent: the result appearing is the confirmation. For meaningful completions, one moment from 5.4 plus success haptic |
+| State                          | Standard                                                                                                                                                                                                                                                                                                         |
+| ------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| First launch / empty           | Says what will appear here and offers the one action that fills it. Small custom illustration or large SF Symbol (48–64, tertiary), title3 headline, one line of subhead, one button. Vertically centered slightly above middle (optical center). Optionally a ghosted preview of what filled content looks like |
+| Empty after filtering / search | "No results for “query”" + suggestion ("Check spelling or try a broader term") + clear-filter action. No illustration                                                                                                                                                                                            |
+| Loading, first time            | Skeletons that match real content shape and size, with a subtle shimmer (1.2 s loop, low contrast) or a slow pulse. Never a centered spinner on a blank screen                                                                                                                                                   |
+| Loading under 300 ms           | Show nothing new. Flashing a skeleton for 100 ms looks broken; delay loading UI by \~300 ms                                                                                                                                                                                                                      |
+| Loading, refresh               | Keep showing cached content; indicate refresh in place (pull indicator or small inline progress)                                                                                                                                                                                                                 |
+| Long task                      | Determinate progress with honest estimates; let the user leave and get notified on completion                                                                                                                                                                                                                    |
+| Error, recoverable             | Inline, near the cause, plain language, one action (Retry / Edit). Keep whatever content can still be shown                                                                                                                                                                                                      |
+| Error, offline                 | Persistent but quiet banner; queue user actions and sync later; show which items are pending                                                                                                                                                                                                                     |
+| Success                        | Usually silent: the result appearing is the confirmation. For meaningful completions, one moment from 5.4 plus success haptic                                                                                                                                                                                    |
 
 Transitions between states crossfade (fade.standard) and keep layout stable: skeletons occupy the same frames as the content that replaces them, so nothing jumps.
 
@@ -427,14 +427,14 @@ Accessibility is part of the premium bar: Apple's own apps are fully accessible,
 
 A beautiful animation that drops frames looks worse than no animation. These budgets are pass/fail.
 
-| Metric | Target |
-| --- | --- |
+| Metric                                          | Target                                                                                              |
+| ----------------------------------------------- | --------------------------------------------------------------------------------------------------- |
 | Frame rate during scroll, gestures, transitions | Locked 60 fps; 120 fps on ProMotion/high-refresh devices. Zero dropped frames on a mid-range device |
-| Touch-to-visual-feedback | < 16 ms (same frame) |
-| Tap-to-navigation start | < 100 ms |
-| Cold start to first meaningful content | < 1 s on a recent device, with cached data shown first |
-| Layout shift after first paint | None. Images, async text and skeletons reserve their final size |
-| Web | LCP < 2.0 s, INP < 100 ms, CLS < 0.05 |
+| Touch-to-visual-feedback                        | < 16 ms (same frame)                                                                                |
+| Tap-to-navigation start                         | < 100 ms                                                                                            |
+| Cold start to first meaningful content          | < 1 s on a recent device, with cached data shown first                                              |
+| Layout shift after first paint                  | None. Images, async text and skeletons reserve their final size                                     |
+| Web                                             | LCP < 2.0 s, INP < 100 ms, CLS < 0.05                                                               |
 
 Rules:
 
@@ -449,18 +449,18 @@ Rules:
 
 Use whichever row matches the app's stack. Use native components for behavior (scrolling, gestures, text input, accessibility) and style them to the identity; build custom only where native can't reach the bar or the look.
 
-| Concern | SwiftUI (iOS) | React Native / Expo | Web (React) |
-| --- | --- | --- | --- |
-| Springs | `.spring(response:dampingFraction:)`, `.smooth`, `.snappy`, `.bouncy` | `react-native-reanimated` `withSpring({ stiffness, damping, mass: 1 })` | `motion` (Framer Motion) `type: "spring"` with stiffness/damping, or CSS `linear()` spring approximations |
-| Gestures | Native gestures, `DragGesture` with `predictedEndTranslation` | `react-native-gesture-handler` + Reanimated, velocity passed into `withSpring` | `motion` drag with `dragElastic`, or `@use-gesture/react` |
-| Shared element / zoom | `.matchedGeometryEffect`, `.navigationTransition(.zoom)` | Reanimated shared transitions or a custom overlay animation | `motion` `layoutId`, View Transitions API |
-| Layout animation | `withAnimation` around state changes | Reanimated `Layout` / `entering` / `exiting` | `motion` `layout` prop, `AnimatePresence` |
-| Haptics | `.sensoryFeedback(...)` / UIFeedbackGenerator | `expo-haptics` (selection, impact, notification) | Vibration API on Android only; otherwise rely on visual feedback |
-| Materials | `.regularMaterial`, `.ultraThinMaterial` | `expo-blur` `BlurView` | `backdrop-filter: blur() saturate()` |
-| Numbers | `.contentTransition(.numericText())`, `.monospacedDigit()` | Per-digit animated text component, `fontVariant: ['tabular-nums']` | `tabular-nums` + per-digit slide (e.g. NumberFlow) |
-| Lists | `List` / `LazyVStack`, `.swipeActions`, `.contextMenu` | `FlashList`, swipeable rows via gesture handler, `react-native-ios-context-menu` or Zeego | Virtualized list, Radix/Base UI menus |
-| Sheets | `.sheet` + `.presentationDetents` | `@gorhom/bottom-sheet` or native form sheets (Expo Router) | Vaul drawer on touch, dialog on desktop |
-| Corners | `.continuous` style | `borderCurve: 'continuous'` (iOS) | `corner-shape: squircle` progressive enhancement |
+| Concern               | SwiftUI (iOS)                                                         | React Native / Expo                                                                       | Web (React)                                                                                               |
+| --------------------- | --------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| Springs               | `.spring(response:dampingFraction:)`, `.smooth`, `.snappy`, `.bouncy` | `react-native-reanimated` `withSpring({ stiffness, damping, mass: 1 })`                   | `motion` (Framer Motion) `type: "spring"` with stiffness/damping, or CSS `linear()` spring approximations |
+| Gestures              | Native gestures, `DragGesture` with `predictedEndTranslation`         | `react-native-gesture-handler` + Reanimated, velocity passed into `withSpring`            | `motion` drag with `dragElastic`, or `@use-gesture/react`                                                 |
+| Shared element / zoom | `.matchedGeometryEffect`, `.navigationTransition(.zoom)`              | Reanimated shared transitions or a custom overlay animation                               | `motion` `layoutId`, View Transitions API                                                                 |
+| Layout animation      | `withAnimation` around state changes                                  | Reanimated `Layout` / `entering` / `exiting`                                              | `motion` `layout` prop, `AnimatePresence`                                                                 |
+| Haptics               | `.sensoryFeedback(...)` / UIFeedbackGenerator                         | `expo-haptics` (selection, impact, notification)                                          | Vibration API on Android only; otherwise rely on visual feedback                                          |
+| Materials             | `.regularMaterial`, `.ultraThinMaterial`                              | `expo-blur` `BlurView`                                                                    | `backdrop-filter: blur() saturate()`                                                                      |
+| Numbers               | `.contentTransition(.numericText())`, `.monospacedDigit()`            | Per-digit animated text component, `fontVariant: ['tabular-nums']`                        | `tabular-nums` + per-digit slide (e.g. NumberFlow)                                                        |
+| Lists                 | `List` / `LazyVStack`, `.swipeActions`, `.contextMenu`                | `FlashList`, swipeable rows via gesture handler, `react-native-ios-context-menu` or Zeego | Virtualized list, Radix/Base UI menus                                                                     |
+| Sheets                | `.sheet` + `.presentationDetents`                                     | `@gorhom/bottom-sheet` or native form sheets (Expo Router)                                | Vaul drawer on touch, dialog on desktop                                                                   |
+| Corners               | `.continuous` style                                                   | `borderCurve: 'continuous'` (iOS)                                                         | `corner-shape: squircle` progressive enhancement                                                          |
 
 Cross-platform apps follow each platform's conventions for navigation, back behavior and controls (e.g. native date pickers, switches). Brand lives in color, type, motion character and content, not in reinventing standard controls.
 

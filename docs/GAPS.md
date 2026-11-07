@@ -9,7 +9,7 @@ that is missing or partial · P3 = polish, hygiene, or spec/repo drift · P4 = P
 
 ## Where things stand
 
-22 of the 32 Phase 1 items are done (G-05 with a follow-up), one is deferred indefinitely (G-06), and nine remain:
+23 of the 32 Phase 1 items are done (G-05 with a follow-up), one is deferred indefinitely (G-06), and eight remain:
 
 | Open | Item                                | Size |
 | ---- | ----------------------------------- | ---- |
@@ -20,7 +20,6 @@ that is missing or partial · P3 = polish, hygiene, or spec/repo drift · P4 = P
 | G-25 | Notifications in the wrong layer    | S    |
 | G-26 | shadcn/ui not used                  | S    |
 | G-27 | Zustand dependency unused           | S    |
-| G-28 | Audit events are write-only         | S    |
 | G-29 | Spec document is stale              | S    |
 
 The one follow-up to a done item is G-05: a real Vercel preview deploy has not been checked. Phase 2 (P4) is untouched by design.
@@ -46,7 +45,7 @@ What shipped, and what was deliberately left out. Decisions with a longer ration
 
 | ID   | What shipped                                                                                                                                                                                                                                                                                                                                                       | Known limits                                                                                                                                                         |
 | ---- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| G-07 | Attachments on assets, completions and activities, stored outside the database, with camera capture, usage in Settings, and an optional backup zip with per-file hash checks.                                                                                                                                                                                      | No asset delete exists yet, so the "block delete while attached" rule is untested.                                                                                   |
+| G-07 | Attachments on assets, completions and activities, stored outside the database, with camera capture, usage in Settings, and an optional backup zip with per-file hash checks.                                                                                                                                                                                      | An asset can now be deleted only when nothing uses it and it has no readings or files (tested).                                                                      |
 | G-08 | Condition schedules: a numeric reading fires when it meets the condition and the previous one did not. Staying past the limit does not refire; it must come back first. One open occurrence per schedule.                                                                                                                                                          | Qualitative readings and unit conversion (the unit is not compared).                                                                                                 |
 | G-09 | Event schedules: completing another activity creates one occurrence of the dependent activity, due `delayDays` later. At most one open occurrence; triggers never chain, so A→B→A cannot loop; undoing the trigger supersedes the follow-up.                                                                                                                       | Named events fired by hand. A correction that moves the trigger's date does not re-date an existing follow-up.                                                       |
 | G-10 | The activity form offers "every N units from a start date, regardless of completion", and existing fixed schedules are editable.                                                                                                                                                                                                                                   |                                                                                                                                                                      |
@@ -63,11 +62,12 @@ What shipped, and what was deliberately left out. Decisions with a longer ration
 
 ### P3 — hygiene and documentation
 
-| ID   | What shipped                                                                                                                                                                                                                                                      | Known limits                                                                             |
-| ---- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
-| G-30 | Root [README.md](../README.md) (requirements, commands, e2e suite, package layout, things to know) and [decisions/README.md](decisions/README.md), which indexes the spec's ADR-001 to 019 in order and the numbered records.                                     | The one-line ADRs are not split into separate files; the spec's own table order is G-29. |
-| G-31 | The tracked vitest JSON output is removed and `.vitest` is ignored.                                                                                                                                                                                               |                                                                                          |
-| G-32 | `dist` is ignored. The manifest, `index.html` and the icon background share the `--brand` colour (`#0f8a6d`), the PNG icons are regenerated, and the sidebar mark matches the icon (a checkmark). A test fails if the colours drift or an icon is the wrong size. | The regenerated icons and the new sidebar mark have not been looked at in a browser.     |
+| ID   | What shipped                                                                                                                                                                                                                                                      | Known limits                                                                                        |
+| ---- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| G-30 | Root [README.md](../README.md) (requirements, commands, e2e suite, package layout, things to know) and [decisions/README.md](decisions/README.md), which indexes the spec's ADR-001 to 019 in order and the numbered records.                                     | The one-line ADRs are not split into separate files; the spec's own table order is G-29.            |
+| G-28 | Settings → "Recent changes" lists the last 30 changes, worded for a person. Snoozing, moving an item and recording a reading now write audit events.                                                                                                              | The automatic reconcile is not audited (a person did not do it). A per-activity log does not exist. |
+| G-31 | The tracked vitest JSON output is removed and `.vitest` is ignored.                                                                                                                                                                                               |                                                                                                     |
+| G-32 | `dist` is ignored. The manifest, `index.html` and the icon background share the `--brand` colour (`#0f8a6d`), the PNG icons are regenerated, and the sidebar mark matches the icon (a checkmark). A test fails if the colours drift or an icon is the wrong size. | The regenerated icons and the new sidebar mark have not been looked at in a browser.                |
 
 ---
 
@@ -136,10 +136,6 @@ Spec §5.1 puts notification adapters in infrastructure. They now sit in `apps/w
 
 Listed in §3.1 and declared in `apps/web/package.json`, but no source file imports it. Remove it, or use it for the transient UI state it was chosen for.
 
-#### G-28 Audit events are write-only — S
-
-`audit_events` is written by most use cases, but nothing reads it, so there is no way to see it. Coverage is incomplete: completing, skipping, cancelling, voiding and correcting, editing, archiving, pausing and resuming, assets, categories, places, reminders and attachments write events. **Snoozing, rescheduling, recording a measurement and the automatic reconcile do not.** Decide: expose an activity or change log, or reduce scope, and either audit those four or record why not.
-
 #### G-29 Spec document is stale — S
 
 - §11.1 has escaped backticks (`\`lead_days\``, `\`at_time\``, `\`enabled\``, `\`reminder_deliveries\``) that render literally.
@@ -188,12 +184,11 @@ Phase 2 also inherits deferrals from done items: encrypted storage, app lock and
 
 1. **Cheap hygiene:** G-27 (remove or use Zustand), then G-05's preview check.
 2. **Quality passes:** G-20, G-21, G-22.
-3. **Spec alignment and docs:** G-24 (remaining rows), G-25, G-26, G-28, G-29.
+3. **Spec alignment and docs:** G-24 (remaining rows), G-25, G-26, G-29.
 
 ## Decisions needed from you
 
 1. G-26: adopt shadcn/ui for complex controls, or amend the spec to say the UI is hand-rolled Tailwind? (Per the rule above, the default is to adopt it so the code matches §3.1; say if you would rather drop it from the spec.)
-2. G-28: expose a change log in the app, or keep the audit trail as an internal record only?
-3. G-25: do the Web Push contract now, or wait until G-33 is scheduled?
+2. G-25: do the Web Push contract now, or wait until G-33 is scheduled?
 
 Settled earlier: infrastructure adapters are split by platform and the manifest is generated at build time (G-24); CI is deferred indefinitely (G-06); an "event" is the completion of another activity (G-09); `missed` is a stored status (G-11, G-17); digital, routines and household use presets over activities rather than new entities (G-12, G-14, G-15); Phase 1 attachments store files locally outside the database and optionally in a backup zip (G-07).
