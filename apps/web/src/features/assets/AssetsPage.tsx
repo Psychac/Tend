@@ -56,7 +56,7 @@ export function AssetsPage() {
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h2 className="text-xl font-semibold">Assets</h2>
+        <h2 className="text-2xl font-semibold">Assets</h2>
         <button type="button" className={primary} onClick={() => setAdding(!adding)}>
           {adding ? 'Close' : 'Add asset'}
         </button>

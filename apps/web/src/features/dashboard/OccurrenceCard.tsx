@@ -18,6 +18,11 @@ interface Props {
 }
 
 const button = 'btn';
+const SNOOZE_CHOICES = [
+  { label: 'Tomorrow', days: 1 },
+  { label: 'In 3 days', days: 3 },
+  { label: 'Next week', days: 7 },
+] as const;
 const primary = 'btn btn-primary';
 
 function timingLabel(item: OccurrenceItem): string | null {
@@ -36,6 +41,10 @@ export function OccurrenceCard({ item, today }: Props) {
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [confirmCancel, setConfirmCancel] = useState(false);
+  const [panel, setPanel] = useState<'snooze' | 'more' | null>(null);
+  const [pickDate, setPickDate] = useState('');
+  // A snooze must land after the current due date, even for something long overdue.
+  const base = item.dueOn > today ? item.dueOn : today;
   const [error, setError] = useState<string | null>(null);
 
   const requiredMeasurements = activity.measurementRequirements.filter((r) => r.required);
@@ -48,6 +57,11 @@ export function OccurrenceCard({ item, today }: Props) {
     setBusy(false);
     if (!result.ok) setError(describeError(result.error));
   }
+
+  const snooze = (until: LocalDate) => {
+    setPanel(null);
+    void run(() => snoozeOccurrence(deps, { occurrenceId: occurrence.id, until }));
+  };
 
   const quickDone = () => {
     // Required measurements cannot be skipped, so ask for them instead of failing.
@@ -95,33 +109,84 @@ export function OccurrenceCard({ item, today }: Props) {
           <button
             type="button"
             className={button}
+            aria-expanded={panel === 'snooze'}
             disabled={busy}
-            onClick={() =>
-              void run(() =>
-                snoozeOccurrence(deps, { occurrenceId: occurrence.id, until: addDays(today, 1) }),
-              )
-            }
+            onClick={() => setPanel(panel === 'snooze' ? null : 'snooze')}
           >
-            Snooze a day
+            Snooze
           </button>
           <button
             type="button"
             className={button}
+            aria-expanded={panel === 'more'}
             disabled={busy}
-            onClick={() => void run(() => skipOccurrence(deps, { occurrenceId: occurrence.id }))}
+            onClick={() => setPanel(panel === 'more' ? null : 'more')}
           >
-            Skip
-          </button>
-          <button
-            type="button"
-            className={button}
-            disabled={busy}
-            onClick={() => setConfirmCancel(true)}
-          >
-            Cancel
+            More
           </button>
         </div>
       </div>
+
+      {panel === 'snooze' ? (
+        <div role="group" aria-label="Snooze until" className="mt-2 flex flex-wrap items-end gap-2">
+          {SNOOZE_CHOICES.map((c) => (
+            <button
+              key={c.label}
+              type="button"
+              className={button}
+              disabled={busy}
+              onClick={() => snooze(addDays(base, c.days))}
+            >
+              {c.label}
+            </button>
+          ))}
+          <label className="block text-sm">
+            Pick a date
+            <input
+              type="date"
+              min={addDays(base, 1)}
+              value={pickDate}
+              onChange={(e) => setPickDate(e.target.value)}
+              className="mt-1 block field"
+            />
+          </label>
+          <button
+            type="button"
+            className={button}
+            disabled={busy || !pickDate}
+            onClick={() => snooze(pickDate as LocalDate)}
+          >
+            Snooze to date
+          </button>
+        </div>
+      ) : null}
+
+      {panel === 'more' && !confirmCancel ? (
+        <div role="group" aria-label="More actions" className="mt-2 space-y-2 text-sm">
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              className={button}
+              disabled={busy}
+              onClick={() => void run(() => skipOccurrence(deps, { occurrenceId: occurrence.id }))}
+            >
+              Skip
+            </button>
+            <span className="text-muted">Not doing it this time. Counted as skipped.</span>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              className={button}
+              disabled={busy}
+              onClick={() => setConfirmCancel(true)}
+            >
+              Cancel
+            </button>
+            <span className="text-muted">Remove it from the list. Not counted as skipped.</span>
+          </div>
+        </div>
+      ) : null}
 
       {confirmCancel ? (
         <div role="group" aria-label="Confirm cancel" className="mt-2 space-y-2 text-sm">

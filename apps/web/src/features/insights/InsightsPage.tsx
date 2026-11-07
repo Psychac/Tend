@@ -33,7 +33,7 @@ export function InsightsPage() {
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h2 className="text-xl font-semibold">Insights</h2>
+        <h2 className="text-2xl font-semibold">Insights</h2>
         <label className="text-sm">
           Period{' '}
           <select
@@ -97,10 +97,14 @@ function Report({ view }: { view: InsightsView }) {
         <h3 id="spend-heading" className="text-lg font-medium">
           Spending
         </h3>
-        <p>
-          <span className="text-muted">Total: </span>
-          <span className="font-medium">{spendText(view.spend)}</span>
-        </p>
+        {view.spend.length === 0 ? (
+          <p className="text-muted">No costs recorded in this period.</p>
+        ) : (
+          <p>
+            <span className="text-muted">Total: </span>
+            <span className="font-medium">{spendText(view.spend)}</span>
+          </p>
+        )}
         {view.spend.length > 1 ? (
           <p className="text-sm text-muted">
             Costs were recorded in more than one currency, so they are shown separately rather than

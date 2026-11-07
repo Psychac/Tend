@@ -31,7 +31,7 @@ export function DigitalPage() {
   return (
     <div className="space-y-4">
       <div>
-        <h2 className="text-xl font-semibold">Digital upkeep</h2>
+        <h2 className="text-2xl font-semibold">Digital upkeep</h2>
         <p className="text-sm text-muted">
           Renewals, backups and reviews. Don’t store passwords, authentication secrets or recovery
           codes in Tend.

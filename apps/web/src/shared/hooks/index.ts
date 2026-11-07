@@ -55,13 +55,14 @@ export function useAction() {
 export const describeError = (e: DomainError): string =>
   e.issues.length > 0 ? e.issues.map((i) => `${i.path}: ${i.message}`).join('; ') : e.message;
 
-/** "Thu 5 Nov" for a YYYY-MM-DD date, independent of the viewer's timezone. */
+/** "Thu 5 Nov" for a YYYY-MM-DD date, independent of the viewer's timezone. The year is added when it is not this year. */
 export function formatDate(date: string): string {
   const [y, m, d] = date.split('-').map(Number) as [number, number, number];
   return new Date(Date.UTC(y, m - 1, d)).toLocaleDateString('en-GB', {
     weekday: 'short',
     day: 'numeric',
     month: 'short',
+    ...(y === new Date().getFullYear() ? {} : { year: 'numeric' as const }),
     timeZone: 'UTC',
   });
 }

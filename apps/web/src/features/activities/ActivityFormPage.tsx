@@ -376,7 +376,7 @@ export function ActivityForm({ initial }: { initial?: ActivityFormInitial | unde
 
   return (
     <form onSubmit={submit} className="max-w-xl space-y-4">
-      <h2 className="text-xl font-semibold">{editing ? 'Edit activity' : 'New activity'}</h2>
+      <h2 className="text-2xl font-semibold">{editing ? 'Edit activity' : 'New activity'}</h2>
 
       <label className="block text-sm">
         Name

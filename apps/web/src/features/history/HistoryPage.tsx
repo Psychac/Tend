@@ -55,7 +55,7 @@ export function HistoryPage() {
 
   return (
     <div className="space-y-4">
-      <h2 className="text-xl font-semibold">History</h2>
+      <h2 className="text-2xl font-semibold">History</h2>
 
       <div className="flex flex-wrap gap-4">
         <label className="block text-sm">

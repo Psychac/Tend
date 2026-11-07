@@ -19,17 +19,17 @@ Creating activities, completing one and visiting every screen. This is separate 
 
 - **Onboarding.** A new user gets an empty Dashboard and one sentence. The presets (Household, Digital, Routines) are the best way in but sit three items down the nav.
 - **A long first form.** New activity shows type, priority, category, place, asset, repeat, reminder, checklist and readings at once. A presets-first or simple/advanced flow would shorten it.
-- **Five buttons per Dashboard card** (Done, Details, Snooze a day, Skip, Cancel). Skip and Cancel are hard to tell apart.
-- **Snooze is fixed at one day.** No "next week" or "pick a date".
+- ~~**Five buttons per Dashboard card.**~~ **Fixed.** Cards show Done, Details, Snooze and More. More holds Skip and Cancel, each with a one-line explanation.
+- ~~**Snooze is fixed at one day.**~~ **Fixed.** Tomorrow, in 3 days, next week, or a picked date.
 - **Nothing can be deleted.** Activities can only be archived; assets have no delete (GAPS G-07).
 - **No visible change log.** Audit events are written and never shown (GAPS G-28).
 - **Notifications only fire while the app is open.** Web Push is Phase 2 (GAPS G-33).
 - **No app-wide search,** only per-list filters.
-- **Dates:** the Dashboard shows "Sat 7 Nov" with no year, while the date field shows "07-11-2026". The Calendar week always starts on Monday.
-- **Insights with little data** shows "Total: none" and a one-bar chart. It needs a clearer empty state.
-- **Inconsistent page headings.** Household is visibly smaller than Activities and Insights.
-- **Sync status appears twice** on the mobile Dashboard (header and page).
-- **Version is `0.0.0`** (GAPS G-23).
+- **Dates:** ~~no year~~ the year now shows when it is not this year. Still open: the date field's own format follows the browser, and the Calendar week always starts on Monday.
+- ~~**Insights with little data**~~ **Fixed.** "No costs recorded in this period" replaces "Total: none". (The page already had an empty state when nothing is done.)
+- ~~**Inconsistent page headings.**~~ **Fixed.** Every page title is the same size.
+- ~~**Sync status appears twice** on the mobile Dashboard.~~ **Fixed.** The header copy is hidden on the Dashboard.
+- ~~**Version is `0.0.0`**~~ **Fixed.** The web app is `0.1.0`; bump it when releasing.
 
 ## Ideas
 

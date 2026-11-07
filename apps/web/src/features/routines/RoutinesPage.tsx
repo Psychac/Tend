@@ -40,7 +40,7 @@ export function RoutinesPage() {
   return (
     <div className="space-y-4">
       <div>
-        <h2 className="text-xl font-semibold">Routines</h2>
+        <h2 className="text-2xl font-semibold">Routines</h2>
         <p className="text-sm text-muted">
           Personal routines and life admin: activities of type Routine, Administrative or Custom.
           For your own kind of activity, use Custom and give it a category.

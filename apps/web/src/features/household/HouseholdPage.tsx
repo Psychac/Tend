@@ -56,7 +56,7 @@ export function HouseholdPage() {
   return (
     <div className="space-y-4">
       <div>
-        <h2 className="text-xl font-semibold">Household</h2>
+        <h2 className="text-2xl font-semibold">Household</h2>
         <p className="text-sm text-muted">
           Cleaning and upkeep by room. Give an activity a place to have it appear under that room.
         </p>

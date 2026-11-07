@@ -274,7 +274,7 @@ export function AppLayout() {
 
       <header className="sticky top-0 z-10 flex items-center justify-between border-b border-line bg-surface/90 px-4 py-3 backdrop-blur md:hidden">
         <h1 className="text-base font-semibold tracking-tight">Tend</h1>
-        <SyncIndicator />
+        {pathname === '/' ? <span /> : <SyncIndicator />}
         <button
           type="button"
           onClick={cycleTheme}

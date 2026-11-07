@@ -67,7 +67,8 @@ describe('create, complete and manage an activity', () => {
     await user.click(await screen.findByRole('link', { name: 'Dashboard' }));
 
     const dueToday = await screen.findByRole('region', { name: 'Due today' });
-    await user.click(within(dueToday).getByRole('button', { name: 'Snooze a day' }));
+    await user.click(within(dueToday).getByRole('button', { name: 'Snooze' }));
+    await user.click(within(dueToday).getByRole('button', { name: 'Tomorrow' }));
 
     const upcoming = await screen.findByRole('region', { name: 'Coming up' });
     expect(within(upcoming).getAllByText(/snoozed/i).length).toBeGreaterThan(0);
@@ -228,6 +229,7 @@ describe('history and multi-currency cost', () => {
     await createDaily(user, 'Take out bins');
     await user.click(await screen.findByRole('link', { name: 'Dashboard' }));
     const dueToday = await screen.findByRole('region', { name: 'Due today' });
+    await user.click(within(dueToday).getByRole('button', { name: 'More' }));
     await user.click(within(dueToday).getByRole('button', { name: 'Skip' }));
 
     await user.click(await screen.findByRole('link', { name: 'History' }));
@@ -241,6 +243,7 @@ describe('history and multi-currency cost', () => {
     await createDaily(user, 'Water plants');
     await user.click(await screen.findByRole('link', { name: 'Dashboard' }));
     const dueToday = await screen.findByRole('region', { name: 'Due today' });
+    await user.click(within(dueToday).getByRole('button', { name: 'More' }));
     await user.click(within(dueToday).getByRole('button', { name: 'Cancel' }));
     await user.click(within(dueToday).getByRole('button', { name: 'Keep it' }));
     expect(within(dueToday).getByText('Water plants')).toBeInTheDocument();

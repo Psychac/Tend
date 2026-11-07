@@ -56,7 +56,7 @@ export function ActivitiesPage() {
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h2 className="text-xl font-semibold">Activities</h2>
+        <h2 className="text-2xl font-semibold">Activities</h2>
         <div className="flex items-center gap-2">
           <Link to="/digital" className="btn">
             Digital upkeep

@@ -37,7 +37,7 @@ function download(filename: string, content: string | Blob): void {
 export function SettingsPage() {
   return (
     <div className="max-w-2xl space-y-8">
-      <h2 className="text-xl font-semibold">Settings</h2>
+      <h2 className="text-2xl font-semibold">Settings</h2>
       <CategoriesSection />
       <LocationsSection />
       <NotificationsSection />
