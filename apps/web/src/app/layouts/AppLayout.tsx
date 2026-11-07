@@ -111,6 +111,16 @@ const NAV = [
     ),
   },
   {
+    to: '/search',
+    label: 'Search',
+    icon: icon(
+      <>
+        <circle cx="11" cy="11" r="7" />
+        <path d="M20 20l-3.5-3.5" />
+      </>,
+    ),
+  },
+  {
     to: '/insights',
     label: 'Insights',
     icon: icon(
@@ -172,6 +182,7 @@ const DESKTOP_ORDER = [
   'md:order-8',
   'md:order-9',
   'md:order-10',
+  'md:order-11',
 ] as const;
 
 const linkClass = (isActive: boolean, secondary: boolean, order: string) =>

@@ -143,3 +143,17 @@ describe('recent changes', () => {
     expect(items.some((t) => /Added activity: Water plants/.test(t ?? ''))).toBe(true);
   });
 });
+
+describe('search', () => {
+  it('finds an activity by name and links to it', async () => {
+    const { user } = renderApp('/activities/new');
+    await user.type(await screen.findByLabelText('Name'), 'Service the boiler');
+    await user.click(screen.getByRole('button', { name: 'Create activity' }));
+    await screen.findByText('Service the boiler');
+
+    await user.click(screen.getByRole('link', { name: 'Search' }));
+    await user.type(await screen.findByLabelText('Search everything'), 'boiler');
+    const link = await screen.findByRole('link', { name: 'Service the boiler' });
+    expect(link).toHaveAttribute('href', '/activities?q=Service%20the%20boiler');
+  });
+});

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link } from 'react-router';
+import { Link, useSearchParams } from 'react-router';
 import {
   archiveActivity,
   deleteActivity,
@@ -22,7 +22,9 @@ const small = 'btn';
 export function ActivitiesPage() {
   const { deps } = useApp();
   const act = useAction();
-  const [search, setSearch] = useState('');
+  // A search result links here with the name filled in.
+  const [searchParams] = useSearchParams();
+  const [search, setSearch] = useState(searchParams.get('q') ?? '');
   const [showArchived, setShowArchived] = useState(false);
   const [categoryFilter, setCategoryFilter] = useState('');
   const [locationFilter, setLocationFilter] = useState('');
