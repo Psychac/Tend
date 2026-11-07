@@ -77,6 +77,9 @@ export function OccurrenceCard({ item, today }: Props) {
             {item.missedBefore > 0 ? (
               <span className="ml-2 text-sm text-muted">+ {item.missedBefore} earlier missed</span>
             ) : null}
+            {item.laterCount > 0 ? (
+              <span className="ml-2 text-muted">· {item.laterCount} more coming up</span>
+            ) : null}
             {item.occurrence.status === 'snoozed' ? (
               <span className="ml-2 text-muted">(snoozed)</span>
             ) : null}

@@ -45,7 +45,22 @@ describe('getDashboard', () => {
       ['2026-11-12', 1],
     ]);
     expect(d.dueToday).toEqual([]);
-    expect(d.upcoming.map((i) => i.dueOn)).toEqual(['2026-11-19', '2026-11-26']);
+    // The activity already has items due, so its later ones fold into the last of them.
+    expect(d.upcoming).toEqual([]);
+    expect(d.overdue.map((i) => i.laterCount)).toEqual([0, 2]);
+  });
+
+  it('shows a repeating activity once under coming up, with the rest counted', async () => {
+    const h = createHarness(); // Thu 2026-11-05
+    must(
+      await createActivity(h.deps, {
+        name: 'Clean AC filter',
+        type: 'maintenance',
+        schedule: weeklyFrom('2026-11-07'),
+      }),
+    );
+    const d = await getDashboard(h.repos, h.clock, { timeZone: KOLKATA });
+    expect(d.upcoming.map((i) => [i.dueOn, i.laterCount])).toEqual([['2026-11-07', 1]]);
   });
 
   it('orders today by priority, then name', async () => {

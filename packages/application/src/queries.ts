@@ -34,6 +34,8 @@ export interface OccurrenceItem {
   readonly daysLate: number;
   /** Earlier occurrences of this activity rolled up as missed since it was last completed. */
   readonly missedBefore: number;
+  /** Later items of this activity inside the upcoming window, folded into this one. */
+  readonly laterCount: number;
 }
 
 export interface RecentCompletion {
@@ -109,6 +111,7 @@ export async function getDashboard(
       dueOn,
       daysLate: dueOn < today ? daysBetween(dueOn, today) : 0,
       missedBefore,
+      laterCount: 0,
     });
   }
 
@@ -118,11 +121,32 @@ export async function getDashboard(
     PRIORITY_RANK[a.activity.priority] - PRIORITY_RANK[b.activity.priority] ||
     a.activity.name.localeCompare(b.activity.name);
 
+  // A repeating activity has several dated items ahead. Show each activity once: if something
+  // is already due, later items fold into it; otherwise only the nearest upcoming one shows.
+  const windowed = items.filter((i) => i.dueOn <= horizon);
+  const byActivity = new Map<ActivityId, OccurrenceItem[]>();
+  for (const i of windowed.sort(byDue)) {
+    const list = byActivity.get(i.activity.id) ?? [];
+    list.push(i);
+    byActivity.set(i.activity.id, list);
+  }
+  const shown: OccurrenceItem[] = [];
+  for (const list of byActivity.values()) {
+    const current = list.filter((i) => i.dueOn <= today);
+    const future = list.filter((i) => i.dueOn > today);
+    if (current.length > 0) {
+      const last = current[current.length - 1]!;
+      shown.push(...current.slice(0, -1), { ...last, laterCount: future.length });
+    } else if (future[0]) {
+      shown.push({ ...future[0], laterCount: future.length - 1 });
+    }
+  }
+
   return {
     today,
-    overdue: items.filter((i) => i.dueOn < today).sort(byDue),
-    dueToday: items.filter((i) => i.dueOn === today).sort(byPriority),
-    upcoming: items.filter((i) => i.dueOn > today && i.dueOn <= horizon).sort(byDue),
+    overdue: shown.filter((i) => i.dueOn < today).sort(byDue),
+    dueToday: shown.filter((i) => i.dueOn === today).sort(byPriority),
+    upcoming: shown.filter((i) => i.dueOn > today).sort(byDue),
     recentCompletions: completions.map((completion) => ({
       completion,
       activityName: activityById.get(completion.activityId)?.name ?? 'Deleted activity',
