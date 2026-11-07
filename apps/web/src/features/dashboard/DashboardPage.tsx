@@ -46,9 +46,9 @@ function Stat({
       ? 'text-faint'
       : { danger: 'text-danger', brand: 'text-brand', info: 'text-info' }[tone];
   return (
-    <div className="card text-center" aria-hidden="true">
-      <p className={`text-2xl font-bold tabular-nums ${color}`}>{value}</p>
-      <p className="text-xs font-medium text-muted">{label}</p>
+    <div className="card flex flex-col text-center">
+      <dt className="order-2 text-xs font-medium text-muted">{label}</dt>
+      <dd className={`order-1 text-2xl font-bold tabular-nums ${color}`}>{value}</dd>
     </div>
   );
 }
@@ -108,11 +108,11 @@ export function DashboardPage() {
         <SyncIndicator showDetail className="mt-2" />
       </div>
 
-      <div className="grid grid-cols-3 gap-3">
+      <dl className="grid grid-cols-3 gap-3">
         <Stat label="Overdue" value={d.overdue.length} tone="danger" />
         <Stat label="Due today" value={d.dueToday.length} tone="brand" />
         <Stat label="Coming up" value={d.upcoming.length} tone="info" />
-      </div>
+      </dl>
 
       <RemindersPanel />
 

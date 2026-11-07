@@ -332,3 +332,13 @@ describe('insights', () => {
     expect(screen.getByRole('region', { name: 'By activity' })).toHaveTextContent('Service car');
   });
 });
+
+describe('dashboard summary', () => {
+  it('exposes the counts to assistive technology', async () => {
+    renderApp('/');
+    const overdue = await screen.findByText('Overdue');
+    expect(overdue.tagName).toBe('DT');
+    expect(overdue.closest('[aria-hidden="true"]')).toBeNull();
+    expect(overdue.nextElementSibling).toHaveTextContent('0');
+  });
+});
