@@ -126,3 +126,20 @@ describe('deleting', () => {
     expect(screen.getByText('Water plants')).toBeInTheDocument();
   });
 });
+
+describe('recent changes', () => {
+  it('lists what changed', async () => {
+    const { user } = renderApp('/activities/new');
+    await user.type(await screen.findByLabelText('Name'), 'Water plants');
+    await user.click(screen.getByRole('button', { name: 'Create activity' }));
+    await user.click(await screen.findByRole('button', { name: 'Archive Water plants' }));
+
+    await user.click(await screen.findByRole('link', { name: 'Settings' }));
+    const heading = await screen.findByRole('heading', { name: 'Recent changes' });
+    const list = heading.closest('section')!;
+    const items = Array.from(list.querySelectorAll('li')).map((li) => li.textContent);
+    // The clock is frozen in these tests, so only check that both changes are listed.
+    expect(items.some((t) => /Archived activity: Water plants/.test(t ?? ''))).toBe(true);
+    expect(items.some((t) => /Added activity: Water plants/.test(t ?? ''))).toBe(true);
+  });
+});

@@ -13,7 +13,7 @@ import {
   type Occurrence,
   type Result,
 } from '@tend/domain';
-import { found, transact, type Deps } from './deps';
+import { auditEvent, found, transact, type Deps } from './deps';
 import { ensureOccurrences, triggerConditionSchedules } from './generation';
 import type { MeasurementInput } from './occurrences';
 
@@ -73,6 +73,15 @@ export async function recordMeasurement(
     });
     if (!created.ok) return created;
     await repos.measurements.add(created.value);
+    await repos.audit.add(
+      auditEvent(
+        deps,
+        'measurement',
+        created.value.id,
+        'created',
+        `Reading: ${input.measurement.key}`,
+      ),
+    );
 
     const createdOccurrences: Occurrence[] = [];
     for (const schedule of await repos.schedules.list()) {

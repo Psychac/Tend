@@ -25,6 +25,7 @@ import {
   type Result,
   type ValidationIssue,
 } from '@tend/domain';
+import type { Repositories } from '@tend/contracts';
 import { auditEvent, found, transact, type Deps } from './deps';
 import { ensureOccurrences, triggerConditionSchedules, triggerEventSchedules } from './generation';
 
@@ -317,6 +318,7 @@ export async function snoozeOccurrence(
     });
     if (!snoozed.ok) return snoozed;
     await repos.occurrences.save(snoozed.value);
+    await auditChange(deps, repos, loaded.value, `snoozed until ${until.value}`);
     return ok(snoozed.value);
   });
 }
@@ -348,8 +350,28 @@ export async function rescheduleOccurrence(
     const moved = rescheduleOccurrenceEntity(loaded.value, to.value, deps.clock.now());
     if (!moved.ok) return moved;
     await repos.occurrences.save(moved.value);
+    await auditChange(deps, repos, loaded.value, `moved to ${to.value}`);
     return ok(moved.value);
   });
+}
+
+/** Records a change to an occurrence under the activity's name, so the change log reads well. */
+async function auditChange(
+  deps: Deps,
+  repos: Repositories,
+  occurrence: Occurrence,
+  what: string,
+): Promise<void> {
+  const activity = await repos.activities.getById(occurrence.activityId);
+  await repos.audit.add(
+    auditEvent(
+      deps,
+      'occurrence',
+      occurrence.id,
+      'updated',
+      `${activity?.name ?? 'Activity'}: ${what}`,
+    ),
+  );
 }
 
 export type { DomainError };

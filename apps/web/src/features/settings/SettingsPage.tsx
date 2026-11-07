@@ -1,3 +1,4 @@
+import { ChangesSection } from './ChangesSection';
 import { useState, type ChangeEvent } from 'react';
 import {
   exportBackup,
@@ -45,6 +46,7 @@ export function SettingsPage() {
       <StorageSection />
       <PrivacySection />
       <BackupSection />
+      <ChangesSection />
       <DiagnosticsSection />
     </div>
   );

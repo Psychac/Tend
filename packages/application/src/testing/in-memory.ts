@@ -265,7 +265,15 @@ export function createInMemoryStore(): { repos: Repositories; uow: UnitOfWork } 
     },
     audit: {
       add: async (e) => audit.append(e),
-      list: async (f: Page) => paged(audit.all(), f),
+      list: async (f: Page) =>
+        paged(
+          audit
+            .all()
+            .sort((a, b) =>
+              a.occurredAt < b.occurredAt ? 1 : a.occurredAt > b.occurredAt ? -1 : 0,
+            ),
+          f,
+        ),
     },
   };
 
