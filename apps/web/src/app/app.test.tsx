@@ -10,8 +10,14 @@ describe('navigation', () => {
     renderApp();
     expect(await screen.findByRole('heading', { name: 'Dashboard' })).toBeInTheDocument();
     expect(screen.getByRole('navigation', { name: 'Primary' })).toBeInTheDocument();
-    expect(await screen.findByText(/nothing is due/i)).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Add an activity' })).toHaveAttribute(
+    expect(
+      await screen.findByRole('heading', { name: 'What do you want to keep up?' }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /Subscriptions/ })).toHaveAttribute(
+      'href',
+      '/activities/new?preset=subscription',
+    );
+    expect(screen.getByRole('link', { name: 'start from scratch' })).toHaveAttribute(
       'href',
       '/activities/new',
     );
@@ -167,7 +173,8 @@ describe('assets and usage-based maintenance', () => {
     expect(await screen.findByText('Oil change')).toBeInTheDocument();
 
     await user.click(screen.getByRole('link', { name: 'Dashboard' }));
-    expect(await screen.findByText(/nothing is due/i)).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Dashboard' })).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Due today' })).not.toBeInTheDocument();
 
     await user.click(screen.getByRole('link', { name: 'Assets' }));
     await record('6500');

@@ -32,6 +32,48 @@ function Section({
   );
 }
 
+const STARTERS = [
+  { label: 'Home upkeep', hint: 'Rooms, seasonal chores', to: '/household' },
+  { label: 'Subscriptions', hint: 'Renewals and bills', to: '/activities/new?preset=subscription' },
+  { label: 'Health', hint: 'Check-ups', to: '/activities/new?preset=health-checkup' },
+  { label: 'Documents', hint: 'Passport, licence, papers', to: '/activities/new?preset=documents' },
+  { label: 'Car or appliances', hint: 'Track an asset and its service', to: '/assets' },
+  { label: 'Back up my data', hint: 'A regular reminder', to: '/activities/new?preset=backup' },
+] as const;
+
+/** Shown to someone with nothing yet: a few common places to begin, each opening a ready-made form. */
+function StarterPicker() {
+  return (
+    <section aria-labelledby="h-start" className="space-y-3">
+      <div>
+        <h3 id="h-start" className="text-lg font-medium">
+          What do you want to keep up?
+        </h3>
+        <p className="text-sm text-muted">
+          Pick one to start from a ready-made reminder. You can change everything before saving.
+        </p>
+      </div>
+      <ul className="grid gap-2 sm:grid-cols-2">
+        {STARTERS.map((s) => (
+          <li key={s.label}>
+            <Link to={s.to} className="card block p-3 hover:border-brand">
+              <span className="font-medium">{s.label}</span>
+              <span className="block text-sm text-muted">{s.hint}</span>
+            </Link>
+          </li>
+        ))}
+      </ul>
+      <p className="text-sm text-muted">
+        Or{' '}
+        <Link to="/activities/new" className="font-medium text-brand underline">
+          start from scratch
+        </Link>
+        .
+      </p>
+    </section>
+  );
+}
+
 function Stat({
   label,
   value,
@@ -118,13 +160,15 @@ export function DashboardPage() {
 
       <AssetAlerts />
 
-      {nothingOpen ? (
+      {nothingOpen && d.recentCompletions.length === 0 ? (
+        <StarterPicker />
+      ) : nothingOpen ? (
         <p className="card border-dashed py-8 text-center text-muted">
           Nothing is due.{' '}
           <Link to="/activities/new" className="font-medium text-brand underline">
             Add an activity
           </Link>{' '}
-          to start keeping things up.
+          to keep more things up.
         </p>
       ) : null}
 

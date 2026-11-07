@@ -11,7 +11,7 @@ test('a change in one tab appears in the other without a reload', async ({ conte
 
   await a.goto('/activities/new');
   await b.goto('/');
-  await expect(b.getByText('Nothing is due.')).toBeVisible({ timeout: 30_000 });
+  await expect(b.getByText('What do you want to keep up?')).toBeVisible({ timeout: 30_000 });
 
   await a.getByLabel('Name').fill('Water plants');
   await a.getByLabel('Repeats').selectOption('calendar');

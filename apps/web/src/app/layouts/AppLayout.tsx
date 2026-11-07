@@ -160,8 +160,22 @@ function useTheme(): [Theme, () => void] {
   return [theme, () => setTheme(NEXT[theme])];
 }
 
-const linkClass = (isActive: boolean, secondary: boolean) =>
-  `relative flex min-w-[4.25rem] flex-1 flex-col items-center justify-center gap-0.5 px-1 py-2 text-[11px] font-medium transition-colors md:min-w-0 md:flex-none md:flex-row md:justify-start md:gap-3 md:rounded-lg md:px-3 md:py-2 md:text-sm ${
+/** Keeps the sidebar in NAV order even though the phone bar lists the primary pages first. */
+const DESKTOP_ORDER = [
+  'md:order-1',
+  'md:order-2',
+  'md:order-3',
+  'md:order-4',
+  'md:order-5',
+  'md:order-6',
+  'md:order-7',
+  'md:order-8',
+  'md:order-9',
+  'md:order-10',
+] as const;
+
+const linkClass = (isActive: boolean, secondary: boolean, order: string) =>
+  `${order} relative flex min-w-[4.25rem] flex-1 flex-col items-center justify-center gap-0.5 px-1 py-2 text-[11px] font-medium transition-colors md:min-w-0 md:flex-none md:flex-row md:justify-start md:gap-3 md:rounded-lg md:px-3 md:py-2 md:text-sm ${
     secondary
       ? 'max-md:flex-row max-md:justify-start max-md:gap-3 max-md:px-4 max-md:py-3 max-md:text-sm max-md:flex-none'
       : ''
@@ -190,7 +204,9 @@ export function AppLayout() {
       key={item.to}
       to={item.to}
       end={item.to === '/'}
-      className={({ isActive }) => linkClass(isActive, isSecondary)}
+      className={({ isActive }) =>
+        linkClass(isActive, isSecondary, DESKTOP_ORDER[NAV.indexOf(item)] ?? '')
+      }
     >
       {item.icon}
       <span>{item.label}</span>
@@ -246,12 +262,12 @@ export function AppLayout() {
         >
           {secondary.map((item) => renderItem(item, true))}
         </div>
-        <SyncIndicator className="hidden px-3 pb-1 md:mt-auto md:flex" />
+        <SyncIndicator className="hidden px-3 pb-1 md:order-[20] md:mt-auto md:flex" />
         <button
           type="button"
           onClick={cycleTheme}
           aria-label={`Theme: ${theme}. Switch theme`}
-          className="hidden items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-muted hover:bg-sunken hover:text-ink md:flex"
+          className="hidden items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-muted hover:bg-sunken hover:text-ink md:order-[21] md:flex"
         >
           {theme === 'dark'
             ? icon(<path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z" />)

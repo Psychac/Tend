@@ -17,12 +17,12 @@ Creating activities, completing one and visiting every screen. This is separate 
 
 ## Lacking
 
-- **Onboarding.** A new user gets an empty Dashboard and one sentence. The presets (Household, Digital, Routines) are the best way in but sit three items down the nav.
-- **A long first form.** New activity shows type, priority, category, place, asset, repeat, reminder, checklist and readings at once. A presets-first or simple/advanced flow would shorten it.
+- ~~**Onboarding.**~~ **Fixed.** An empty Dashboard now asks "What do you want to keep up?" with six starting points (home, subscriptions, health, documents, car or appliances, backups) that open ready-made forms.
+- ~~**A long first form.**~~ **Fixed.** New activity shows name, repeat, date and reminder; the rest sits under "More options" (open when editing or starting from a preset).
 - ~~**Five buttons per Dashboard card.**~~ **Fixed.** Cards show Done, Details, Snooze and More. More holds Skip and Cancel, each with a one-line explanation.
 - ~~**Snooze is fixed at one day.**~~ **Fixed.** Tomorrow, in 3 days, next week, or a picked date.
-- **Nothing can be deleted.** Activities can only be archived; assets have no delete (GAPS G-07).
-- **No visible change log.** Audit events are written and never shown (GAPS G-28).
+- ~~**Nothing can be deleted.**~~ **Fixed.** A never-done activity, or an unused asset, can be deleted after a confirmation. Anything with history can only be archived (assets: retired), with the reason shown.
+- ~~**No visible change log.**~~ **Fixed.** Settings has a read-only "Recent changes" list (last 30). Snoozing, moving an item and recording a reading are now recorded too. The automatic reconcile is not, because a person did not do it (GAPS G-28 can be closed).
 - **Notifications only fire while the app is open.** Web Push is Phase 2 (GAPS G-33).
 - **No app-wide search,** only per-list filters.
 - **Dates:** ~~no year~~ the year now shows when it is not this year. Still open: the date field's own format follows the browser, and the Calendar week always starts on Monday.

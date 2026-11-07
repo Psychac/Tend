@@ -24,6 +24,7 @@ test('categories and places can be created, used and survive a reload', async ({
   await page.getByRole('link', { name: 'Activities' }).click();
   await page.getByRole('link', { name: 'New activity' }).click();
   await page.getByLabel('Name').fill('Wipe counters');
+  await page.getByText('More options').click();
   await page.getByRole('combobox', { name: 'Category' }).selectOption({ label: 'Cleaning' });
   await page.getByRole('combobox', { name: 'Place' }).selectOption({ label: 'House › Kitchen' });
   await page.getByRole('button', { name: 'Create activity' }).click();

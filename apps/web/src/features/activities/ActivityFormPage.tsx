@@ -396,70 +396,6 @@ export function ActivityForm({ initial }: { initial?: ActivityFormInitial | unde
       ) : null}
 
       <label className="block text-sm">
-        Description
-        <textarea
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          className={field}
-        />
-      </label>
-
-      <div className="flex flex-wrap gap-4">
-        <label className="block text-sm">
-          Type
-          <select
-            value={type}
-            onChange={(e) => setType(e.target.value as ActivityType)}
-            className={field}
-          >
-            {TYPES.map((t) => (
-              <option key={t} value={t}>
-                {t[0]?.toUpperCase() + t.slice(1)}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="block text-sm">
-          Priority
-          <select
-            value={priority}
-            onChange={(e) => setPriority(e.target.value as Priority)}
-            className={field}
-          >
-            <option value="low">Low</option>
-            <option value="normal">Normal</option>
-            <option value="high">High</option>
-          </select>
-        </label>
-      </div>
-
-      <div className="flex flex-wrap gap-4">
-        <CategorySelect label="Category" value={categoryId} onChange={setCategoryId} />
-        <LocationSelect label="Place" value={locationId} onChange={setLocationId} />
-      </div>
-
-      <label className="block text-sm">
-        Asset (optional)
-        <select
-          value={assetId}
-          onChange={(e) => {
-            setAssetId(e.target.value);
-            if (!e.target.value && repeat === 'usage') setRepeat('none');
-          }}
-          className={field}
-        >
-          <option value="">None</option>
-          {assets.status === 'ready'
-            ? assets.data.map((a) => (
-                <option key={a.asset.id} value={a.asset.id}>
-                  {a.asset.name}
-                </option>
-              ))
-            : null}
-        </select>
-      </label>
-
-      <label className="block text-sm">
         Repeats
         <select
           value={repeat}
@@ -747,77 +683,151 @@ export function ActivityForm({ initial }: { initial?: ActivityFormInitial | unde
         </fieldset>
       ) : null}
 
-      <label className="block text-sm">
-        Checklist (one item per line, optional)
-        <textarea
-          value={checklist}
-          onChange={(e) => setChecklist(e.target.value)}
-          className={field}
-        />
-      </label>
+      <details
+        className="space-y-4 rounded border border-line p-3"
+        {...(editing || preset ? { open: true } : {})}
+      >
+        <summary className="cursor-pointer text-sm font-medium">More options</summary>
+        <p className="mt-1 text-sm text-muted">
+          Description, type, priority, category, place, asset, checklist and readings.
+        </p>
 
-      <fieldset className="space-y-2">
-        <legend className="text-sm font-medium">Readings to record when done (optional)</legend>
-        {requirements.map((r) => (
-          <div key={r.rowKey} className="flex flex-wrap items-end gap-2">
-            <label className="block text-sm">
-              Reading
-              <input
-                value={r.key}
-                onChange={(e) =>
-                  setRequirements(
-                    requirements.map((x) => (x === r ? { ...x, key: e.target.value } : x)),
-                  )
-                }
-                className="mt-1 block w-32 field"
-              />
-            </label>
-            <label className="block text-sm">
-              Unit
-              <input
-                value={r.unit}
-                onChange={(e) =>
-                  setRequirements(
-                    requirements.map((x) => (x === r ? { ...x, unit: e.target.value } : x)),
-                  )
-                }
-                className="mt-1 block w-20 field"
-              />
-            </label>
-            <label className="flex items-center gap-1 pb-1 text-sm">
-              <input
-                type="checkbox"
-                checked={r.required}
-                onChange={(e) =>
-                  setRequirements(
-                    requirements.map((x) => (x === r ? { ...x, required: e.target.checked } : x)),
-                  )
-                }
-              />
-              Required
-            </label>
-            <button
-              type="button"
-              className="field text-sm hover:bg-sunken"
-              onClick={() => setRequirements(requirements.filter((x) => x !== r))}
+        <label className="block text-sm">
+          Description
+          <textarea
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            className={field}
+          />
+        </label>
+
+        <div className="flex flex-wrap gap-4">
+          <label className="block text-sm">
+            Type
+            <select
+              value={type}
+              onChange={(e) => setType(e.target.value as ActivityType)}
+              className={field}
             >
-              Remove
-            </button>
-          </div>
-        ))}
-        <button
-          type="button"
-          className="btn"
-          onClick={() =>
-            setRequirements([
-              ...requirements,
-              { key: '', unit: '', required: false, rowKey: nextKey() },
-            ])
-          }
-        >
-          Add a reading
-        </button>
-      </fieldset>
+              {TYPES.map((t) => (
+                <option key={t} value={t}>
+                  {t[0]?.toUpperCase() + t.slice(1)}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="block text-sm">
+            Priority
+            <select
+              value={priority}
+              onChange={(e) => setPriority(e.target.value as Priority)}
+              className={field}
+            >
+              <option value="low">Low</option>
+              <option value="normal">Normal</option>
+              <option value="high">High</option>
+            </select>
+          </label>
+        </div>
+
+        <div className="flex flex-wrap gap-4">
+          <CategorySelect label="Category" value={categoryId} onChange={setCategoryId} />
+          <LocationSelect label="Place" value={locationId} onChange={setLocationId} />
+        </div>
+
+        <label className="block text-sm">
+          Asset (optional)
+          <select
+            value={assetId}
+            onChange={(e) => {
+              setAssetId(e.target.value);
+              if (!e.target.value && repeat === 'usage') setRepeat('none');
+            }}
+            className={field}
+          >
+            <option value="">None</option>
+            {assets.status === 'ready'
+              ? assets.data.map((a) => (
+                  <option key={a.asset.id} value={a.asset.id}>
+                    {a.asset.name}
+                  </option>
+                ))
+              : null}
+          </select>
+        </label>
+
+        <label className="block text-sm">
+          Checklist (one item per line, optional)
+          <textarea
+            value={checklist}
+            onChange={(e) => setChecklist(e.target.value)}
+            className={field}
+          />
+        </label>
+
+        <fieldset className="space-y-2">
+          <legend className="text-sm font-medium">Readings to record when done (optional)</legend>
+          {requirements.map((r) => (
+            <div key={r.rowKey} className="flex flex-wrap items-end gap-2">
+              <label className="block text-sm">
+                Reading
+                <input
+                  value={r.key}
+                  onChange={(e) =>
+                    setRequirements(
+                      requirements.map((x) => (x === r ? { ...x, key: e.target.value } : x)),
+                    )
+                  }
+                  className="mt-1 block w-32 field"
+                />
+              </label>
+              <label className="block text-sm">
+                Unit
+                <input
+                  value={r.unit}
+                  onChange={(e) =>
+                    setRequirements(
+                      requirements.map((x) => (x === r ? { ...x, unit: e.target.value } : x)),
+                    )
+                  }
+                  className="mt-1 block w-20 field"
+                />
+              </label>
+              <label className="flex items-center gap-1 pb-1 text-sm">
+                <input
+                  type="checkbox"
+                  checked={r.required}
+                  onChange={(e) =>
+                    setRequirements(
+                      requirements.map((x) => (x === r ? { ...x, required: e.target.checked } : x)),
+                    )
+                  }
+                />
+                Required
+              </label>
+              <button
+                type="button"
+                className="field text-sm hover:bg-sunken"
+                onClick={() => setRequirements(requirements.filter((x) => x !== r))}
+              >
+                Remove
+              </button>
+            </div>
+          ))}
+          <button
+            type="button"
+            className="btn"
+            onClick={() =>
+              setRequirements([
+                ...requirements,
+                { key: '', unit: '', required: false, rowKey: nextKey() },
+              ])
+            }
+          >
+            Add a reading
+          </button>
+        </fieldset>
+      </details>
 
       {error ? (
         <p role="alert" className="text-sm text-danger">
