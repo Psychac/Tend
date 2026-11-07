@@ -5,6 +5,7 @@ import {
   listReplacementPlan,
   updateAsset,
   recordMeasurement,
+  deleteAsset,
   setAssetStatus,
   type AssetListItem,
   type ReplacementPlanItem,
@@ -22,6 +23,7 @@ import {
 import { MeasurementHistory } from './MeasurementHistory';
 import { MoneyField, useMoneyState } from '../../shared/ui/currency';
 import { CategorySelect, LocationSelect } from '../../shared/ui/pickers';
+import { ConfirmDelete } from '../../shared/ui/ConfirmDelete';
 import { useApp } from '../../app/providers/AppProvider';
 import {
   describeError,
@@ -377,6 +379,17 @@ function AssetCard({ item }: { item: AssetListItem }) {
             {inactive ? 'Reactivate' : 'Retire'}
           </button>
         </div>
+      </div>
+
+      <div className="mt-2">
+        <ConfirmDelete
+          label={asset.name}
+          what={`Delete ${asset.name} for good? This can't be undone. An asset with activities, readings or files can only be retired.`}
+          onConfirm={async () => {
+            const r = await act(() => deleteAsset(deps, { assetId: asset.id }));
+            return r.ok ? null : describeError(r.error);
+          }}
+        />
       </div>
 
       {error ? (

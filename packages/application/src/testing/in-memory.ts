@@ -197,6 +197,7 @@ export function createInMemoryStore(): { repos: Repositories; uow: UnitOfWork } 
         return paged(f.order === 'due_desc' ? rows.reverse() : rows, f);
       },
       save: async (o) => occurrences.save(o),
+      delete: async (id) => occurrences.remove(id),
     },
     completions: {
       getById: async (id) => completions.get(id),
@@ -224,6 +225,7 @@ export function createInMemoryStore(): { repos: Repositories; uow: UnitOfWork } 
       list: async (f) =>
         reminders.all().filter((r) => f?.activityId === undefined || r.activityId === f.activityId),
       save: async (r) => reminders.save(r),
+      delete: async (id) => reminders.remove(id),
     },
     reminderDeliveries: {
       add: async (d) => reminderDeliveries.append(d),

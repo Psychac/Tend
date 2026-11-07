@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router';
 import {
   archiveActivity,
+  deleteActivity,
   setActivityDueDate,
   listActivities,
   pauseActivitySchedule,
@@ -13,6 +14,7 @@ import { useApp } from '../../app/providers/AppProvider';
 import { describeError, formatDate, useAction, useLiveQuery } from '../../shared/hooks';
 import { AttachmentsSection } from '../attachments/AttachmentsSection';
 import { CategorySelect, LocationSelect } from '../../shared/ui/pickers';
+import { ConfirmDelete } from '../../shared/ui/ConfirmDelete';
 import { LogDoneForm } from './LogDoneForm';
 
 const small = 'btn';
@@ -237,6 +239,16 @@ export function ActivitiesPage() {
                       Restore
                     </button>
                   )}
+                </div>
+                <div className="w-full">
+                  <ConfirmDelete
+                    label={activity.name}
+                    what={`Delete ${activity.name} for good? This can't be undone. An activity that has been done can only be archived.`}
+                    onConfirm={async () => {
+                      const r = await act(() => deleteActivity(deps, { activityId: activity.id }));
+                      return r.ok ? null : describeError(r.error);
+                    }}
+                  />
                 </div>
                 {dateOpen === activity.id ? (
                   <form

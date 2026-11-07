@@ -97,3 +97,32 @@ describe('planned and dated one-offs', () => {
     expect(await screen.findByText('Paint fence')).toBeInTheDocument();
   });
 });
+
+describe('deleting', () => {
+  it('deletes an activity that was never done, after asking', async () => {
+    const { user } = renderApp('/activities/new');
+    await user.type(await screen.findByLabelText('Name'), 'Typo activity');
+    await user.click(screen.getByRole('button', { name: 'Create activity' }));
+
+    await user.click(await screen.findByRole('button', { name: 'Delete Typo activity' }));
+    await user.click(screen.getByRole('button', { name: 'Keep it' }));
+    expect(screen.getByText('Typo activity')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Delete Typo activity' }));
+    await user.click(screen.getByRole('button', { name: 'Yes, delete it' }));
+    expect(await screen.findByText(/No activities yet/)).toBeInTheDocument();
+  });
+
+  it('explains why an activity with history cannot be deleted', async () => {
+    const { user } = renderApp('/activities/new');
+    await user.type(await screen.findByLabelText('Name'), 'Water plants');
+    await user.click(screen.getByRole('button', { name: 'Create activity' }));
+    await user.click(await screen.findByRole('button', { name: 'Log Water plants as done' }));
+    await user.click(screen.getByRole('button', { name: 'Save' }));
+
+    await user.click(await screen.findByRole('button', { name: 'Delete Water plants' }));
+    await user.click(screen.getByRole('button', { name: 'Yes, delete it' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent(/can only be archived/);
+    expect(screen.getByText('Water plants')).toBeInTheDocument();
+  });
+});

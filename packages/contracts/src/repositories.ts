@@ -109,6 +109,8 @@ export interface OccurrenceRepository {
   list(filter: OccurrenceFilter): Promise<Occurrence[]>;
   /** Version-checked like other mutable entities. */
   save(occurrence: Occurrence): Promise<void>;
+  /** Only for removing an activity that was never done. */
+  delete(id: OccurrenceId): Promise<void>;
 }
 
 export interface CompletionFilter extends Page {
@@ -165,6 +167,7 @@ export interface ReminderRepository {
   getById(id: ReminderId): Promise<Reminder | null>;
   list(filter?: ReminderFilter): Promise<Reminder[]>;
   save(reminder: Reminder): Promise<void>;
+  delete(id: ReminderId): Promise<void>;
 }
 
 /** Append-only record of what has been delivered, so nothing is delivered twice. */

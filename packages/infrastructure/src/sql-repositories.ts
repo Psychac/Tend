@@ -233,6 +233,7 @@ function buildRepositories(runner: Runner): Repositories {
         });
       },
       save: (o) => occurrences.save(o),
+      delete: (id) => occurrences.remove(id),
     },
     completions: {
       getById: (id) => completions.getById(id),
@@ -261,6 +262,7 @@ function buildRepositories(runner: Runner): Repositories {
         return reminders.query({ where, params, orderBy: 'created_at ASC' });
       },
       save: (r) => reminders.save(r),
+      delete: (id) => reminders.remove(id),
     },
     reminderDeliveries: {
       add: (d) => reminderDeliveries.append(d),
